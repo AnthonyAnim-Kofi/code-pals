@@ -1,9 +1,32 @@
-import { Heart, Flame, Zap, Gem, Infinity } from "lucide-react";
+import { Heart, Flame, Zap, Gem, Infinity, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useUserProfile } from "@/hooks/useUserProgress";
 
 export function UserProgress() {
+  const { data: profile, isLoading } = useUserProfile();
+
+  if (isLoading) {
+    return (
+      <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  const streak = profile?.streak_count || 0;
+  const xp = profile?.xp || 0;
+  const hearts = profile?.hearts || 5;
+  const gems = profile?.gems || 0;
+
+  // Calculate daily goal progress (assuming 50 XP daily goal)
+  const dailyGoal = 50;
+  const todayXp = xp % dailyGoal; // Simplified - in real app, track today's XP separately
+  const dailyProgress = Math.min((todayXp / dailyGoal) * 100, 100);
+
   return (
     <div className="space-y-4">
       {/* Stats Card */}
@@ -15,7 +38,7 @@ export function UserProgress() {
               <Flame className="w-5 h-5 text-accent-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-accent">5</p>
+              <p className="text-2xl font-extrabold text-accent">{streak}</p>
               <p className="text-xs text-muted-foreground font-semibold">Day streak</p>
             </div>
           </div>
@@ -26,7 +49,7 @@ export function UserProgress() {
               <Zap className="w-5 h-5 text-golden-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-golden">1,250</p>
+              <p className="text-2xl font-extrabold text-golden">{xp.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground font-semibold">Total XP</p>
             </div>
           </div>
@@ -37,7 +60,7 @@ export function UserProgress() {
               <Heart className="w-5 h-5 text-destructive-foreground fill-current" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-destructive">5</p>
+              <p className="text-2xl font-extrabold text-destructive">{hearts}</p>
               <p className="text-xs text-muted-foreground font-semibold">Hearts</p>
             </div>
           </div>
@@ -48,7 +71,7 @@ export function UserProgress() {
               <Gem className="w-5 h-5 text-secondary-foreground" />
             </div>
             <div>
-              <p className="text-2xl font-extrabold text-secondary">500</p>
+              <p className="text-2xl font-extrabold text-secondary">{gems.toLocaleString()}</p>
               <p className="text-xs text-muted-foreground font-semibold">Gems</p>
             </div>
           </div>
@@ -75,9 +98,9 @@ export function UserProgress() {
       <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
         <div className="flex items-center justify-between mb-3">
           <p className="font-bold text-foreground">Daily Goal</p>
-          <span className="text-sm text-muted-foreground">30 / 50 XP</span>
+          <span className="text-sm text-muted-foreground">{todayXp} / {dailyGoal} XP</span>
         </div>
-        <Progress value={60} size="lg" indicatorColor="gradient" />
+        <Progress value={dailyProgress} size="lg" indicatorColor="gradient" />
       </div>
     </div>
   );

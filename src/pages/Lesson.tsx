@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { X, Heart, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LessonComplete } from "@/components/LessonComplete";
+import { DragOrderChallenge } from "@/components/challenges/DragOrderChallenge";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress } from "@/hooks/useUserProgress";
+import { useUpdateQuestProgress } from "@/hooks/useQuests";
 import { cn } from "@/lib/utils";
 
-// Sample lesson data
+// Sample lesson data with different question types
 const lessonData = {
   title: "Print Statements",
   questions: [
@@ -33,6 +36,17 @@ const lessonData = {
     },
     {
       id: 3,
+      type: "drag-order",
+      instruction: "Arrange the code blocks to print numbers 1 to 3",
+      blocks: [
+        { id: "1", code: "print(1)" },
+        { id: "2", code: "print(2)" },
+        { id: "3", code: "print(3)" },
+      ],
+      correctOrder: ["1", "2", "3"],
+    },
+    {
+      id: 4,
       type: "fill-blank",
       instruction: "Fix the syntax error:",
       code: `name = "Alice"\nprint("Hello, " + ___`,
@@ -47,26 +61,33 @@ export default function Lesson() {
   const navigate = useNavigate();
   const { playCorrect, playIncorrect, playComplete } = useSoundEffects();
   
+  const { data: profile } = useUserProfile();
+  const addXP = useAddXP();
+  const deductHeart = useDeductHeart();
+  const saveLessonProgress = useSaveLessonProgress();
+  const updateQuestProgress = useUpdateQuestProgress();
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | number | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [hearts, setHearts] = useState(5);
   const [xpEarned, setXpEarned] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [dragOrderChecked, setDragOrderChecked] = useState(false);
 
+  const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
   const progress = ((currentQuestion) / lessonData.questions.length) * 100;
   const isLastQuestion = currentQuestion === lessonData.questions.length - 1;
 
-  const handleCheck = () => {
+  const handleCheck = async () => {
     if (selectedAnswer === null) return;
 
     let correct = false;
     if (question.type === "fill-blank") {
       correct = selectedAnswer === question.answer;
-    } else {
+    } else if (question.type === "multiple-choice") {
       correct = selectedAnswer === question.correctIndex;
     }
 
@@ -77,16 +98,50 @@ export default function Lesson() {
       setXpEarned((prev) => prev + 10);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
+      // Update quest progress for correct answers
+      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
     } else {
-      setHearts((prev) => Math.max(0, prev - 1));
+      deductHeart.mutate();
       playIncorrect();
     }
   };
 
-  const handleContinue = () => {
+  const handleDragOrderAnswer = useCallback((isCorrect: boolean) => {
+    setDragOrderChecked(true);
+    setIsChecked(true);
+    setIsCorrect(isCorrect);
+
+    if (isCorrect) {
+      setXpEarned((prev) => prev + 15); // Drag order is worth more XP
+      setCorrectAnswers((prev) => prev + 1);
+      playCorrect();
+      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+    } else {
+      deductHeart.mutate();
+      playIncorrect();
+    }
+  }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+
+  const handleContinue = async () => {
     // If it's the last question, show completion screen
     if (isLastQuestion) {
       playComplete();
+      
+      // Save lesson progress to database
+      const accuracy = Math.round((correctAnswers / lessonData.questions.length) * 100);
+      await saveLessonProgress.mutateAsync({
+        lessonId: parseInt(lessonId || "1"),
+        xpEarned,
+        accuracy,
+      });
+      
+      // Add XP to user profile
+      await addXP.mutateAsync(xpEarned);
+      
+      // Update quest progress
+      updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
+      updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
+      
       setIsComplete(true);
       return;
     }
@@ -95,6 +150,7 @@ export default function Lesson() {
     setSelectedAnswer(null);
     setIsChecked(false);
     setIsCorrect(false);
+    setDragOrderChecked(false);
   };
 
   const handleLessonComplete = () => {
@@ -143,7 +199,17 @@ export default function Lesson() {
             {question.instruction}
           </h2>
 
-          {/* Code Block */}
+          {/* Drag Order Challenge */}
+          {question.type === "drag-order" && question.blocks && question.correctOrder && (
+            <DragOrderChallenge
+              blocks={question.blocks}
+              correctOrder={question.correctOrder}
+              onAnswer={handleDragOrderAnswer}
+              disabled={dragOrderChecked}
+            />
+          )}
+
+          {/* Code Block for Fill-in-the-blank */}
           {question.type === "fill-blank" && (
             <div className="bg-sidebar rounded-2xl p-6 mb-6 font-mono text-sm">
               <pre className="text-sidebar-foreground whitespace-pre-wrap">
@@ -161,38 +227,40 @@ export default function Lesson() {
             </div>
           )}
 
-          {/* Options */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            {question.options?.map((option, index) => {
-              const isSelected =
-                question.type === "fill-blank"
-                  ? selectedAnswer === option
-                  : selectedAnswer === index;
+          {/* Options for fill-blank and multiple-choice */}
+          {(question.type === "fill-blank" || question.type === "multiple-choice") && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {question.options?.map((option, index) => {
+                const isSelected =
+                  question.type === "fill-blank"
+                    ? selectedAnswer === option
+                    : selectedAnswer === index;
 
-              return (
-                <button
-                  key={index}
-                  onClick={() => {
-                    if (isChecked) return;
-                    setSelectedAnswer(question.type === "fill-blank" ? option : index);
-                  }}
-                  disabled={isChecked}
-                  className={cn(
-                    "p-4 rounded-xl border-2 text-left font-semibold transition-all",
-                    isSelected
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-card hover:border-primary/50",
-                    isChecked && isSelected && isCorrect && "border-primary bg-primary/20",
-                    isChecked && isSelected && !isCorrect && "border-destructive bg-destructive/20 text-destructive",
-                    isChecked && !isSelected && question.type === "fill-blank" && option === question.answer && "border-primary bg-primary/10",
-                    isChecked && !isSelected && question.type === "multiple-choice" && index === question.correctIndex && "border-primary bg-primary/10"
-                  )}
-                >
-                  {option}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (isChecked) return;
+                      setSelectedAnswer(question.type === "fill-blank" ? option : index);
+                    }}
+                    disabled={isChecked}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left font-semibold transition-all",
+                      isSelected
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-card hover:border-primary/50",
+                      isChecked && isSelected && isCorrect && "border-primary bg-primary/20",
+                      isChecked && isSelected && !isCorrect && "border-destructive bg-destructive/20 text-destructive",
+                      isChecked && !isSelected && question.type === "fill-blank" && option === question.answer && "border-primary bg-primary/10",
+                      isChecked && !isSelected && question.type === "multiple-choice" && index === question.correctIndex && "border-primary bg-primary/10"
+                    )}
+                  >
+                    {option}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
 
@@ -215,7 +283,9 @@ export default function Lesson() {
                   </div>
                   <div>
                     <p className="font-bold text-primary">Awesome!</p>
-                    <p className="text-sm text-muted-foreground">+10 XP</p>
+                    <p className="text-sm text-muted-foreground">
+                      +{question.type === "drag-order" ? 15 : 10} XP
+                    </p>
                   </div>
                 </>
               ) : (
@@ -226,7 +296,10 @@ export default function Lesson() {
                   <div>
                     <p className="font-bold text-destructive">Oops!</p>
                     <p className="text-sm text-muted-foreground">
-                      The correct answer was: {question.type === "fill-blank" ? question.answer : question.options?.[question.correctIndex ?? 0]}
+                      {question.type === "drag-order" 
+                        ? "The blocks are in the wrong order" 
+                        : `The correct answer was: ${question.type === "fill-blank" ? question.answer : question.options?.[question.correctIndex ?? 0]}`
+                      }
                     </p>
                   </div>
                 </>
@@ -235,7 +308,7 @@ export default function Lesson() {
           )}
 
           <div className="flex gap-3">
-            {!isChecked ? (
+            {!isChecked && question.type !== "drag-order" ? (
               <>
                 <Button variant="outline" size="lg" className="flex-1" asChild>
                   <Link to="/learn">Skip</Link>
@@ -249,7 +322,7 @@ export default function Lesson() {
                   Check
                 </Button>
               </>
-            ) : (
+            ) : isChecked ? (
               <Button
                 size="lg"
                 className="w-full"
@@ -258,7 +331,7 @@ export default function Lesson() {
               >
                 {isLastQuestion ? "Finish" : "Continue"}
               </Button>
-            )}
+            ) : null}
           </div>
         </div>
       </footer>

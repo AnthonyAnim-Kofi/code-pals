@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_quests: {
+        Row: {
+          created_at: string
+          description: string
+          gem_reward: number
+          id: string
+          is_weekly: boolean
+          quest_type: string
+          target_value: number
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          gem_reward?: number
+          id?: string
+          is_weekly?: boolean
+          quest_type: string
+          target_value: number
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          gem_reward?: number
+          id?: string
+          is_weekly?: boolean
+          quest_type?: string
+          target_value?: number
+          title?: string
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           accuracy: number
@@ -91,6 +124,53 @@ export type Database = {
           xp?: number
         }
         Relationships: []
+      }
+      user_quest_progress: {
+        Row: {
+          claimed: boolean
+          claimed_at: string | null
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          current_value: number
+          id: string
+          quest_date: string
+          quest_id: string
+          user_id: string
+        }
+        Insert: {
+          claimed?: boolean
+          claimed_at?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          quest_date?: string
+          quest_id: string
+          user_id: string
+        }
+        Update: {
+          claimed?: boolean
+          claimed_at?: string | null
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number
+          id?: string
+          quest_date?: string
+          quest_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quest_progress_quest_id_fkey"
+            columns: ["quest_id"]
+            isOneToOne: false
+            referencedRelation: "daily_quests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

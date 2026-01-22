@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -33,8 +34,14 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* Main App with Sidebar */}
-            <Route element={<MainLayout />}>
+            {/* Main App with Sidebar - Protected */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <MainLayout />
+                </ProtectedRoute>
+              }
+            >
               <Route path="/learn" element={<Learn />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/quests" element={<Quests />} />
@@ -42,8 +49,15 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
             </Route>
 
-            {/* Lesson (Full screen, no sidebar) */}
-            <Route path="/lesson/:lessonId" element={<Lesson />} />
+            {/* Lesson (Full screen, no sidebar) - Protected */}
+            <Route
+              path="/lesson/:lessonId"
+              element={
+                <ProtectedRoute>
+                  <Lesson />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
