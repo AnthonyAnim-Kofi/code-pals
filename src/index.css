@@ -2,95 +2,101 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Duolingo-inspired playful color palette */
+    --background: 0 0% 98%;
+    --foreground: 220 20% 20%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 220 20% 20%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 220 20% 20%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Signature Duolingo Green */
+    --primary: 100 76% 40%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Sky Blue Accent */
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Orange for streaks/fire */
+    --accent: 28 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    /* Red for hearts */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Purple for premium/special */
+    --premium: 270 70% 60%;
+    --premium-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    /* Golden for XP/achievements */
+    --golden: 45 100% 50%;
+    --golden-foreground: 30 50% 20%;
 
-    --sidebar-background: 0 0% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 100 76% 40%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --radius: 1rem;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Sidebar */
+    --sidebar-background: 220 20% 14%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 100 76% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 20%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 15% 22%;
+    --sidebar-ring: 100 76% 45%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(100, 76%, 40%), hsl(120, 70%, 35%));
+    --gradient-secondary: linear-gradient(135deg, hsl(199, 89%, 48%), hsl(210, 100%, 50%));
+    --gradient-golden: linear-gradient(135deg, hsl(45, 100%, 50%), hsl(35, 100%, 45%));
+    --gradient-premium: linear-gradient(135deg, hsl(270, 70%, 60%), hsl(280, 80%, 50%));
+    --gradient-hero: linear-gradient(180deg, hsl(100, 76%, 95%) 0%, hsl(0, 0%, 100%) 100%);
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 220 20% 10%;
+    --foreground: 220 14% 96%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 220 20% 14%;
+    --card-foreground: 220 14% 96%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 220 20% 14%;
+    --popover-foreground: 220 14% 96%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 100 76% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 220 15% 20%;
+    --muted-foreground: 220 10% 60%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 28 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 220 15% 22%;
+    --input: 220 15% 22%;
+    --ring: 100 76% 45%;
+
+    --gradient-hero: linear-gradient(180deg, hsl(220, 20%, 14%) 0%, hsl(220, 20%, 10%) 100%);
   }
 }
 
@@ -100,6 +106,142 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-nunito antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-primary-shadow {
+    box-shadow: 0 4px 0 hsl(100, 76%, 30%);
+  }
+
+  .btn-primary-shadow:active {
+    box-shadow: 0 2px 0 hsl(100, 76%, 30%);
+    transform: translateY(2px);
+  }
+
+  .btn-secondary-shadow {
+    box-shadow: 0 4px 0 hsl(199, 89%, 35%);
+  }
+
+  .btn-secondary-shadow:active {
+    box-shadow: 0 2px 0 hsl(199, 89%, 35%);
+    transform: translateY(2px);
+  }
+
+  .btn-destructive-shadow {
+    box-shadow: 0 4px 0 hsl(0, 84%, 45%);
+  }
+
+  .btn-outline-shadow {
+    box-shadow: 0 4px 0 hsl(220, 13%, 80%);
+  }
+
+  .card-elevated {
+    box-shadow: 0 4px 0 hsl(220, 13%, 85%);
+  }
+
+  .lesson-bubble {
+    @apply relative flex items-center justify-center w-16 h-16 rounded-full cursor-pointer transition-all duration-200;
+    box-shadow: 0 6px 0 hsl(220, 13%, 80%);
+  }
+
+  .lesson-bubble:hover {
+    transform: translateY(-2px);
+  }
+
+  .lesson-bubble:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 hsl(220, 13%, 80%);
+  }
+
+  .lesson-bubble-complete {
+    @apply bg-primary;
+    box-shadow: 0 6px 0 hsl(100, 76%, 30%);
+  }
+
+  .lesson-bubble-current {
+    @apply bg-primary animate-pulse-gentle;
+    box-shadow: 0 6px 0 hsl(100, 76%, 30%);
+  }
+
+  .lesson-bubble-locked {
+    @apply bg-muted text-muted-foreground;
+  }
+
+  .progress-bar-container {
+    @apply h-4 bg-muted rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full bg-gradient-to-r from-primary to-[hsl(120,70%,40%)] rounded-full transition-all duration-500 ease-out;
+  }
+
+  .xp-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-golden/20 text-golden-foreground rounded-full text-sm font-bold;
+  }
+
+  .streak-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-accent/20 text-accent rounded-full text-sm font-bold;
+  }
+
+  .hearts-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-destructive/20 text-destructive rounded-full text-sm font-bold;
+  }
+}
+
+@layer utilities {
+  .text-gradient-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
+  }
+
+  .text-gradient-golden {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-golden);
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .animate-bounce-gentle {
+    animation: bounce-gentle 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-gentle {
+    animation: pulse-gentle 2s ease-in-out infinite;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-wiggle {
+    animation: wiggle 1s ease-in-out infinite;
+  }
+
+  @keyframes bounce-gentle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse-gentle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(2deg); }
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
   }
 }
