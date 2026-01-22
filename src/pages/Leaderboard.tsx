@@ -1,108 +1,140 @@
-import { Trophy, Medal, Crown, ChevronRight } from "lucide-react";
+import { Trophy, Medal, Loader2, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const leaderboardData = [
-  { rank: 1, name: "CodeMaster", xp: 12500, avatar: "🧑‍💻", isCurrentUser: false },
-  { rank: 2, name: "DevNinja", xp: 11200, avatar: "🥷", isCurrentUser: false },
-  { rank: 3, name: "ByteWizard", xp: 10800, avatar: "🧙", isCurrentUser: false },
-  { rank: 4, name: "You", xp: 9250, avatar: "😎", isCurrentUser: true },
-  { rank: 5, name: "AlgoQueen", xp: 8900, avatar: "👑", isCurrentUser: false },
-  { rank: 6, name: "LoopLord", xp: 8500, avatar: "🔄", isCurrentUser: false },
-  { rank: 7, name: "BugHunter", xp: 8100, avatar: "🐛", isCurrentUser: false },
-  { rank: 8, name: "SyntaxStar", xp: 7800, avatar: "⭐", isCurrentUser: false },
-  { rank: 9, name: "FuncFan", xp: 7500, avatar: "📦", isCurrentUser: false },
-  { rank: 10, name: "ClassClimber", xp: 7200, avatar: "🧗", isCurrentUser: false },
-];
-
-const getRankIcon = (rank: number) => {
-  if (rank === 1) return <Crown className="w-6 h-6 text-golden fill-golden" />;
-  if (rank === 2) return <Medal className="w-6 h-6 text-[#C0C0C0]" />;
-  if (rank === 3) return <Medal className="w-6 h-6 text-[#CD7F32]" />;
-  return <span className="w-6 h-6 flex items-center justify-center font-bold text-muted-foreground">{rank}</span>;
-};
+import { useLeaderboard, useUserProfile } from "@/hooks/useUserProgress";
+import mascot from "@/assets/mascot.png";
 
 export default function Leaderboard() {
+  const { data: leaderboardData, isLoading } = useLeaderboard();
+  const { data: profile } = useUserProfile();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const users = leaderboardData || [];
+  const currentUserRank = users.findIndex((u) => u.id === profile?.id) + 1;
+
+  const getRankIcon = (rank: number) => {
+    switch (rank) {
+      case 1:
+        return <Trophy className="w-5 h-5 text-golden" />;
+      case 2:
+        return <Medal className="w-5 h-5 text-[#C0C0C0]" />;
+      case 3:
+        return <Medal className="w-5 h-5 text-[#CD7F32]" />;
+      default:
+        return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{rank}</span>;
+    }
+  };
+
+  const getLeague = (xp: number) => {
+    if (xp >= 5000) return { name: "Diamond", color: "text-secondary" };
+    if (xp >= 2500) return { name: "Gold", color: "text-golden" };
+    if (xp >= 1000) return { name: "Silver", color: "text-muted-foreground" };
+    return { name: "Bronze", color: "text-accent" };
+  };
+
+  const currentLeague = getLeague(profile?.xp || 0);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-extrabold text-foreground mb-2 flex items-center gap-2">
           <Trophy className="w-7 h-7 text-golden" />
           Leaderboard
         </h1>
         <p className="text-muted-foreground">
-          See how you stack up against other learners this week
+          Compete with other learners and climb the ranks
         </p>
       </div>
 
-      {/* League Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {["Bronze", "Silver", "Gold", "Diamond"].map((league, i) => (
-          <button
-            key={league}
-            className={cn(
-              "px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all",
-              i === 1
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            )}
-          >
-            {league} League
-          </button>
-        ))}
-      </div>
-
-      {/* Leaderboard List */}
-      <div className="bg-card rounded-2xl border border-border card-elevated overflow-hidden">
-        {leaderboardData.map((user, index) => (
-          <div
-            key={user.rank}
-            className={cn(
-              "flex items-center gap-4 p-4 transition-colors",
-              index !== leaderboardData.length - 1 && "border-b border-border",
-              user.isCurrentUser && "bg-primary/5",
-              user.rank <= 3 && "bg-golden/5"
-            )}
-          >
-            {/* Rank */}
-            <div className="w-8 flex justify-center">
-              {getRankIcon(user.rank)}
-            </div>
-
-            {/* Avatar */}
-            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-2xl">
-              {user.avatar}
-            </div>
-
-            {/* Info */}
-            <div className="flex-1 min-w-0">
-              <p className={cn(
-                "font-bold truncate",
-                user.isCurrentUser ? "text-primary" : "text-foreground"
-              )}>
-                {user.name}
-              </p>
-              <p className="text-sm text-muted-foreground">{user.xp.toLocaleString()} XP</p>
-            </div>
-
-            {/* Arrow */}
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </div>
-        ))}
-      </div>
-
-      {/* Your Position Banner */}
-      <div className="p-4 bg-gradient-to-r from-primary to-[hsl(120,70%,35%)] rounded-2xl">
+      {/* League Card */}
+      <div className="p-6 bg-gradient-to-br from-secondary/20 to-secondary/5 rounded-2xl border border-secondary/30">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-primary-foreground/80 text-sm">Your position</p>
-            <p className="text-2xl font-extrabold text-primary-foreground">#4 in Silver League</p>
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-secondary/20 flex items-center justify-center">
+              <Trophy className={cn("w-8 h-8", currentLeague.color)} />
+            </div>
+            <div>
+              <p className={cn("text-2xl font-extrabold", currentLeague.color)}>
+                {currentLeague.name} League
+              </p>
+              <p className="text-muted-foreground">
+                {profile?.xp?.toLocaleString() || 0} XP total
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-primary-foreground/80 text-sm">XP to next rank</p>
-            <p className="text-2xl font-extrabold text-primary-foreground">1,550 XP</p>
-          </div>
+          {currentUserRank > 0 && (
+            <div className="text-right">
+              <p className="text-3xl font-extrabold text-foreground">#{currentUserRank}</p>
+              <p className="text-sm text-muted-foreground">Your rank</p>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Rankings */}
+      {users.length === 0 ? (
+        <div className="p-8 bg-card rounded-2xl border border-border text-center">
+          <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-bold text-foreground mb-2">No learners yet</h3>
+          <p className="text-muted-foreground">
+            Complete lessons to appear on the leaderboard!
+          </p>
+        </div>
+      ) : (
+        <div className="bg-card rounded-2xl border border-border overflow-hidden card-elevated">
+          {users.map((leaderUser, index) => {
+            const rank = index + 1;
+            const isCurrentUser = leaderUser.id === profile?.id;
+
+            return (
+              <div
+                key={leaderUser.id}
+                className={cn(
+                  "flex items-center gap-4 p-4 border-b border-border last:border-b-0 transition-colors",
+                  isCurrentUser && "bg-primary/5",
+                  rank <= 3 && "bg-gradient-to-r from-golden/5 to-transparent"
+                )}
+              >
+                <div className="w-8 flex justify-center">
+                  {getRankIcon(rank)}
+                </div>
+
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                  {leaderUser.avatar_url ? (
+                    <img src={leaderUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={mascot} alt="" className="w-8 h-8 object-contain" />
+                  )}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <p className={cn(
+                    "font-bold truncate",
+                    isCurrentUser ? "text-primary" : "text-foreground"
+                  )}>
+                    {leaderUser.display_name || leaderUser.username || "Learner"}
+                    {isCurrentUser && " (You)"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    🔥 {leaderUser.streak_count || 0} day streak
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="font-bold text-golden">{leaderUser.xp?.toLocaleString() || 0}</p>
+                  <p className="text-xs text-muted-foreground">XP</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

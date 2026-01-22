@@ -1,89 +1,52 @@
-import { Target, Gift, Zap, CheckCircle2, Circle } from "lucide-react";
+import { useEffect } from "react";
+import { Target, Gift, Zap, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const dailyQuests = [
-  {
-    id: 1,
-    title: "Earn 50 XP",
-    description: "Complete lessons to earn XP",
-    current: 30,
-    target: 50,
-    reward: 10,
-    completed: false,
-  },
-  {
-    id: 2,
-    title: "Complete 3 lessons",
-    description: "Finish any 3 lessons today",
-    current: 2,
-    target: 3,
-    reward: 15,
-    completed: false,
-  },
-  {
-    id: 3,
-    title: "Get 5 answers correct",
-    description: "Answer correctly without hints",
-    current: 5,
-    target: 5,
-    reward: 20,
-    completed: true,
-  },
-];
-
-const weeklyQuests = [
-  {
-    id: 4,
-    title: "7-day streak",
-    description: "Practice every day for a week",
-    current: 5,
-    target: 7,
-    reward: 100,
-    completed: false,
-  },
-  {
-    id: 5,
-    title: "Earn 500 XP",
-    description: "Total XP earned this week",
-    current: 320,
-    target: 500,
-    reward: 50,
-    completed: false,
-  },
-];
+import { useQuests, useQuestProgress, useInitializeQuestProgress, useClaimQuestReward } from "@/hooks/useQuests";
+import { useUserProfile } from "@/hooks/useUserProgress";
+import { toast } from "sonner";
 
 interface QuestCardProps {
   quest: {
-    id: number;
+    id: string;
     title: string;
     description: string;
-    current: number;
-    target: number;
-    reward: number;
-    completed: boolean;
+    target_value: number;
+    gem_reward: number;
   };
+  progress: {
+    id: string;
+    current_value: number;
+    completed: boolean;
+    claimed: boolean;
+  } | null;
+  onClaim: (progressId: string, gemReward: number) => void;
+  isClaiming: boolean;
 }
 
-function QuestCard({ quest }: QuestCardProps) {
-  const progress = (quest.current / quest.target) * 100;
+function QuestCard({ quest, progress, onClaim, isClaiming }: QuestCardProps) {
+  const currentValue = progress?.current_value || 0;
+  const progressPercent = Math.min((currentValue / quest.target_value) * 100, 100);
+  const isCompleted = progress?.completed || false;
+  const isClaimed = progress?.claimed || false;
 
   return (
     <div
       className={cn(
         "p-4 bg-card rounded-2xl border border-border card-elevated transition-all",
-        quest.completed && "bg-primary/5 border-primary/30"
+        isCompleted && !isClaimed && "bg-primary/5 border-primary/30",
+        isClaimed && "opacity-60"
       )}
     >
       <div className="flex items-start gap-4">
         <div
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-            quest.completed ? "bg-primary" : "bg-muted"
+            isCompleted ? "bg-primary" : "bg-muted"
           )}
         >
-          {quest.completed ? (
+          {isCompleted ? (
             <CheckCircle2 className="w-6 h-6 text-primary-foreground" />
           ) : (
             <Target className="w-6 h-6 text-muted-foreground" />
@@ -98,20 +61,37 @@ function QuestCard({ quest }: QuestCardProps) {
             </div>
             <div className="flex items-center gap-1 px-2 py-1 bg-golden/20 rounded-lg shrink-0">
               <Gift className="w-4 h-4 text-golden" />
-              <span className="text-sm font-bold text-golden">{quest.reward}</span>
+              <span className="text-sm font-bold text-golden">{quest.gem_reward}</span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Progress value={progress} size="sm" indicatorColor={quest.completed ? "primary" : "gradient"} />
+            <Progress 
+              value={progressPercent} 
+              size="sm" 
+              indicatorColor={isClaimed ? "secondary" : isCompleted ? "primary" : "gradient"} 
+            />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {quest.current} / {quest.target}
+                {currentValue} / {quest.target_value}
               </span>
-              {quest.completed && (
-                <Button size="sm" variant="golden" className="h-8">
-                  Claim
+              {isCompleted && !isClaimed && (
+                <Button 
+                  size="sm" 
+                  variant="golden" 
+                  className="h-8"
+                  onClick={() => onClaim(progress!.id, quest.gem_reward)}
+                  disabled={isClaiming}
+                >
+                  {isClaiming ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Claim"
+                  )}
                 </Button>
+              )}
+              {isClaimed && (
+                <span className="text-sm text-muted-foreground font-medium">Claimed ✓</span>
               )}
             </div>
           </div>
@@ -122,6 +102,54 @@ function QuestCard({ quest }: QuestCardProps) {
 }
 
 export default function Quests() {
+  const { data: quests, isLoading: questsLoading } = useQuests();
+  const { data: progressData, isLoading: progressLoading } = useQuestProgress();
+  const { data: profile } = useUserProfile();
+  const initializeProgress = useInitializeQuestProgress();
+  const claimReward = useClaimQuestReward();
+
+  // Initialize quest progress for today when quests are loaded
+  useEffect(() => {
+    if (quests && quests.length > 0) {
+      initializeProgress.mutate(quests);
+    }
+  }, [quests]);
+
+  const handleClaim = async (progressId: string, gemReward: number) => {
+    try {
+      await claimReward.mutateAsync({ progressId, gemReward });
+      toast.success(`+${gemReward} gems claimed!`, {
+        description: "Your reward has been added to your account",
+      });
+    } catch (error) {
+      toast.error("Failed to claim reward");
+    }
+  };
+
+  const isLoading = questsLoading || progressLoading;
+
+  const dailyQuests = quests?.filter((q) => !q.is_weekly) || [];
+  const weeklyQuests = quests?.filter((q) => q.is_weekly) || [];
+
+  const getProgressForQuest = (questId: string) => {
+    return progressData?.find((p) => p.quest_id === questId) || null;
+  };
+
+  const totalClaimableGems = progressData
+    ?.filter((p) => p.completed && !p.claimed)
+    .reduce((acc, p) => {
+      const quest = quests?.find((q) => q.id === p.quest_id);
+      return acc + (quest?.gem_reward || 0);
+    }, 0) || 0;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -142,7 +170,13 @@ export default function Quests() {
         </h2>
         <div className="space-y-3">
           {dailyQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} />
+            <QuestCard 
+              key={quest.id} 
+              quest={quest} 
+              progress={getProgressForQuest(quest.id)}
+              onClaim={handleClaim}
+              isClaiming={claimReward.isPending}
+            />
           ))}
         </div>
       </div>
@@ -155,7 +189,13 @@ export default function Quests() {
         </h2>
         <div className="space-y-3">
           {weeklyQuests.map((quest) => (
-            <QuestCard key={quest.id} quest={quest} />
+            <QuestCard 
+              key={quest.id} 
+              quest={quest} 
+              progress={getProgressForQuest(quest.id)}
+              onClaim={handleClaim}
+              isClaiming={claimReward.isPending}
+            />
           ))}
         </div>
       </div>
@@ -165,11 +205,16 @@ export default function Quests() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-golden-foreground/80 text-sm">Available rewards</p>
-            <p className="text-2xl font-extrabold text-golden-foreground">20 Gems</p>
+            <p className="text-2xl font-extrabold text-golden-foreground">
+              {totalClaimableGems} Gems
+            </p>
           </div>
-          <Button variant="outline" className="bg-white/20 border-white/30 text-golden-foreground hover:bg-white/30">
-            Claim All
-          </Button>
+          <div className="text-right">
+            <p className="text-golden-foreground/80 text-sm">Your gems</p>
+            <p className="text-2xl font-extrabold text-golden-foreground">
+              {profile?.gems || 0}
+            </p>
+          </div>
         </div>
       </div>
     </div>
