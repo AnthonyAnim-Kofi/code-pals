@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
+      challenges: {
+        Row: {
+          challenged_id: string
+          challenged_score: number | null
+          challenger_id: string
+          challenger_score: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          lesson_id: number
+          status: string
+        }
+        Insert: {
+          challenged_id: string
+          challenged_score?: number | null
+          challenger_id: string
+          challenger_score?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id: number
+          status?: string
+        }
+        Update: {
+          challenged_id?: string
+          challenged_score?: number | null
+          challenger_id?: string
+          challenger_score?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_challenged_id_fkey"
+            columns: ["challenged_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "challenges_challenger_id_fkey"
+            columns: ["challenger_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       daily_quests: {
         Row: {
           created_at: string
@@ -46,6 +127,50 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      league_history: {
+        Row: {
+          action: string
+          created_at: string
+          from_league: string
+          id: string
+          rank_in_league: number
+          to_league: string
+          user_id: string
+          week_ending: string
+          weekly_xp: number
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          from_league: string
+          id?: string
+          rank_in_league: number
+          to_league: string
+          user_id: string
+          week_ending: string
+          weekly_xp: number
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          from_league?: string
+          id?: string
+          rank_in_league?: number
+          to_league?: string
+          user_id?: string
+          week_ending?: string
+          weekly_xp?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       lesson_progress: {
         Row: {
@@ -85,45 +210,129 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          double_xp_until: string | null
           gems: number
           hearts: number
           id: string
           last_practice_date: string | null
+          league: string
           streak_count: number
+          streak_freeze_count: number
           updated_at: string
           user_id: string
           username: string | null
+          weekly_xp: number
           xp: number
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          double_xp_until?: string | null
           gems?: number
           hearts?: number
           id?: string
           last_practice_date?: string | null
+          league?: string
           streak_count?: number
+          streak_freeze_count?: number
           updated_at?: string
           user_id: string
           username?: string | null
+          weekly_xp?: number
           xp?: number
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          double_xp_until?: string | null
           gems?: number
           hearts?: number
           id?: string
           last_practice_date?: string | null
+          league?: string
           streak_count?: number
+          streak_freeze_count?: number
           updated_at?: string
           user_id?: string
           username?: string | null
+          weekly_xp?: number
           xp?: number
         }
         Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       user_quest_progress: {
         Row: {
@@ -177,7 +386,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_weekly_leagues: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

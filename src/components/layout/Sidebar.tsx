@@ -19,6 +19,15 @@ const navItems = [
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
+import { Users, RotateCcw, Award, Settings } from "lucide-react";
+
+const moreItems = [
+  { icon: Users, label: "Social", path: "/social" },
+  { icon: Award, label: "Achievements", path: "/achievements" },
+  { icon: RotateCcw, label: "Practice", path: "/practice" },
+  { icon: Settings, label: "Settings", path: "/settings" },
+];
+
 export function Sidebar() {
   const location = useLocation();
 
@@ -40,6 +49,27 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200",
+                isActive
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </Link>
+          );
+        })}
+        
+        <div className="border-t border-sidebar-border my-4" />
+        
+        {moreItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <Link

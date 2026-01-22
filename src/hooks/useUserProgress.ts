@@ -15,6 +15,10 @@ export interface UserProfile {
   last_practice_date: string | null;
   created_at: string;
   updated_at: string;
+  league: string;
+  weekly_xp: number;
+  streak_freeze_count: number;
+  double_xp_until: string | null;
 }
 
 export function useUserProfile() {
