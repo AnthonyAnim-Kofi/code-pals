@@ -1,0 +1,57 @@
+import { Button } from "@/components/ui/button";
+import { BookOpen, NotebookPen } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface UnitBannerProps {
+  title: string;
+  description: string;
+  color: "green" | "blue" | "orange" | "purple";
+  isActive?: boolean;
+}
+
+const colorClasses = {
+  green: "from-primary to-[hsl(120,70%,35%)]",
+  blue: "from-secondary to-[hsl(210,100%,45%)]",
+  orange: "from-accent to-[hsl(20,100%,45%)]",
+  purple: "from-premium to-[hsl(280,80%,50%)]",
+};
+
+export function UnitBanner({ title, description, color, isActive = false }: UnitBannerProps) {
+  return (
+    <div 
+      className={cn(
+        "relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r",
+        colorClasses[color]
+      )}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1">
+          <h2 className="text-xl font-extrabold text-white mb-1">{title}</h2>
+          <p className="text-sm text-white/80">{description}</p>
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="bg-white/20 border-white/30 hover:bg-white/30 text-white"
+          >
+            <NotebookPen className="w-5 h-5" />
+          </Button>
+          {isActive && (
+            <Button 
+              variant="golden"
+              className="shadow-none"
+            >
+              <BookOpen className="w-5 h-5" />
+              Continue
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Decorative elements */}
+      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full" />
+      <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/10 rounded-full" />
+    </div>
+  );
+}
