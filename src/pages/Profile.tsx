@@ -1,14 +1,9 @@
-import { User, Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import mascot from "@/assets/mascot.png";
-
-const stats = [
-  { icon: Flame, label: "Day Streak", value: "5", color: "text-accent" },
-  { icon: Zap, label: "Total XP", value: "1,250", color: "text-golden" },
-  { icon: Trophy, label: "League", value: "Silver", color: "text-secondary" },
-  { icon: Calendar, label: "Joined", value: "Jan 2025", color: "text-muted-foreground" },
-];
 
 const achievements = [
   { emoji: "🔥", title: "7 Day Streak", unlocked: true },
@@ -20,6 +15,21 @@ const achievements = [
 ];
 
 export default function Profile() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
+
+  const stats = [
+    { icon: Flame, label: "Day Streak", value: "5", color: "text-accent" },
+    { icon: Zap, label: "Total XP", value: "1,250", color: "text-golden" },
+    { icon: Trophy, label: "League", value: "Silver", color: "text-secondary" },
+    { icon: Calendar, label: "Joined", value: "Jan 2025", color: "text-muted-foreground" },
+  ];
+
   return (
     <div className="space-y-8">
       {/* Profile Header */}
@@ -28,9 +38,11 @@ export default function Profile() {
           <div className="w-20 h-20 rounded-full bg-primary/10 border-4 border-primary flex items-center justify-center">
             <img src={mascot} alt="Avatar" className="w-14 h-14 object-contain" />
           </div>
-          <div className="flex-1">
-            <h1 className="text-2xl font-extrabold text-foreground">Learner</h1>
-            <p className="text-muted-foreground">@codelearner2025</p>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl font-extrabold text-foreground truncate">
+              {user?.user_metadata?.full_name || "Learner"}
+            </h1>
+            <p className="text-muted-foreground truncate">{user?.email}</p>
           </div>
           <Button variant="outline" size="icon">
             <Settings className="w-5 h-5" />
@@ -107,7 +119,12 @@ export default function Profile() {
           <Settings className="w-5 h-5" />
           Settings
         </Button>
-        <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive" size="lg">
+        <Button 
+          variant="outline" 
+          className="w-full justify-start text-destructive hover:text-destructive" 
+          size="lg"
+          onClick={handleLogout}
+        >
           <LogOut className="w-5 h-5" />
           Log Out
         </Button>

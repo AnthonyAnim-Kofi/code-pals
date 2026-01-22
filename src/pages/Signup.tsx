@@ -1,0 +1,152 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Code2, Mail, Lock, ArrowRight, Loader2, User } from "lucide-react";
+import mascot from "@/assets/mascot.png";
+
+export default function Signup() {
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await signUp(email, password);
+
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      navigate("/learn");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="p-4">
+        <Link to="/" className="flex items-center gap-2 w-fit">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+            <Code2 className="w-6 h-6 text-primary-foreground" />
+          </div>
+          <span className="text-xl font-extrabold text-foreground">CodeOwl</span>
+        </Link>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Mascot */}
+          <div className="flex justify-center mb-6">
+            <img src={mascot} alt="CodeOwl" className="w-24 h-24 animate-bounce-gentle" />
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-8 card-elevated">
+            <h1 className="text-2xl font-extrabold text-center text-foreground mb-2">
+              Create your account
+            </h1>
+            <p className="text-center text-muted-foreground mb-6">
+              Start your coding adventure today!
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10 h-12"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10 h-12"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10 h-12"
+                    required
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-lg">
+                  {error}
+                </p>
+              )}
+
+              <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                {loading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-muted-foreground">
+                Already have an account?{" "}
+                <Link to="/login" className="text-primary font-semibold hover:underline">
+                  Log in
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -55,10 +55,10 @@ export default function Landing() {
 
             <div className="flex items-center gap-3">
               <Button variant="ghost" asChild>
-                <Link to="/learn">Login</Link>
+                <Link to="/login">Login</Link>
               </Button>
               <Button asChild>
-                <Link to="/learn">Get Started</Link>
+                <Link to="/signup">Get Started</Link>
               </Button>
             </div>
           </div>
@@ -87,7 +87,7 @@ export default function Landing() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button size="xl" asChild>
-                  <Link to="/learn">
+                  <Link to="/signup">
                     Start Learning Free
                     <ArrowRight className="w-5 h-5" />
                   </Link>
