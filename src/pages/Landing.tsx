@@ -1,47 +1,48 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Code2, 
-  Sparkles, 
-  Trophy, 
-  Zap, 
-  CheckCircle2,
-  ArrowRight,
-  Play
-} from "lucide-react";
+import { Code2, Sparkles, Trophy, Zap, CheckCircle2, ArrowRight, Play } from "lucide-react";
 import mascot from "@/assets/mascot.png";
 import heroBg from "@/assets/hero-bg.png";
-
-const features = [
-  {
-    icon: Sparkles,
-    title: "Bite-sized lessons",
-    description: "Learn to code in quick, fun, 5-minute lessons. Perfect for busy schedules.",
-  },
-  {
-    icon: Zap,
-    title: "Practice by doing",
-    description: "Write real code from day one. Interactive challenges keep you engaged.",
-  },
-  {
-    icon: Trophy,
-    title: "Stay motivated",
-    description: "Earn XP, unlock achievements, and compete with friends on leaderboards.",
-  },
-];
-
-const languages = [
-  { name: "Python", color: "bg-[#3776AB]", icon: "🐍" },
-  { name: "JavaScript", color: "bg-[#F7DF1E]", icon: "⚡" },
-  { name: "TypeScript", color: "bg-[#3178C6]", icon: "📘" },
-  { name: "Rust", color: "bg-[#B7410E]", icon: "🦀" },
-  { name: "Go", color: "bg-[#00ADD8]", icon: "🐹" },
-  { name: "SQL", color: "bg-[#336791]", icon: "🗄️" },
-];
-
+const features = [{
+  icon: Sparkles,
+  title: "Bite-sized lessons",
+  description: "Learn to code in quick, fun, 5-minute lessons. Perfect for busy schedules."
+}, {
+  icon: Zap,
+  title: "Practice by doing",
+  description: "Write real code from day one. Interactive challenges keep you engaged."
+}, {
+  icon: Trophy,
+  title: "Stay motivated",
+  description: "Earn XP, unlock achievements, and compete with friends on leaderboards."
+}];
+const languages = [{
+  name: "Python",
+  color: "bg-[#3776AB]",
+  icon: "🐍"
+}, {
+  name: "JavaScript",
+  color: "bg-[#F7DF1E]",
+  icon: "⚡"
+}, {
+  name: "TypeScript",
+  color: "bg-[#3178C6]",
+  icon: "📘"
+}, {
+  name: "Rust",
+  color: "bg-[#B7410E]",
+  icon: "🦀"
+}, {
+  name: "Go",
+  color: "bg-[#00ADD8]",
+  icon: "🐹"
+}, {
+  name: "SQL",
+  color: "bg-[#336791]",
+  icon: "🗄️"
+}];
 export default function Landing() {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4">
@@ -66,14 +67,11 @@ export default function Landing() {
       </header>
 
       {/* Hero */}
-      <section 
-        className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden"
-        style={{
-          backgroundImage: `url(${heroBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
+      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden" style={{
+      backgroundImage: `url(${heroBg})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center'
+    }}>
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="flex-1 text-center lg:text-left">
@@ -81,7 +79,7 @@ export default function Landing() {
                 Learn to code the{" "}
                 <span className="text-gradient-primary">fun way</span>
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto lg:mx-0">
+              <p className="mb-8 max-w-lg mx-auto lg:mx-0 text-gray-900 text-xl font-semibold">
                 Master programming with bite-sized lessons, interactive challenges, 
                 and a gamified experience that keeps you coming back for more.
               </p>
@@ -103,14 +101,9 @@ export default function Landing() {
               {/* Social Proof */}
               <div className="mt-10 flex items-center gap-6 justify-center lg:justify-start">
                 <div className="flex -space-x-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div 
-                      key={i} 
-                      className="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg"
-                    >
+                  {[1, 2, 3, 4, 5].map(i => <div key={i} className="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">
                       {['😊', '🤓', '😎', '🧑‍💻', '👩‍💻'][i - 1]}
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
                 <div className="text-left">
                   <p className="font-bold text-foreground">50,000+ learners</p>
@@ -121,11 +114,7 @@ export default function Landing() {
 
             {/* Mascot */}
             <div className="flex-1 flex justify-center">
-              <img 
-                src={mascot} 
-                alt="CodeOwl mascot" 
-                className="w-64 lg:w-80 animate-float drop-shadow-2xl"
-              />
+              <img src={mascot} alt="CodeOwl mascot" className="w-64 lg:w-80 animate-float drop-shadow-2xl" />
             </div>
           </div>
         </div>
@@ -138,15 +127,10 @@ export default function Landing() {
             Learn popular programming languages
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
-            {languages.map((lang) => (
-              <div 
-                key={lang.name}
-                className="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated hover:scale-105 transition-transform cursor-pointer"
-              >
+            {languages.map(lang => <div key={lang.name} className="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated hover:scale-105 transition-transform cursor-pointer">
                 <span className="text-2xl">{lang.icon}</span>
                 <span className="font-bold text-foreground">{lang.name}</span>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -162,18 +146,13 @@ export default function Landing() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {features.map((feature, i) => (
-              <div 
-                key={i}
-                className="p-6 bg-card rounded-2xl border border-border card-elevated text-center group hover:scale-105 transition-transform"
-              >
+            {features.map((feature, i) => <div key={i} className="p-6 bg-card rounded-2xl border border-border card-elevated text-center group hover:scale-105 transition-transform">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <feature.icon className="w-8 h-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -212,6 +191,5 @@ export default function Landing() {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 }
