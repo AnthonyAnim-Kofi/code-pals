@@ -14,6 +14,10 @@ import Leaderboard from "./pages/Leaderboard";
 import Quests from "./pages/Quests";
 import Shop from "./pages/Shop";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Social from "./pages/Social";
+import Achievements from "./pages/Achievements";
+import Practice from "./pages/Practice";
 import Lesson from "./pages/Lesson";
 import NotFound from "./pages/NotFound";
 
@@ -47,6 +51,10 @@ const App = () => (
               <Route path="/quests" element={<Quests />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/social" element={<Social />} />
+              <Route path="/achievements" element={<Achievements />} />
+              <Route path="/practice" element={<Practice />} />
             </Route>
 
             {/* Lesson (Full screen, no sidebar) - Protected */}
