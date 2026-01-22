@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { X, Heart, Zap, Check, AlertCircle } from "lucide-react";
+import { X, Heart, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { LessonComplete } from "@/components/LessonComplete";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { cn } from "@/lib/utils";
 
 // Sample lesson data
@@ -43,12 +45,16 @@ const lessonData = {
 export default function Lesson() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
+  const { playCorrect, playIncorrect, playComplete } = useSoundEffects();
+  
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | number | null>(null);
   const [isChecked, setIsChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [hearts, setHearts] = useState(5);
   const [xpEarned, setXpEarned] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const question = lessonData.questions[currentQuestion];
   const progress = ((currentQuestion) / lessonData.questions.length) * 100;
@@ -69,15 +75,19 @@ export default function Lesson() {
 
     if (correct) {
       setXpEarned((prev) => prev + 10);
+      setCorrectAnswers((prev) => prev + 1);
+      playCorrect();
     } else {
       setHearts((prev) => Math.max(0, prev - 1));
+      playIncorrect();
     }
   };
 
   const handleContinue = () => {
-    // If it's the last question, navigate away regardless of correct/incorrect
+    // If it's the last question, show completion screen
     if (isLastQuestion) {
-      navigate("/learn");
+      playComplete();
+      setIsComplete(true);
       return;
     }
 
@@ -86,6 +96,22 @@ export default function Lesson() {
     setIsChecked(false);
     setIsCorrect(false);
   };
+
+  const handleLessonComplete = () => {
+    navigate("/learn");
+  };
+
+  // Show completion screen
+  if (isComplete) {
+    return (
+      <LessonComplete
+        xpEarned={xpEarned}
+        totalQuestions={lessonData.questions.length}
+        correctAnswers={correctAnswers}
+        onContinue={handleLessonComplete}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -184,7 +210,7 @@ export default function Lesson() {
             <div className="flex items-center gap-3 mb-4">
               {isCorrect ? (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center animate-scale-in">
                     <Check className="w-6 h-6 text-primary-foreground" strokeWidth={3} />
                   </div>
                   <div>
@@ -194,7 +220,7 @@ export default function Lesson() {
                 </>
               ) : (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center animate-scale-in">
                     <AlertCircle className="w-6 h-6 text-destructive-foreground" />
                   </div>
                   <div>
@@ -230,7 +256,7 @@ export default function Lesson() {
                 variant={isCorrect ? "default" : "destructive"}
                 onClick={handleContinue}
               >
-                {isLastQuestion && isCorrect ? "Complete Lesson" : "Continue"}
+                {isLastQuestion ? "Finish" : "Continue"}
               </Button>
             )}
           </div>
