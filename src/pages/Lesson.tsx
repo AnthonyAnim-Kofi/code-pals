@@ -75,7 +75,8 @@ export default function Lesson() {
   };
 
   const handleContinue = () => {
-    if (isLastQuestion && isCorrect) {
+    // If it's the last question, navigate away regardless of correct/incorrect
+    if (isLastQuestion) {
       navigate("/learn");
       return;
     }
