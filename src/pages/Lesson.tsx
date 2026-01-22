@@ -1,16 +1,18 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { X, Heart, Check, AlertCircle } from "lucide-react";
+import { X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LessonComplete } from "@/components/LessonComplete";
 import { DragOrderChallenge } from "@/components/challenges/DragOrderChallenge";
+import { CodeRunnerChallenge } from "@/components/challenges/CodeRunnerChallenge";
+import { MascotReaction } from "@/components/MascotReaction";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress } from "@/hooks/useUserProgress";
 import { useUpdateQuestProgress } from "@/hooks/useQuests";
 import { cn } from "@/lib/utils";
 
-// Sample lesson data with different question types
+// Extended lesson data with different question types including code runner
 const lessonData = {
   title: "Print Statements",
   questions: [
@@ -47,11 +49,39 @@ const lessonData = {
     },
     {
       id: 4,
+      type: "code-runner",
+      instruction: "Write code to print 'Hello, Python!'",
+      initialCode: "# Type your code below\n",
+      expectedOutput: "Hello, Python!",
+      hint: "Use the print() function",
+    },
+    {
+      id: 5,
       type: "fill-blank",
       instruction: "Fix the syntax error:",
       code: `name = "Alice"\nprint("Hello, " + ___`,
       answer: "name)",
       options: ["name)", "name", '"name")', "Name)"],
+    },
+    {
+      id: 6,
+      type: "multiple-choice",
+      instruction: "Which of these is a valid Python comment?",
+      options: [
+        "# This is a comment",
+        "// This is a comment",
+        "/* This is a comment */",
+        "-- This is a comment",
+      ],
+      correctIndex: 0,
+    },
+    {
+      id: 7,
+      type: "code-runner",
+      instruction: "Calculate and print the sum of 5 + 3",
+      initialCode: "# Calculate the sum\nresult = 5 + 3\n",
+      expectedOutput: "8",
+      hint: "Don't forget to print the result!",
     },
   ],
 };
@@ -75,11 +105,19 @@ export default function Lesson() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [dragOrderChecked, setDragOrderChecked] = useState(false);
+  const [codeRunnerChecked, setCodeRunnerChecked] = useState(false);
+  const [mascotReaction, setMascotReaction] = useState<"idle" | "correct" | "incorrect" | "celebrate">("idle");
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
   const progress = ((currentQuestion) / lessonData.questions.length) * 100;
   const isLastQuestion = currentQuestion === lessonData.questions.length - 1;
+
+  // Generate a random encouragement message
+  const mascotMessage = useMemo(() => {
+    if (mascotReaction === "idle") return undefined;
+    return undefined; // Let component pick random message
+  }, [mascotReaction]);
 
   const handleCheck = async () => {
     if (selectedAnswer === null) return;
@@ -93,12 +131,12 @@ export default function Lesson() {
 
     setIsCorrect(correct);
     setIsChecked(true);
+    setMascotReaction(correct ? "correct" : "incorrect");
 
     if (correct) {
       setXpEarned((prev) => prev + 10);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
-      // Update quest progress for correct answers
       updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
     } else {
       deductHeart.mutate();
@@ -110,9 +148,27 @@ export default function Lesson() {
     setDragOrderChecked(true);
     setIsChecked(true);
     setIsCorrect(isCorrect);
+    setMascotReaction(isCorrect ? "correct" : "incorrect");
 
     if (isCorrect) {
-      setXpEarned((prev) => prev + 15); // Drag order is worth more XP
+      setXpEarned((prev) => prev + 15);
+      setCorrectAnswers((prev) => prev + 1);
+      playCorrect();
+      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+    } else {
+      deductHeart.mutate();
+      playIncorrect();
+    }
+  }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+
+  const handleCodeRunnerAnswer = useCallback((isCorrect: boolean) => {
+    setCodeRunnerChecked(true);
+    setIsChecked(true);
+    setIsCorrect(isCorrect);
+    setMascotReaction(isCorrect ? "correct" : "incorrect");
+
+    if (isCorrect) {
+      setXpEarned((prev) => prev + 20); // Code runner is worth more XP
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
       updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
@@ -123,11 +179,10 @@ export default function Lesson() {
   }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
 
   const handleContinue = async () => {
-    // If it's the last question, show completion screen
     if (isLastQuestion) {
       playComplete();
+      setMascotReaction("celebrate");
       
-      // Save lesson progress to database
       const accuracy = Math.round((correctAnswers / lessonData.questions.length) * 100);
       await saveLessonProgress.mutateAsync({
         lessonId: parseInt(lessonId || "1"),
@@ -135,10 +190,8 @@ export default function Lesson() {
         accuracy,
       });
       
-      // Add XP to user profile
       await addXP.mutateAsync(xpEarned);
       
-      // Update quest progress
       updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
       updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
       
@@ -151,13 +204,14 @@ export default function Lesson() {
     setIsChecked(false);
     setIsCorrect(false);
     setDragOrderChecked(false);
+    setCodeRunnerChecked(false);
+    setMascotReaction("idle");
   };
 
   const handleLessonComplete = () => {
     navigate("/learn");
   };
 
-  // Show completion screen
   if (isComplete) {
     return (
       <LessonComplete
@@ -193,6 +247,13 @@ export default function Lesson() {
 
       {/* Main Content */}
       <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
+        {/* Mascot Reaction */}
+        {mascotReaction !== "idle" && (
+          <div className="mb-6 animate-fade-in">
+            <MascotReaction reaction={mascotReaction} message={mascotMessage} />
+          </div>
+        )}
+
         {/* Question */}
         <div className="mb-8">
           <h2 className="text-xl font-bold text-foreground mb-6">
@@ -206,6 +267,17 @@ export default function Lesson() {
               correctOrder={question.correctOrder}
               onAnswer={handleDragOrderAnswer}
               disabled={dragOrderChecked}
+            />
+          )}
+
+          {/* Code Runner Challenge */}
+          {question.type === "code-runner" && question.initialCode && question.expectedOutput && (
+            <CodeRunnerChallenge
+              initialCode={question.initialCode}
+              expectedOutput={question.expectedOutput}
+              hint={question.hint}
+              onAnswer={handleCodeRunnerAnswer}
+              disabled={codeRunnerChecked}
             />
           )}
 
@@ -274,41 +346,8 @@ export default function Lesson() {
         )}
       >
         <div className="container mx-auto px-4 py-4 max-w-2xl">
-          {isChecked && (
-            <div className="flex items-center gap-3 mb-4">
-              {isCorrect ? (
-                <>
-                  <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center animate-scale-in">
-                    <Check className="w-6 h-6 text-primary-foreground" strokeWidth={3} />
-                  </div>
-                  <div>
-                    <p className="font-bold text-primary">Awesome!</p>
-                    <p className="text-sm text-muted-foreground">
-                      +{question.type === "drag-order" ? 15 : 10} XP
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-12 h-12 rounded-full bg-destructive flex items-center justify-center animate-scale-in">
-                    <AlertCircle className="w-6 h-6 text-destructive-foreground" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-destructive">Oops!</p>
-                    <p className="text-sm text-muted-foreground">
-                      {question.type === "drag-order" 
-                        ? "The blocks are in the wrong order" 
-                        : `The correct answer was: ${question.type === "fill-blank" ? question.answer : question.options?.[question.correctIndex ?? 0]}`
-                      }
-                    </p>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
           <div className="flex gap-3">
-            {!isChecked && question.type !== "drag-order" ? (
+            {!isChecked && question.type !== "drag-order" && question.type !== "code-runner" ? (
               <>
                 <Button variant="outline" size="lg" className="flex-1" asChild>
                   <Link to="/learn">Skip</Link>
