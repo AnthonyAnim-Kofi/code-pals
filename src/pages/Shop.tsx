@@ -1,36 +1,8 @@
-import { ShoppingBag, Heart, Infinity, Gem, Zap, Lock } from "lucide-react";
+import { ShoppingBag, Heart, Zap, Gem, Infinity, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-const shopItems = [
-  {
-    id: 1,
-    title: "Heart Refill",
-    description: "Get all your hearts back",
-    icon: Heart,
-    price: 450,
-    currency: "gems",
-    color: "bg-destructive",
-  },
-  {
-    id: 2,
-    title: "Streak Freeze",
-    description: "Protect your streak for one day",
-    icon: Zap,
-    price: 200,
-    currency: "gems",
-    color: "bg-secondary",
-  },
-  {
-    id: 3,
-    title: "Double XP",
-    description: "Earn 2x XP for 15 minutes",
-    icon: Zap,
-    price: 100,
-    currency: "gems",
-    color: "bg-golden",
-  },
-];
+import { useUserProfile } from "@/hooks/useUserProgress";
+import { usePurchaseHeartRefill, usePurchaseStreakFreeze, usePurchaseDoubleXP } from "@/hooks/useShop";
 
 const premiumFeatures = [
   "Unlimited hearts",
@@ -41,6 +13,52 @@ const premiumFeatures = [
 ];
 
 export default function Shop() {
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const purchaseHeartRefill = usePurchaseHeartRefill();
+  const purchaseStreakFreeze = usePurchaseStreakFreeze();
+  const purchaseDoubleXP = usePurchaseDoubleXP();
+
+  const gems = profile?.gems ?? 0;
+
+  const shopItems = [
+    {
+      id: 1,
+      title: "Heart Refill",
+      description: "Get all your hearts back",
+      icon: Heart,
+      price: 450,
+      currency: "gems",
+      color: "bg-destructive",
+      onPurchase: () => purchaseHeartRefill.mutate(),
+      isLoading: purchaseHeartRefill.isPending,
+      disabled: gems < 450,
+    },
+    {
+      id: 2,
+      title: "Streak Freeze",
+      description: "Protect your streak for one day",
+      icon: Zap,
+      price: 200,
+      currency: "gems",
+      color: "bg-secondary",
+      onPurchase: () => purchaseStreakFreeze.mutate(),
+      isLoading: purchaseStreakFreeze.isPending,
+      disabled: gems < 200,
+    },
+    {
+      id: 3,
+      title: "Double XP",
+      description: "Earn 2x XP for 15 minutes",
+      icon: Zap,
+      price: 100,
+      currency: "gems",
+      color: "bg-golden",
+      onPurchase: () => purchaseDoubleXP.mutate(),
+      isLoading: purchaseDoubleXP.isPending,
+      disabled: gems < 100,
+    },
+  ];
+
   return (
     <div className="space-y-8">
       <div>
@@ -62,10 +80,11 @@ export default function Shop() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Your balance</p>
-              <p className="text-2xl font-extrabold text-foreground">500 Gems</p>
+              <p className="text-2xl font-extrabold text-foreground">
+                {profileLoading ? "..." : `${gems} Gems`}
+              </p>
             </div>
           </div>
-          <Button variant="secondary">Get More</Button>
         </div>
       </div>
 
@@ -92,9 +111,20 @@ export default function Shop() {
               <p className="text-sm text-center text-muted-foreground mb-4">
                 {item.description}
               </p>
-              <Button className="w-full" variant="outline">
-                <Gem className="w-4 h-4 text-secondary" />
-                {item.price}
+              <Button 
+                className="w-full" 
+                variant={item.disabled ? "outline" : "default"}
+                onClick={item.onPurchase}
+                disabled={item.disabled || item.isLoading}
+              >
+                {item.isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Gem className="w-4 h-4 text-secondary" />
+                    {item.price}
+                  </>
+                )}
               </Button>
             </div>
           ))}

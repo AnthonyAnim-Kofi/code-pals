@@ -1,5 +1,6 @@
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble } from "@/components/LessonBubble";
+import { useLessonProgress } from "@/hooks/useUserProgress";
 
 const units = [
   {
@@ -7,13 +8,12 @@ const units = [
     title: "Unit 1: Intro to Python",
     description: "Learn the basics of Python programming",
     color: "green" as const,
-    isActive: true,
     lessons: [
-      { id: 1, status: "complete" as const, position: "center" as const },
-      { id: 2, status: "complete" as const, position: "left" as const },
-      { id: 3, status: "complete" as const, position: "right" as const },
-      { id: 4, status: "current" as const, position: "center" as const },
-      { id: 5, status: "locked" as const, position: "left" as const },
+      { id: 1, position: "center" as const },
+      { id: 2, position: "left" as const },
+      { id: 3, position: "right" as const },
+      { id: 4, position: "center" as const },
+      { id: 5, position: "left" as const },
     ],
   },
   {
@@ -21,13 +21,12 @@ const units = [
     title: "Unit 2: Variables & Data Types",
     description: "Store and manipulate different types of data",
     color: "blue" as const,
-    isActive: false,
     lessons: [
-      { id: 6, status: "locked" as const, position: "center" as const },
-      { id: 7, status: "locked" as const, position: "right" as const },
-      { id: 8, status: "locked" as const, position: "left" as const },
-      { id: 9, status: "locked" as const, position: "center" as const },
-      { id: 10, status: "locked" as const, position: "right" as const },
+      { id: 6, position: "center" as const },
+      { id: 7, position: "right" as const },
+      { id: 8, position: "left" as const },
+      { id: 9, position: "center" as const },
+      { id: 10, position: "right" as const },
     ],
   },
   {
@@ -35,12 +34,11 @@ const units = [
     title: "Unit 3: Control Flow",
     description: "Make decisions with if statements and loops",
     color: "orange" as const,
-    isActive: false,
     lessons: [
-      { id: 11, status: "locked" as const, position: "center" as const },
-      { id: 12, status: "locked" as const, position: "left" as const },
-      { id: 13, status: "locked" as const, position: "right" as const },
-      { id: 14, status: "locked" as const, position: "center" as const },
+      { id: 11, position: "center" as const },
+      { id: 12, position: "left" as const },
+      { id: 13, position: "right" as const },
+      { id: 14, position: "center" as const },
     ],
   },
   {
@@ -48,16 +46,54 @@ const units = [
     title: "Unit 4: Functions",
     description: "Create reusable blocks of code",
     color: "purple" as const,
-    isActive: false,
     lessons: [
-      { id: 15, status: "locked" as const, position: "center" as const },
-      { id: 16, status: "locked" as const, position: "right" as const },
-      { id: 17, status: "locked" as const, position: "left" as const },
+      { id: 15, position: "center" as const },
+      { id: 16, position: "right" as const },
+      { id: 17, position: "left" as const },
     ],
   },
 ];
 
 export default function Learn() {
+  const { data: lessonProgress = [] } = useLessonProgress();
+  
+  // Get completed lesson IDs
+  const completedLessonIds = lessonProgress
+    .filter((p) => p.completed)
+    .map((p) => p.lesson_id);
+
+  // Determine the status of each lesson based on progress
+  const getLessonStatus = (lessonId: number): "complete" | "current" | "locked" => {
+    if (completedLessonIds.includes(lessonId)) {
+      return "complete";
+    }
+    // First lesson is always accessible
+    if (lessonId === 1) {
+      return "current";
+    }
+    // A lesson is current if the previous one is complete
+    if (completedLessonIds.includes(lessonId - 1)) {
+      return "current";
+    }
+    return "locked";
+  };
+
+  // Find current lesson for each unit
+  const getCurrentLessonForUnit = (unitLessons: { id: number }[]): number | undefined => {
+    for (const lesson of unitLessons) {
+      const status = getLessonStatus(lesson.id);
+      if (status === "current") {
+        return lesson.id;
+      }
+    }
+    return undefined;
+  };
+
+  // Determine if unit is active
+  const isUnitActive = (unitLessons: { id: number }[]): boolean => {
+    return unitLessons.some(lesson => getLessonStatus(lesson.id) === "current");
+  };
+
   return (
     <div className="space-y-8">
       <div>
@@ -76,7 +112,8 @@ export default function Learn() {
             title={unit.title}
             description={unit.description}
             color={unit.color}
-            isActive={unit.isActive}
+            isActive={isUnitActive(unit.lessons)}
+            currentLessonId={getCurrentLessonForUnit(unit.lessons)}
           />
 
           {/* Lessons */}
@@ -85,7 +122,7 @@ export default function Learn() {
               <LessonBubble
                 key={lesson.id}
                 id={lesson.id}
-                status={lesson.status}
+                status={getLessonStatus(lesson.id)}
                 position={lesson.position}
                 lessonNumber={lessonIndex + 1}
               />
