@@ -107,11 +107,13 @@ export default function Lesson() {
   const [dragOrderChecked, setDragOrderChecked] = useState(false);
   const [codeRunnerChecked, setCodeRunnerChecked] = useState(false);
   const [mascotReaction, setMascotReaction] = useState<"idle" | "correct" | "incorrect" | "celebrate">("idle");
+  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
   const progress = ((currentQuestion) / lessonData.questions.length) * 100;
   const isLastQuestion = currentQuestion === lessonData.questions.length - 1;
+  const isFirstQuestion = currentQuestion === 0;
 
   // Generate a random encouragement message
   const mascotMessage = useMemo(() => {
@@ -179,6 +181,9 @@ export default function Lesson() {
   }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
 
   const handleContinue = async () => {
+    // Mark current question as answered
+    setAnsweredQuestions(prev => new Set(prev).add(currentQuestion));
+    
     if (isLastQuestion) {
       playComplete();
       setMascotReaction("celebrate");
@@ -199,6 +204,10 @@ export default function Lesson() {
       return;
     }
 
+    goToNextQuestion();
+  };
+
+  const goToNextQuestion = () => {
     setCurrentQuestion((prev) => prev + 1);
     setSelectedAnswer(null);
     setIsChecked(false);
@@ -206,6 +215,26 @@ export default function Lesson() {
     setDragOrderChecked(false);
     setCodeRunnerChecked(false);
     setMascotReaction("idle");
+  };
+
+  const goToPreviousQuestion = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion((prev) => prev - 1);
+      setSelectedAnswer(null);
+      setIsChecked(answeredQuestions.has(currentQuestion - 1));
+      setIsCorrect(false);
+      setDragOrderChecked(answeredQuestions.has(currentQuestion - 1));
+      setCodeRunnerChecked(answeredQuestions.has(currentQuestion - 1));
+      setMascotReaction("idle");
+    }
+  };
+
+  const handleSkip = () => {
+    // Mark as answered and go to next question, not back to learn page
+    setAnsweredQuestions(prev => new Set(prev).add(currentQuestion));
+    if (!isLastQuestion) {
+      goToNextQuestion();
+    }
   };
 
   const handleLessonComplete = () => {
@@ -347,10 +376,27 @@ export default function Lesson() {
       >
         <div className="container mx-auto px-4 py-4 max-w-2xl">
           <div className="flex gap-3">
+            {/* Back button - always visible except on first question */}
+            {!isFirstQuestion && (
+              <Button 
+                variant="ghost" 
+                size="lg" 
+                onClick={goToPreviousQuestion}
+                className="px-4"
+              >
+                ←
+              </Button>
+            )}
+            
             {!isChecked && question.type !== "drag-order" && question.type !== "code-runner" ? (
               <>
-                <Button variant="outline" size="lg" className="flex-1" asChild>
-                  <Link to="/learn">Skip</Link>
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className="flex-1" 
+                  onClick={handleSkip}
+                >
+                  Skip
                 </Button>
                 <Button
                   size="lg"
@@ -364,7 +410,7 @@ export default function Lesson() {
             ) : isChecked ? (
               <Button
                 size="lg"
-                className="w-full"
+                className="flex-1"
                 variant={isCorrect ? "default" : "destructive"}
                 onClick={handleContinue}
               >

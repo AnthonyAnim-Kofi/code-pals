@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
 import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2 } from "lucide-react";
@@ -91,8 +91,10 @@ export default function Profile() {
             </h1>
             <p className="text-muted-foreground truncate">{user?.email}</p>
           </div>
-          <Button variant="outline" size="icon">
-            <Settings className="w-5 h-5" />
+          <Button variant="outline" size="icon" asChild>
+            <Link to="/settings">
+              <Settings className="w-5 h-5" />
+            </Link>
           </Button>
         </div>
       </div>
@@ -164,9 +166,11 @@ export default function Profile() {
 
       {/* Actions */}
       <div className="space-y-3">
-        <Button variant="outline" className="w-full justify-start" size="lg">
-          <Settings className="w-5 h-5" />
-          Settings
+        <Button variant="outline" className="w-full justify-start" size="lg" asChild>
+          <Link to="/settings">
+            <Settings className="w-5 h-5" />
+            Settings
+          </Link>
         </Button>
         <Button 
           variant="outline" 

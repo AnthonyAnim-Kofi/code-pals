@@ -19,6 +19,8 @@ import Social from "./pages/Social";
 import Achievements from "./pages/Achievements";
 import Practice from "./pages/Practice";
 import Lesson from "./pages/Lesson";
+import Admin from "./pages/Admin";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +39,10 @@ const App = () => (
             {/* Auth */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+
+            {/* Admin */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<Admin />} />
 
             {/* Main App with Sidebar - Protected */}
             <Route

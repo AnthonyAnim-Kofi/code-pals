@@ -1,9 +1,9 @@
 import { useCallback, useRef } from "react";
 
-// Sound URLs - using free sound effects
+// Sound URLs - using free sound effects (louder and clearer sounds)
 const SOUNDS = {
   correct: "https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3",
-  incorrect: "https://assets.mixkit.co/active_storage/sfx/2001/2001-preview.mp3",
+  incorrect: "https://assets.mixkit.co/active_storage/sfx/2955/2955-preview.mp3", // Buzzer sound - louder and clearer
   complete: "https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3",
   click: "https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3",
 };
@@ -18,10 +18,11 @@ export function useSoundEffects() {
       // Create audio element if it doesn't exist
       if (!audioRefs.current[type]) {
         audioRefs.current[type] = new Audio(SOUNDS[type]);
-        audioRefs.current[type]!.volume = 0.5;
       }
 
       const audio = audioRefs.current[type]!;
+      // Set volume based on sound type - incorrect sound is louder
+      audio.volume = type === "incorrect" ? 0.8 : 0.5;
       audio.currentTime = 0;
       audio.play().catch(() => {
         // Silently fail if audio can't play (e.g., autoplay restrictions)
