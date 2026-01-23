@@ -258,23 +258,24 @@ export function useCreateQuestion() {
 
   return useMutation({
     mutationFn: async (question: Omit<Question, "id">) => {
+      const insertData = {
+        lesson_id: question.lesson_id,
+        type: question.type,
+        instruction: question.instruction,
+        code: question.code,
+        answer: question.answer,
+        options: question.options as unknown as undefined,
+        blocks: question.blocks as unknown as undefined,
+        correct_order: question.correct_order as unknown as undefined,
+        initial_code: question.initial_code,
+        expected_output: question.expected_output,
+        hint: question.hint,
+        order_index: question.order_index,
+        xp_reward: question.xp_reward,
+      };
       const { data, error } = await supabase
         .from("questions")
-        .insert({
-          lesson_id: question.lesson_id,
-          type: question.type,
-          instruction: question.instruction,
-          code: question.code,
-          answer: question.answer,
-          options: question.options,
-          blocks: question.blocks,
-          correct_order: question.correct_order,
-          initial_code: question.initial_code,
-          expected_output: question.expected_output,
-          hint: question.hint,
-          order_index: question.order_index,
-          xp_reward: question.xp_reward,
-        })
+        .insert(insertData as any)
         .select()
         .single();
 

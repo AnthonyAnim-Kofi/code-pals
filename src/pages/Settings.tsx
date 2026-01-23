@@ -17,9 +17,10 @@ export default function Settings() {
   const { data: profile, isLoading } = useUserProfile();
   const updateProfile = useUpdateProfile();
   
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState<string>("");
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [avatarCategory, setAvatarCategory] = useState("all");
+  const [initialized, setInitialized] = useState(false);
   const [notifications, setNotifications] = useState({
     streakReminders: true,
     challengeAlerts: true,
@@ -27,13 +28,12 @@ export default function Settings() {
     weeklyReport: false,
   });
 
-  // Initialize form with profile data
-  useState(() => {
-    if (profile) {
-      setDisplayName(profile.display_name || "");
-      setSelectedAvatar(profile.avatar_url);
-    }
-  });
+  // Initialize form with profile data when it loads
+  if (profile && !initialized) {
+    setDisplayName(profile.display_name || "");
+    setSelectedAvatar(profile.avatar_url);
+    setInitialized(true);
+  }
 
   const filteredAvatars = avatarCategory === "all" 
     ? AVATARS 
@@ -107,7 +107,7 @@ export default function Settings() {
               <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
-                value={displayName || profile?.display_name || ""}
+                value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Enter your display name"
                 className="rounded-xl"

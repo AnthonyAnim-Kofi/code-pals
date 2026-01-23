@@ -32,11 +32,11 @@ export function Sidebar() {
   const location = useLocation();
 
   return (
-    <aside className="fixed left-0 top-0 z-50 flex h-full w-[256px] flex-col border-r border-sidebar-border bg-sidebar lg:flex hidden">
+    <aside className="fixed left-0 top-0 z-50 flex h-full w-[256px] flex-col border-r border-sidebar-border bg-sidebar lg:flex hidden overflow-hidden">
       {/* Logo */}
       <Link 
         to="/" 
-        className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border"
+        className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border shrink-0"
       >
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sidebar-primary">
           <Code2 className="w-6 h-6 text-sidebar-primary-foreground" />
@@ -46,8 +46,8 @@ export function Sidebar() {
         </span>
       </Link>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      {/* Navigation - Scrollable */}
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -90,7 +90,7 @@ export function Sidebar() {
       </nav>
 
       {/* Mascot */}
-      <div className="px-4 py-6 border-t border-sidebar-border">
+      <div className="px-4 py-6 border-t border-sidebar-border shrink-0">
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent">
           <img 
             src={mascot} 

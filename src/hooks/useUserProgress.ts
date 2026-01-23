@@ -19,6 +19,7 @@ export interface UserProfile {
   weekly_xp: number;
   streak_freeze_count: number;
   double_xp_until: string | null;
+  heart_regeneration_started_at: string | null;
 }
 
 export function useUserProfile() {
@@ -111,7 +112,7 @@ export function useDeductHeart() {
       
       const { data: profile, error: fetchError } = await supabase
         .from("profiles")
-        .select("hearts")
+        .select("hearts, heart_regeneration_started_at")
         .eq("user_id", user.id)
         .single();
       
@@ -119,9 +120,18 @@ export function useDeductHeart() {
       
       const newHearts = Math.max(0, (profile?.hearts || 0) - 1);
       
+      // Start heart regeneration timer if hearts are now less than 5 and timer isn't running
+      const updateData: { hearts: number; heart_regeneration_started_at?: string } = {
+        hearts: newHearts,
+      };
+      
+      if (newHearts < 5 && !profile?.heart_regeneration_started_at) {
+        updateData.heart_regeneration_started_at = new Date().toISOString();
+      }
+      
       const { data, error } = await supabase
         .from("profiles")
-        .update({ hearts: newHearts })
+        .update(updateData)
         .eq("user_id", user.id)
         .select()
         .single();

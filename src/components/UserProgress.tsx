@@ -3,6 +3,8 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProgress";
+import { HeartTimer } from "@/components/HeartTimer";
+import { LeagueTimer } from "@/components/LeagueTimer";
 
 export function UserProgress() {
   const { data: profile, isLoading } = useUserProfile();
@@ -76,7 +78,20 @@ export function UserProgress() {
             </div>
           </div>
         </div>
+
+        {/* Heart Timer */}
+        {hearts < 5 && (
+          <div className="mt-4">
+            <HeartTimer 
+              currentHearts={hearts} 
+              regenStartedAt={profile?.heart_regeneration_started_at || null} 
+            />
+          </div>
+        )}
       </div>
+
+      {/* League Timer */}
+      <LeagueTimer />
 
       {/* Unlimited Hearts Promo */}
       <div className="p-4 bg-gradient-to-br from-premium to-premium/80 rounded-2xl">

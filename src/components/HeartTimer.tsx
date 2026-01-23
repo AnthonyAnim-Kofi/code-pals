@@ -3,13 +3,28 @@ import { useHeartRegeneration } from "@/hooks/useHeartRegeneration";
 import { cn } from "@/lib/utils";
 
 interface HeartTimerProps {
-  currentHearts: number;
-  regenStartedAt: string | null;
+  currentHearts?: number;
+  regenStartedAt?: string | null;
   maxHearts?: number;
+  compact?: boolean;
 }
 
-export function HeartTimer({ currentHearts, regenStartedAt, maxHearts = 5 }: HeartTimerProps) {
+export function HeartTimer({ 
+  currentHearts = 5, 
+  regenStartedAt = null, 
+  maxHearts = 5,
+  compact = false 
+}: HeartTimerProps) {
   const { formattedTime, isRegenerating } = useHeartRegeneration(currentHearts, regenStartedAt);
+
+  if (compact) {
+    if (!isRegenerating) return null;
+    return (
+      <span className="text-xs font-mono text-muted-foreground ml-1">
+        ({formattedTime})
+      </span>
+    );
+  }
 
   if (!isRegenerating) {
     return (

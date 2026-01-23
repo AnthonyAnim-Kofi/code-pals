@@ -11,6 +11,8 @@ import {
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserProfile } from "@/hooks/useUserProgress";
+import { HeartTimer } from "@/components/HeartTimer";
 
 const navItems = [
   { icon: Home, label: "Learn", path: "/learn" },
@@ -22,6 +24,11 @@ const navItems = [
 
 export function MobileHeader() {
   const location = useLocation();
+  const { data: profile } = useUserProfile();
+
+  const hearts = profile?.hearts ?? 5;
+  const streak = profile?.streak_count ?? 0;
+  const gems = profile?.gems ?? 0;
 
   return (
     <>
@@ -37,15 +44,16 @@ export function MobileHeader() {
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1 text-accent font-bold text-sm">
               <Flame className="w-5 h-5" />
-              <span>5</span>
+              <span>{streak}</span>
             </div>
             <div className="flex items-center gap-1 text-golden font-bold text-sm">
               <Zap className="w-5 h-5" />
-              <span>1,250</span>
+              <span>{gems.toLocaleString()}</span>
             </div>
             <div className="flex items-center gap-1 text-destructive font-bold text-sm">
               <Heart className="w-5 h-5 fill-current" />
-              <span>5</span>
+              <span>{hearts}</span>
+              {hearts < 5 && <HeartTimer compact />}
             </div>
           </div>
         </div>
