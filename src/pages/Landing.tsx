@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Code2, Sparkles, Trophy, Zap, CheckCircle2, ArrowRight, Play } from "lucide-react";
+import { Code2, Sparkles, Trophy, Zap, ArrowRight } from "lucide-react";
 import mascot from "@/assets/mascot.png";
 import heroBg from "@/assets/hero-bg.png";
 const features = [{
@@ -90,12 +90,7 @@ export default function Landing() {
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
-                <Button size="xl" variant="outline" asChild>
-                  <Link to="/learn">
-                    <Play className="w-5 h-5" />
-                    Watch Demo
-                  </Link>
-                </Button>
+                
               </div>
 
               {/* Social Proof */}
