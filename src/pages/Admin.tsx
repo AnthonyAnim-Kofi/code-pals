@@ -11,8 +11,7 @@ import {
   Loader2,
   Plus,
   Trash2,
-  Save,
-  ChevronDown,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +43,7 @@ import {
   useCreateUnitNote,
   useDeleteUnitNote,
 } from "@/hooks/useAdmin";
+import { BulkImport } from "@/components/admin/BulkImport";
 import { cn } from "@/lib/utils";
 
 export default function Admin() {
@@ -263,6 +263,10 @@ export default function Admin() {
             <TabsTrigger value="quests" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Target className="w-4 h-4 mr-2" />
               Quests
+            </TabsTrigger>
+            <TabsTrigger value="import" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              <Upload className="w-4 h-4 mr-2" />
+              Import
             </TabsTrigger>
           </TabsList>
 
@@ -756,6 +760,11 @@ export default function Admin() {
               <h3 className="text-lg font-bold mb-4">Quest Management</h3>
               <p className="text-slate-400">Coming soon: Create and manage daily/weekly quests</p>
             </div>
+          </TabsContent>
+
+          {/* Import Tab */}
+          <TabsContent value="import">
+            <BulkImport />
           </TabsContent>
         </Tabs>
       </main>

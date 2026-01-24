@@ -20,6 +20,7 @@ export interface UserProfile {
   streak_freeze_count: number;
   double_xp_until: string | null;
   heart_regeneration_started_at: string | null;
+  active_language_id: string | null;
 }
 
 export function useUserProfile() {

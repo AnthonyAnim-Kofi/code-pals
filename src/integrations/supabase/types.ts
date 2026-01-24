@@ -276,8 +276,53 @@ export type Database = {
           },
         ]
       }
+      partial_lesson_progress: {
+        Row: {
+          answered_questions: Json
+          correct_answers: number
+          created_at: string
+          current_question_index: number
+          id: string
+          lesson_id: string
+          updated_at: string
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          answered_questions?: Json
+          correct_answers?: number
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          lesson_id: string
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          answered_questions?: Json
+          correct_answers?: number
+          created_at?: string
+          current_question_index?: number
+          id?: string
+          lesson_id?: string
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partial_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          active_language_id: string | null
           avatar_url: string | null
           created_at: string
           display_name: string | null
@@ -297,6 +342,7 @@ export type Database = {
           xp: number
         }
         Insert: {
+          active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
@@ -316,6 +362,7 @@ export type Database = {
           xp?: number
         }
         Update: {
+          active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
@@ -334,7 +381,15 @@ export type Database = {
           weekly_xp?: number
           xp?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_active_language_id_fkey"
+            columns: ["active_language_id"]
+            isOneToOne: false
+            referencedRelation: "languages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       questions: {
         Row: {
