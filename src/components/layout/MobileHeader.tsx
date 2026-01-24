@@ -3,9 +3,7 @@ import {
   Home, 
   Trophy, 
   Target, 
-  ShoppingBag, 
-  User,
-  Code2,
+  ShoppingBag,
   Heart,
   Flame,
   Zap
@@ -13,13 +11,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { HeartTimer } from "@/components/HeartTimer";
+import { MobileMoreMenu } from "./MobileMoreMenu";
 
 const navItems = [
   { icon: Home, label: "Learn", path: "/learn" },
   { icon: Trophy, label: "Ranks", path: "/leaderboard" },
   { icon: Target, label: "Quests", path: "/quests" },
   { icon: ShoppingBag, label: "Shop", path: "/shop" },
-  { icon: User, label: "Profile", path: "/profile" },
 ];
 
 export function MobileHeader() {
@@ -35,9 +33,15 @@ export function MobileHeader() {
       {/* Top Header - Stats */}
       <header className="fixed top-0 left-0 right-0 z-50 lg:hidden bg-card border-b border-border">
         <div className="flex items-center justify-between px-4 h-14">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary">
-              <Code2 className="w-5 h-5 text-primary-foreground" />
+          <Link to="/profile" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center overflow-hidden">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs font-bold text-primary">
+                  {profile?.display_name?.[0] || "U"}
+                </span>
+              )}
             </div>
           </Link>
 
@@ -60,7 +64,7 @@ export function MobileHeader() {
       </header>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border pb-safe">
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -80,6 +84,7 @@ export function MobileHeader() {
               </Link>
             );
           })}
+          <MobileMoreMenu />
         </div>
       </nav>
     </>

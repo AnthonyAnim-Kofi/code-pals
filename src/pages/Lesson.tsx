@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { X, Heart } from "lucide-react";
+import { X, Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LessonComplete } from "@/components/LessonComplete";
@@ -10,22 +10,31 @@ import { MascotReaction } from "@/components/MascotReaction";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress } from "@/hooks/useUserProgress";
 import { useUpdateQuestProgress } from "@/hooks/useQuests";
+import { 
+  useLessonData, 
+  useLessonLanguageInfo, 
+  usePartialLessonProgress, 
+  useSavePartialProgress,
+  useClearPartialProgress 
+} from "@/hooks/useLessonData";
 import { cn } from "@/lib/utils";
 
-// Extended lesson data with different question types including code runner
-const lessonData = {
+// Fallback lesson data for demo
+const fallbackLessonData = {
   title: "Print Statements",
   questions: [
     {
-      id: 1,
+      id: "1",
       type: "fill-blank",
       instruction: "Complete the code to print 'Hello, World!'",
       code: `# Print a greeting message\nprint(___)`,
       answer: '"Hello, World!"',
       options: ['"Hello, World!"', "'Hello World'", "Hello World", '"hello"'],
+      xp_reward: 10,
+      order_index: 0,
     },
     {
-      id: 2,
+      id: "2",
       type: "multiple-choice",
       instruction: "What does the print() function do?",
       options: [
@@ -34,10 +43,12 @@ const lessonData = {
         "Creates a variable",
         "Imports a module",
       ],
-      correctIndex: 0,
+      answer: "0",
+      xp_reward: 10,
+      order_index: 1,
     },
     {
-      id: 3,
+      id: "3",
       type: "drag-order",
       instruction: "Arrange the code blocks to print numbers 1 to 3",
       blocks: [
@@ -45,43 +56,19 @@ const lessonData = {
         { id: "2", code: "print(2)" },
         { id: "3", code: "print(3)" },
       ],
-      correctOrder: ["1", "2", "3"],
+      correct_order: ["1", "2", "3"],
+      xp_reward: 15,
+      order_index: 2,
     },
     {
-      id: 4,
+      id: "4",
       type: "code-runner",
       instruction: "Write code to print 'Hello, Python!'",
-      initialCode: "# Type your code below\n",
-      expectedOutput: "Hello, Python!",
+      initial_code: "# Type your code below\n",
+      expected_output: "Hello, Python!",
       hint: "Use the print() function",
-    },
-    {
-      id: 5,
-      type: "fill-blank",
-      instruction: "Fix the syntax error:",
-      code: `name = "Alice"\nprint("Hello, " + ___`,
-      answer: "name)",
-      options: ["name)", "name", '"name")', "Name)"],
-    },
-    {
-      id: 6,
-      type: "multiple-choice",
-      instruction: "Which of these is a valid Python comment?",
-      options: [
-        "# This is a comment",
-        "// This is a comment",
-        "/* This is a comment */",
-        "-- This is a comment",
-      ],
-      correctIndex: 0,
-    },
-    {
-      id: 7,
-      type: "code-runner",
-      instruction: "Calculate and print the sum of 5 + 3",
-      initialCode: "# Calculate the sum\nresult = 5 + 3\n",
-      expectedOutput: "8",
-      hint: "Don't forget to print the result!",
+      xp_reward: 20,
+      order_index: 3,
     },
   ],
 };
@@ -90,13 +77,29 @@ export default function Lesson() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
   const { playCorrect, playIncorrect, playComplete } = useSoundEffects();
-  
+
   const { data: profile } = useUserProfile();
+  const { data: lessonFromDb, isLoading: loadingLesson } = useLessonData(lessonId);
+  const { data: languageInfo } = useLessonLanguageInfo(lessonId);
+  const { data: savedProgress } = usePartialLessonProgress(lessonId);
+  const savePartialProgress = useSavePartialProgress();
+  const clearPartialProgress = useClearPartialProgress();
   const addXP = useAddXP();
   const deductHeart = useDeductHeart();
   const saveLessonProgress = useSaveLessonProgress();
   const updateQuestProgress = useUpdateQuestProgress();
-  
+
+  // Use database questions if available, otherwise use fallback
+  const lessonData = useMemo(() => {
+    if (lessonFromDb && lessonFromDb.questions.length > 0) {
+      return {
+        title: lessonFromDb.title,
+        questions: lessonFromDb.questions,
+      };
+    }
+    return fallbackLessonData;
+  }, [lessonFromDb]);
+
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | number | null>(null);
   const [isChecked, setIsChecked] = useState(false);
@@ -108,6 +111,20 @@ export default function Lesson() {
   const [codeRunnerChecked, setCodeRunnerChecked] = useState(false);
   const [mascotReaction, setMascotReaction] = useState<"idle" | "correct" | "incorrect" | "celebrate">("idle");
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
+  const [initialized, setInitialized] = useState(false);
+
+  // Restore saved progress on mount
+  useEffect(() => {
+    if (savedProgress && !initialized) {
+      setCurrentQuestion(savedProgress.current_question_index);
+      setXpEarned(savedProgress.xp_earned);
+      setCorrectAnswers(savedProgress.correct_answers);
+      setAnsweredQuestions(new Set(savedProgress.answered_questions));
+      setInitialized(true);
+    } else if (!savedProgress && !initialized) {
+      setInitialized(true);
+    }
+  }, [savedProgress, initialized]);
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
@@ -115,11 +132,24 @@ export default function Lesson() {
   const isLastQuestion = currentQuestion === lessonData.questions.length - 1;
   const isFirstQuestion = currentQuestion === 0;
 
-  // Generate a random encouragement message
-  const mascotMessage = useMemo(() => {
-    if (mascotReaction === "idle") return undefined;
-    return undefined; // Let component pick random message
-  }, [mascotReaction]);
+  // Save partial progress when state changes
+  const saveProgress = useCallback(() => {
+    if (lessonId) {
+      savePartialProgress.mutate({
+        lesson_id: lessonId,
+        current_question_index: currentQuestion,
+        answered_questions: Array.from(answeredQuestions),
+        xp_earned: xpEarned,
+        correct_answers: correctAnswers,
+      });
+    }
+  }, [lessonId, currentQuestion, answeredQuestions, xpEarned, correctAnswers, savePartialProgress]);
+
+  // Handle exit - save progress and navigate to correct language
+  const handleExit = () => {
+    saveProgress();
+    navigate("/learn");
+  };
 
   const handleCheck = async () => {
     if (selectedAnswer === null) return;
@@ -128,7 +158,9 @@ export default function Lesson() {
     if (question.type === "fill-blank") {
       correct = selectedAnswer === question.answer;
     } else if (question.type === "multiple-choice") {
-      correct = selectedAnswer === question.correctIndex;
+      // Handle both string index and number index
+      const correctIdx = parseInt(question.answer || "0");
+      correct = selectedAnswer === correctIdx || selectedAnswer === question.answer;
     }
 
     setIsCorrect(correct);
@@ -136,7 +168,8 @@ export default function Lesson() {
     setMascotReaction(correct ? "correct" : "incorrect");
 
     if (correct) {
-      setXpEarned((prev) => prev + 10);
+      const xpReward = question.xp_reward || 10;
+      setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
       updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
@@ -153,7 +186,8 @@ export default function Lesson() {
     setMascotReaction(isCorrect ? "correct" : "incorrect");
 
     if (isCorrect) {
-      setXpEarned((prev) => prev + 15);
+      const xpReward = question.xp_reward || 15;
+      setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
       updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
@@ -161,7 +195,7 @@ export default function Lesson() {
       deductHeart.mutate();
       playIncorrect();
     }
-  }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
 
   const handleCodeRunnerAnswer = useCallback((isCorrect: boolean) => {
     setCodeRunnerChecked(true);
@@ -170,7 +204,8 @@ export default function Lesson() {
     setMascotReaction(isCorrect ? "correct" : "incorrect");
 
     if (isCorrect) {
-      setXpEarned((prev) => prev + 20); // Code runner is worth more XP
+      const xpReward = question.xp_reward || 20;
+      setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
       updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
@@ -178,33 +213,44 @@ export default function Lesson() {
       deductHeart.mutate();
       playIncorrect();
     }
-  }, [playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
 
   const handleContinue = async () => {
     // Mark current question as answered
-    setAnsweredQuestions(prev => new Set(prev).add(currentQuestion));
-    
+    const newAnswered = new Set(answeredQuestions).add(currentQuestion);
+    setAnsweredQuestions(newAnswered);
+
     if (isLastQuestion) {
       playComplete();
       setMascotReaction("celebrate");
-      
+
       const accuracy = Math.round((correctAnswers / lessonData.questions.length) * 100);
+      
+      // Use the database lesson ID if available
+      const dbLessonId = lessonFromDb?.id || lessonId;
+      
       await saveLessonProgress.mutateAsync({
-        lessonId: parseInt(lessonId || "1"),
+        lessonId: parseInt(dbLessonId || "1"),
         xpEarned,
         accuracy,
       });
-      
+
       await addXP.mutateAsync(xpEarned);
-      
+
       updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
       updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
-      
+
+      // Clear partial progress since lesson is complete
+      if (lessonId) {
+        clearPartialProgress.mutate(lessonId);
+      }
+
       setIsComplete(true);
       return;
     }
 
     goToNextQuestion();
+    saveProgress();
   };
 
   const goToNextQuestion = () => {
@@ -230,16 +276,25 @@ export default function Lesson() {
   };
 
   const handleSkip = () => {
-    // Mark as answered and go to next question, not back to learn page
-    setAnsweredQuestions(prev => new Set(prev).add(currentQuestion));
+    // Mark as answered and go to next question
+    setAnsweredQuestions((prev) => new Set(prev).add(currentQuestion));
     if (!isLastQuestion) {
       goToNextQuestion();
+      saveProgress();
     }
   };
 
   const handleLessonComplete = () => {
     navigate("/learn");
   };
+
+  if (loadingLesson) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (isComplete) {
     return (
@@ -258,9 +313,12 @@ export default function Lesson() {
       <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-4 h-16">
-            <Link to="/learn" className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <button 
+              onClick={handleExit}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
               <X className="w-6 h-6 text-muted-foreground" />
-            </Link>
+            </button>
 
             <div className="flex-1">
               <Progress value={progress} size="default" indicatorColor="gradient" />
@@ -279,7 +337,7 @@ export default function Lesson() {
         {/* Mascot Reaction */}
         {mascotReaction !== "idle" && (
           <div className="mb-6 animate-fade-in">
-            <MascotReaction reaction={mascotReaction} message={mascotMessage} />
+            <MascotReaction reaction={mascotReaction} />
           </div>
         )}
 
@@ -290,20 +348,20 @@ export default function Lesson() {
           </h2>
 
           {/* Drag Order Challenge */}
-          {question.type === "drag-order" && question.blocks && question.correctOrder && (
+          {question.type === "drag-order" && question.blocks && question.correct_order && (
             <DragOrderChallenge
               blocks={question.blocks}
-              correctOrder={question.correctOrder}
+              correctOrder={question.correct_order}
               onAnswer={handleDragOrderAnswer}
               disabled={dragOrderChecked}
             />
           )}
 
           {/* Code Runner Challenge */}
-          {question.type === "code-runner" && question.initialCode && question.expectedOutput && (
+          {question.type === "code-runner" && question.initial_code && question.expected_output && (
             <CodeRunnerChallenge
-              initialCode={question.initialCode}
-              expectedOutput={question.expectedOutput}
+              initialCode={question.initial_code}
+              expectedOutput={question.expected_output}
               hint={question.hint}
               onAnswer={handleCodeRunnerAnswer}
               disabled={codeRunnerChecked}
@@ -311,7 +369,7 @@ export default function Lesson() {
           )}
 
           {/* Code Block for Fill-in-the-blank */}
-          {question.type === "fill-blank" && (
+          {question.type === "fill-blank" && question.code && (
             <div className="bg-sidebar rounded-2xl p-6 mb-6 font-mono text-sm">
               <pre className="text-sidebar-foreground whitespace-pre-wrap">
                 {question.code?.split("___").map((part, i, arr) => (
@@ -329,13 +387,14 @@ export default function Lesson() {
           )}
 
           {/* Options for fill-blank and multiple-choice */}
-          {(question.type === "fill-blank" || question.type === "multiple-choice") && (
+          {(question.type === "fill-blank" || question.type === "multiple-choice") && question.options && (
             <div className="grid gap-3 sm:grid-cols-2">
-              {question.options?.map((option, index) => {
+              {question.options.map((option, index) => {
                 const isSelected =
                   question.type === "fill-blank"
                     ? selectedAnswer === option
                     : selectedAnswer === index;
+                const correctIdx = parseInt(question.answer || "0");
 
                 return (
                   <button
@@ -353,7 +412,7 @@ export default function Lesson() {
                       isChecked && isSelected && isCorrect && "border-primary bg-primary/20",
                       isChecked && isSelected && !isCorrect && "border-destructive bg-destructive/20 text-destructive",
                       isChecked && !isSelected && question.type === "fill-blank" && option === question.answer && "border-primary bg-primary/10",
-                      isChecked && !isSelected && question.type === "multiple-choice" && index === question.correctIndex && "border-primary bg-primary/10"
+                      isChecked && !isSelected && question.type === "multiple-choice" && index === correctIdx && "border-primary bg-primary/10"
                     )}
                   >
                     {option}
@@ -378,22 +437,22 @@ export default function Lesson() {
           <div className="flex gap-3">
             {/* Back button - always visible except on first question */}
             {!isFirstQuestion && (
-              <Button 
-                variant="ghost" 
-                size="lg" 
+              <Button
+                variant="ghost"
+                size="lg"
                 onClick={goToPreviousQuestion}
                 className="px-4"
               >
                 ←
               </Button>
             )}
-            
+
             {!isChecked && question.type !== "drag-order" && question.type !== "code-runner" ? (
               <>
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="flex-1" 
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1"
                   onClick={handleSkip}
                 >
                   Skip
