@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Code2, Sparkles, Trophy, Zap, ArrowRight } from "lucide-react";
 import mascot from "@/assets/mascot.png";
 import heroBg from "@/assets/hero-bg.png";
+import { useLanguages } from "@/hooks/useLanguages";
+
 const features = [{
   icon: Sparkles,
   title: "Bite-sized lessons",
@@ -16,32 +18,23 @@ const features = [{
   title: "Stay motivated",
   description: "Earn XP, unlock achievements, and compete with friends on leaderboards."
 }];
-const languages = [{
-  name: "Python",
-  color: "bg-[#3776AB]",
-  icon: "🐍"
-}, {
-  name: "JavaScript",
-  color: "bg-[#F7DF1E]",
-  icon: "⚡"
-}, {
-  name: "TypeScript",
-  color: "bg-[#3178C6]",
-  icon: "📘"
-}, {
-  name: "Rust",
-  color: "bg-[#B7410E]",
-  icon: "🦀"
-}, {
-  name: "Go",
-  color: "bg-[#00ADD8]",
-  icon: "🐹"
-}, {
-  name: "SQL",
-  color: "bg-[#336791]",
-  icon: "🗄️"
-}];
+
+const fallbackLanguages = [
+  { name: "Python", color: "bg-[#3776AB]", icon: "🐍" },
+  { name: "JavaScript", color: "bg-[#F7DF1E]", icon: "⚡" },
+  { name: "TypeScript", color: "bg-[#3178C6]", icon: "📘" },
+  { name: "Rust", color: "bg-[#B7410E]", icon: "🦀" },
+  { name: "Go", color: "bg-[#00ADD8]", icon: "🐹" },
+  { name: "SQL", color: "bg-[#336791]", icon: "🗄️" },
+];
 export default function Landing() {
+  const { data: dbLanguages = [] } = useLanguages();
+  
+  // Use database languages if available, otherwise fallback
+  const languages = dbLanguages.length > 0 
+    ? dbLanguages.map(l => ({ name: l.name, icon: l.icon, color: "bg-primary" }))
+    : fallbackLanguages;
+
   return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -79,7 +72,7 @@ export default function Landing() {
                 Learn to code the{" "}
                 <span className="text-gradient-primary">fun way</span>
               </h1>
-              <p className="mb-8 max-w-lg mx-auto lg:mx-0 text-gray-900 text-xl font-semibold">
+              <p className="mb-8 max-w-lg mx-auto lg:mx-0 text-foreground/80 text-xl font-semibold">
                 Master programming with bite-sized lessons, interactive challenges, 
                 and a gamified experience that keeps you coming back for more.
               </p>

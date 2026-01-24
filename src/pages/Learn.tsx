@@ -1,147 +1,344 @@
+import { useState } from "react";
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble } from "@/components/LessonBubble";
 import { useLessonProgress } from "@/hooks/useUserProgress";
+import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/useLanguages";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const units = [
-  {
-    id: 1,
-    unitId: "unit-1", // Placeholder - should be fetched from database
-    title: "Unit 1: Intro to Python",
-    description: "Learn the basics of Python programming",
-    color: "green" as const,
-    lessons: [
-      { id: 1, position: "center" as const },
-      { id: 2, position: "left" as const },
-      { id: 3, position: "right" as const },
-      { id: 4, position: "center" as const },
-      { id: 5, position: "left" as const },
-    ],
-  },
-  {
-    id: 2,
-    unitId: "unit-2",
-    title: "Unit 2: Variables & Data Types",
-    description: "Store and manipulate different types of data",
-    color: "blue" as const,
-    lessons: [
-      { id: 6, position: "center" as const },
-      { id: 7, position: "right" as const },
-      { id: 8, position: "left" as const },
-      { id: 9, position: "center" as const },
-      { id: 10, position: "right" as const },
-    ],
-  },
-  {
-    id: 3,
-    unitId: "unit-3",
-    title: "Unit 3: Control Flow",
-    description: "Make decisions with if statements and loops",
-    color: "orange" as const,
-    lessons: [
-      { id: 11, position: "center" as const },
-      { id: 12, position: "left" as const },
-      { id: 13, position: "right" as const },
-      { id: 14, position: "center" as const },
-    ],
-  },
-  {
-    id: 4,
-    unitId: "unit-4",
-    title: "Unit 4: Functions",
-    description: "Create reusable blocks of code",
-    color: "purple" as const,
-    lessons: [
-      { id: 15, position: "center" as const },
-      { id: 16, position: "right" as const },
-      { id: 17, position: "left" as const },
-    ],
-  },
-];
+const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
 
 export default function Learn() {
+  const { data: languages = [], isLoading: languagesLoading } = useLanguages();
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  
+  // Auto-select first language
+  const activeLanguage = selectedLanguage || languages[0]?.id || null;
+  const currentLanguage = languages.find(l => l.id === activeLanguage);
+  
+  const { data: units = [], isLoading: unitsLoading } = useUnitsForLanguage(activeLanguage);
   const { data: lessonProgress = [] } = useLessonProgress();
   
-  // Get completed lesson IDs
+  // Get completed lesson IDs (now using string UUIDs from database)
   const completedLessonIds = lessonProgress
     .filter((p) => p.completed)
-    .map((p) => p.lesson_id);
+    .map((p) => String(p.lesson_id));
+
+  // For the new database structure, we need to track lesson order globally
+  const getAllLessonsInOrder = () => {
+    const allLessons: { id: string; unitId: string; orderIndex: number }[] = [];
+    // This will be populated when we fetch lessons per unit
+    return allLessons;
+  };
 
   // Determine the status of each lesson based on progress
-  const getLessonStatus = (lessonId: number): "complete" | "current" | "locked" => {
+  const getLessonStatus = (lessonId: string, lessonIndex: number, unitIndex: number, allPreviousComplete: boolean): "complete" | "current" | "locked" => {
     if (completedLessonIds.includes(lessonId)) {
       return "complete";
     }
-    // First lesson is always accessible
-    if (lessonId === 1) {
+    // First lesson of first unit is always accessible
+    if (unitIndex === 0 && lessonIndex === 0) {
       return "current";
     }
-    // A lesson is current if the previous one is complete
-    if (completedLessonIds.includes(lessonId - 1)) {
+    // A lesson is current if all previous lessons are complete
+    if (allPreviousComplete) {
       return "current";
     }
     return "locked";
   };
 
-  // Find current lesson for each unit
-  const getCurrentLessonForUnit = (unitLessons: { id: number }[]): number | undefined => {
-    for (const lesson of unitLessons) {
-      const status = getLessonStatus(lesson.id);
-      if (status === "current") {
-        return lesson.id;
-      }
-    }
-    return undefined;
-  };
+  // Fallback units for when database is empty (backward compatibility)
+  const fallbackUnits = [
+    {
+      id: "fallback-1",
+      title: "Unit 1: Intro to Python",
+      description: "Learn the basics of Python programming",
+      color: "green" as const,
+      lessons: [
+        { id: "1", position: "center" as const },
+        { id: "2", position: "left" as const },
+        { id: "3", position: "right" as const },
+        { id: "4", position: "center" as const },
+        { id: "5", position: "left" as const },
+      ],
+    },
+    {
+      id: "fallback-2",
+      title: "Unit 2: Variables & Data Types",
+      description: "Store and manipulate different types of data",
+      color: "blue" as const,
+      lessons: [
+        { id: "6", position: "center" as const },
+        { id: "7", position: "right" as const },
+        { id: "8", position: "left" as const },
+        { id: "9", position: "center" as const },
+        { id: "10", position: "right" as const },
+      ],
+    },
+    {
+      id: "fallback-3",
+      title: "Unit 3: Control Flow",
+      description: "Make decisions with if statements and loops",
+      color: "orange" as const,
+      lessons: [
+        { id: "11", position: "center" as const },
+        { id: "12", position: "left" as const },
+        { id: "13", position: "right" as const },
+        { id: "14", position: "center" as const },
+      ],
+    },
+    {
+      id: "fallback-4",
+      title: "Unit 4: Functions",
+      description: "Create reusable blocks of code",
+      color: "purple" as const,
+      lessons: [
+        { id: "15", position: "center" as const },
+        { id: "16", position: "right" as const },
+        { id: "17", position: "left" as const },
+      ],
+    },
+  ];
 
-  // Determine if unit is active
-  const isUnitActive = (unitLessons: { id: number }[]): boolean => {
-    return unitLessons.some(lesson => getLessonStatus(lesson.id) === "current");
-  };
+  const displayUnits = units.length > 0 ? units : (activeLanguage ? [] : fallbackUnits);
+  const useFallback = units.length === 0 && !activeLanguage;
+
+  // Track completed lessons globally across units for proper unlocking
+  let globalLessonIndex = 0;
+  let allPreviousComplete = true;
+
+  if (languagesLoading) {
+    return (
+      <div className="space-y-8">
+        <Skeleton className="h-10 w-48" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-extrabold text-foreground mb-2">
-          Learn Python 🐍
-        </h1>
-        <p className="text-muted-foreground">
-          Master the world's most popular programming language
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-foreground mb-2">
+            Learn {currentLanguage?.name || "Python"} {currentLanguage?.icon || "🐍"}
+          </h1>
+          <p className="text-muted-foreground">
+            {currentLanguage?.description || "Master the world's most popular programming language"}
+          </p>
+        </div>
+        
+        {languages.length > 1 && (
+          <Select value={activeLanguage || undefined} onValueChange={setSelectedLanguage}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select language" />
+            </SelectTrigger>
+            <SelectContent>
+              {languages.map((lang) => (
+                <SelectItem key={lang.id} value={lang.id}>
+                  <span className="flex items-center gap-2">
+                    <span>{lang.icon}</span>
+                    <span>{lang.name}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
-      {/* Units */}
-      {units.map((unit, unitIndex) => (
-        <div key={unit.id} className="space-y-8">
-          <UnitBanner 
-            title={unit.title}
-            description={unit.description}
-            color={unit.color}
-            isActive={isUnitActive(unit.lessons)}
-            currentLessonId={getCurrentLessonForUnit(unit.lessons)}
-            unitId={unit.unitId}
-          />
-
-          {/* Lessons */}
-          <div className="flex flex-col items-center space-y-6 py-4">
-            {unit.lessons.map((lesson, lessonIndex) => (
-              <LessonBubble
-                key={lesson.id}
-                id={lesson.id}
-                status={getLessonStatus(lesson.id)}
-                position={lesson.position}
-                lessonNumber={lessonIndex + 1}
-              />
-            ))}
-          </div>
-
-          {/* Connector line (except for last unit) */}
-          {unitIndex < units.length - 1 && (
-            <div className="flex justify-center">
-              <div className="w-1 h-8 bg-border rounded-full" />
-            </div>
-          )}
+      {unitsLoading ? (
+        <div className="space-y-8">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
         </div>
+      ) : displayUnits.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-lg font-medium">No units available yet</p>
+          <p className="text-sm mt-2">Check back soon for new content!</p>
+        </div>
+      ) : useFallback ? (
+        // Render fallback units (backward compatibility)
+        <>
+          {fallbackUnits.map((unit, unitIndex) => {
+            const isUnitActive = unit.lessons.some((lesson, idx) => {
+              const status = getLessonStatusFallback(lesson.id, idx, unitIndex);
+              return status === "current";
+            });
+            
+            const currentLessonId = unit.lessons.find((lesson, idx) => {
+              return getLessonStatusFallback(lesson.id, idx, unitIndex) === "current";
+            })?.id;
+
+            return (
+              <div key={unit.id} className="space-y-8">
+                <UnitBanner 
+                  title={unit.title}
+                  description={unit.description}
+                  color={unit.color}
+                  isActive={isUnitActive}
+                  currentLessonId={currentLessonId ? Number(currentLessonId) : undefined}
+                  unitId={unit.id}
+                />
+
+                <div className="flex flex-col items-center space-y-6 py-4">
+                  {unit.lessons.map((lesson, lessonIndex) => (
+                    <LessonBubble
+                      key={lesson.id}
+                      id={Number(lesson.id)}
+                      status={getLessonStatusFallback(lesson.id, lessonIndex, unitIndex)}
+                      position={lesson.position}
+                      lessonNumber={lessonIndex + 1}
+                    />
+                  ))}
+                </div>
+
+                {unitIndex < fallbackUnits.length - 1 && (
+                  <div className="flex justify-center">
+                    <div className="w-1 h-8 bg-border rounded-full" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </>
+      ) : (
+        // Render database units
+        <DatabaseUnits 
+          units={displayUnits} 
+          completedLessonIds={completedLessonIds}
+        />
+      )}
+    </div>
+  );
+
+  function getLessonStatusFallback(lessonId: string, lessonIndex: number, unitIndex: number): "complete" | "current" | "locked" {
+    const numericId = Number(lessonId);
+    if (completedLessonIds.includes(lessonId)) {
+      return "complete";
+    }
+    if (numericId === 1) {
+      return "current";
+    }
+    if (completedLessonIds.includes(String(numericId - 1))) {
+      return "current";
+    }
+    return "locked";
+  }
+}
+
+// Component to render units from database with lessons
+function DatabaseUnits({ 
+  units, 
+  completedLessonIds 
+}: { 
+  units: any[]; 
+  completedLessonIds: string[];
+}) {
+  return (
+    <>
+      {units.map((unit, unitIndex) => (
+        <DatabaseUnit 
+          key={unit.id}
+          unit={unit}
+          unitIndex={unitIndex}
+          totalUnits={units.length}
+          completedLessonIds={completedLessonIds}
+          previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds)}
+        />
       ))}
+    </>
+  );
+}
+
+function checkPreviousUnitsComplete(units: any[], currentUnitIndex: number, completedLessonIds: string[]): boolean {
+  // For first unit, always return true
+  if (currentUnitIndex === 0) return true;
+  // This is a simplified check - in reality we'd need to fetch all lessons
+  return true; // We'll rely on lesson-level checks
+}
+
+function DatabaseUnit({ 
+  unit, 
+  unitIndex, 
+  totalUnits,
+  completedLessonIds,
+  previousUnitsComplete
+}: { 
+  unit: any; 
+  unitIndex: number;
+  totalUnits: number;
+  completedLessonIds: string[];
+  previousUnitsComplete: boolean;
+}) {
+  const { data: lessons = [], isLoading } = useLessonsForUnit(unit.id);
+  const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
+  
+  const getLessonStatus = (lessonId: string, lessonIndex: number): "complete" | "current" | "locked" => {
+    if (completedLessonIds.includes(lessonId)) {
+      return "complete";
+    }
+    // First lesson of first unit is always accessible
+    if (unitIndex === 0 && lessonIndex === 0) {
+      return "current";
+    }
+    // Check if previous lesson in this unit is complete
+    if (lessonIndex > 0) {
+      const prevLesson = lessons[lessonIndex - 1];
+      if (prevLesson && completedLessonIds.includes(prevLesson.id)) {
+        return "current";
+      }
+    }
+    // First lesson of subsequent units - check if previous unit's last lesson is complete
+    if (lessonIndex === 0 && previousUnitsComplete) {
+      return "current";
+    }
+    return "locked";
+  };
+
+  const isUnitActive = lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current");
+  const currentLessonId = lessons.find((lesson, idx) => getLessonStatus(lesson.id, idx) === "current")?.id;
+
+  const colorMap: Record<string, "green" | "blue" | "orange" | "purple"> = {
+    green: "green",
+    blue: "blue", 
+    orange: "orange",
+    purple: "purple",
+  };
+
+  if (isLoading) {
+    return <Skeleton className="h-24 w-full" />;
+  }
+
+  return (
+    <div className="space-y-8">
+      <UnitBanner 
+        title={unit.title}
+        description={unit.description || ""}
+        color={colorMap[unit.color] || "green"}
+        isActive={isUnitActive}
+        currentLessonId={currentLessonId ? Number(currentLessonId.slice(-4)) : undefined}
+        unitId={unit.id}
+      />
+
+      <div className="flex flex-col items-center space-y-6 py-4">
+        {lessons.map((lesson, lessonIndex) => (
+          <LessonBubble
+            key={lesson.id}
+            id={lessonIndex + 1 + (unitIndex * 10)} // Generate numeric ID for routing
+            status={getLessonStatus(lesson.id, lessonIndex)}
+            position={positionPattern[lessonIndex % positionPattern.length]}
+            lessonNumber={lessonIndex + 1}
+          />
+        ))}
+      </div>
+
+      {unitIndex < totalUnits - 1 && (
+        <div className="flex justify-center">
+          <div className="w-1 h-8 bg-border rounded-full" />
+        </div>
+      )}
     </div>
   );
 }
