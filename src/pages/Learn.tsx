@@ -5,6 +5,7 @@ import { useLessonProgress } from "@/hooks/useUserProgress";
 const units = [
   {
     id: 1,
+    unitId: "unit-1", // Placeholder - should be fetched from database
     title: "Unit 1: Intro to Python",
     description: "Learn the basics of Python programming",
     color: "green" as const,
@@ -18,6 +19,7 @@ const units = [
   },
   {
     id: 2,
+    unitId: "unit-2",
     title: "Unit 2: Variables & Data Types",
     description: "Store and manipulate different types of data",
     color: "blue" as const,
@@ -31,6 +33,7 @@ const units = [
   },
   {
     id: 3,
+    unitId: "unit-3",
     title: "Unit 3: Control Flow",
     description: "Make decisions with if statements and loops",
     color: "orange" as const,
@@ -43,6 +46,7 @@ const units = [
   },
   {
     id: 4,
+    unitId: "unit-4",
     title: "Unit 4: Functions",
     description: "Create reusable blocks of code",
     color: "purple" as const,
@@ -114,6 +118,7 @@ export default function Learn() {
             color={unit.color}
             isActive={isUnitActive(unit.lessons)}
             currentLessonId={getCurrentLessonForUnit(unit.lessons)}
+            unitId={unit.unitId}
           />
 
           {/* Lessons */}

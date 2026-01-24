@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { BookOpen, NotebookPen } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UnitNotes } from "@/components/UnitNotes";
 
 interface UnitBannerProps {
   title: string;
@@ -9,6 +10,7 @@ interface UnitBannerProps {
   color: "green" | "blue" | "orange" | "purple";
   isActive?: boolean;
   currentLessonId?: number;
+  unitId?: string;
 }
 
 const colorClasses = {
@@ -18,7 +20,7 @@ const colorClasses = {
   purple: "from-premium to-[hsl(280,80%,50%)]",
 };
 
-export function UnitBanner({ title, description, color, isActive = false, currentLessonId }: UnitBannerProps) {
+export function UnitBanner({ title, description, color, isActive = false, currentLessonId, unitId }: UnitBannerProps) {
   return (
     <div 
       className={cn(
@@ -32,13 +34,7 @@ export function UnitBanner({ title, description, color, isActive = false, curren
           <p className="text-sm text-white/80">{description}</p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
-            className="bg-white/20 border-white/30 hover:bg-white/30 text-white"
-          >
-            <NotebookPen className="w-5 h-5" />
-          </Button>
+          {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || false} />}
           {isActive && currentLessonId && (
             <Button 
               variant="golden"

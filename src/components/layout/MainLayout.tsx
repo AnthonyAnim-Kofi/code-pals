@@ -2,10 +2,12 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { MobileHeader } from "./MobileHeader";
 import { UserProgress } from "@/components/UserProgress";
+import { NotificationManager } from "@/components/NotificationManager";
 
 export function MainLayout() {
   return (
     <div className="min-h-screen bg-background">
+      <NotificationManager />
       <Sidebar />
       <MobileHeader />
       

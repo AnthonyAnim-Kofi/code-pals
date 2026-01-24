@@ -108,11 +108,17 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 space-y-2 text-center">
               <p className="text-muted-foreground">
                 Don't have an account?{" "}
                 <Link to="/signup" className="text-primary font-semibold hover:underline">
                   Sign up
+                </Link>
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Admin?{" "}
+                <Link to="/admin/login" className="text-primary font-semibold hover:underline">
+                  Admin Login
                 </Link>
               </p>
             </div>

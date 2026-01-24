@@ -78,16 +78,19 @@ export function useAddXP() {
       // Get current profile
       const { data: profile, error: fetchError } = await supabase
         .from("profiles")
-        .select("xp")
+        .select("xp, weekly_xp")
         .eq("user_id", user.id)
         .single();
       
       if (fetchError) throw fetchError;
       
-      // Update XP
+      // Update both total XP and weekly XP
       const { data, error } = await supabase
         .from("profiles")
-        .update({ xp: (profile?.xp || 0) + xpAmount })
+        .update({ 
+          xp: (profile?.xp || 0) + xpAmount,
+          weekly_xp: (profile?.weekly_xp || 0) + xpAmount
+        })
         .eq("user_id", user.id)
         .select()
         .single();
@@ -98,6 +101,7 @@ export function useAddXP() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["quest-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["league-leaderboard"] });
     },
   });
 }

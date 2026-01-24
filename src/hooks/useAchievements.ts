@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export interface Achievement {
   id: string;
@@ -57,6 +58,7 @@ export function useUserAchievements() {
 export function useCheckAndAwardAchievements() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { notifyAchievementUnlock } = useNotifications();
   
   return useMutation({
     mutationFn: async (stats: {
@@ -82,7 +84,7 @@ export function useCheckAndAwardAchievements() {
         .eq("user_id", user.id);
       
       const earnedIds = new Set(userAchievements?.map(ua => ua.achievement_id) || []);
-      const newAchievements: string[] = [];
+      const newAchievements: Array<{ id: string; name: string }> = [];
       
       for (const achievement of achievements || []) {
         if (earnedIds.has(achievement.id)) continue;
@@ -114,7 +116,7 @@ export function useCheckAndAwardAchievements() {
         }
         
         if (earned) {
-          newAchievements.push(achievement.id);
+          newAchievements.push({ id: achievement.id, name: achievement.name });
         }
       }
       
@@ -122,10 +124,15 @@ export function useCheckAndAwardAchievements() {
       if (newAchievements.length > 0) {
         await supabase
           .from("user_achievements")
-          .insert(newAchievements.map(id => ({
+          .insert(newAchievements.map(a => ({
             user_id: user.id,
-            achievement_id: id,
+            achievement_id: a.id,
           })));
+        
+        // Send notifications for each new achievement
+        for (const achievement of newAchievements) {
+          notifyAchievementUnlock(achievement.name);
+        }
       }
       
       return newAchievements.length;
