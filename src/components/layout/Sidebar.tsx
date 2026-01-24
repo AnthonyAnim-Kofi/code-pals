@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   BookOpen, 
   Trophy, 
@@ -6,10 +6,23 @@ import {
   ShoppingBag, 
   User,
   Home,
-  Code2
+  Code2,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import mascot from "@/assets/mascot.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const navItems = [
   { icon: Home, label: "Learn", path: "/learn" },
@@ -30,6 +43,14 @@ const moreItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[256px] flex-col border-r border-sidebar-border bg-sidebar lg:flex hidden overflow-hidden">
@@ -87,6 +108,19 @@ export function Sidebar() {
             </Link>
           );
         })}
+        
+        <div className="border-t border-sidebar-border my-4" />
+        
+        <button
+          onClick={() => setShowLogoutDialog(true)}
+          className={cn(
+            "flex items-center gap-4 px-4 py-3 rounded-xl font-bold text-sm transition-all duration-200 w-full text-left",
+            "text-sidebar-foreground hover:bg-sidebar-accent hover:text-destructive"
+          )}
+        >
+          <LogOut className="w-5 h-5" />
+          Log Out
+        </button>
       </nav>
 
       {/* Mascot */}
@@ -103,6 +137,27 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to log out? Your progress will be saved, but you'll need to log in again to continue learning.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogout}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Log Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </aside>
   );
 }
