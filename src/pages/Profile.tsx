@@ -4,6 +4,7 @@ import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
 import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
 import mascot from "@/assets/mascot.png";
 
 const achievements = [
@@ -118,6 +119,12 @@ export default function Profile() {
           </div>
         ))}
       </div>
+
+      {/* Streak Freeze Indicator */}
+      <StreakFreezeIndicator
+        freezeCount={profile?.streak_freeze_count || 0}
+        lastUsed={profile?.last_streak_freeze_used || null}
+      />
 
       {/* Current Course */}
       <div className="p-4 bg-card rounded-2xl border border-border card-elevated">

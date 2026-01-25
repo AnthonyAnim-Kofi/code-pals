@@ -412,3 +412,23 @@ export function useUpdateUser() {
     },
   });
 }
+
+// Admin - Delete lesson
+export function useDeleteLesson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ lessonId, unitId }: { lessonId: string; unitId: string }) => {
+      const { error } = await supabase
+        .from("lessons")
+        .delete()
+        .eq("id", lessonId);
+
+      if (error) throw error;
+      return unitId;
+    },
+    onSuccess: (unitId) => {
+      queryClient.invalidateQueries({ queryKey: ["lessons", unitId] });
+    },
+  });
+}

@@ -32,13 +32,14 @@ const navItems = [
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
-import { Users, RotateCcw, Award, Settings, Globe } from "lucide-react";
+import { Users, RotateCcw, Award, Settings, Globe, History } from "lucide-react";
 
 const moreItems = [
   { icon: Globe, label: "Languages", path: "/languages" },
   { icon: Users, label: "Social", path: "/social" },
   { icon: Award, label: "Achievements", path: "/achievements" },
   { icon: RotateCcw, label: "Practice", path: "/practice" },
+  { icon: History, label: "League History", path: "/league-history" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
