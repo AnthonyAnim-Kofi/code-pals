@@ -3,8 +3,12 @@ import { Sidebar } from "./Sidebar";
 import { MobileHeader } from "./MobileHeader";
 import { UserProgress } from "@/components/UserProgress";
 import { NotificationManager } from "@/components/NotificationManager";
+import { useLeagueNotifications } from "@/hooks/useLeagueNotifications";
 
 export function MainLayout() {
+  // Subscribe to league change notifications
+  useLeagueNotifications();
+  
   return (
     <div className="min-h-screen bg-background">
       <NotificationManager />

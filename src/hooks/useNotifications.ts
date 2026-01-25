@@ -67,6 +67,32 @@ export function useNotifications() {
     });
   }, [sendNotification]);
 
+  const notifyLeaguePromotion = useCallback(
+    (newLeague: string) => {
+      const leagueEmojis: Record<string, string> = {
+        bronze: "🥉",
+        silver: "🥈",
+        gold: "🥇",
+        diamond: "💎",
+      };
+      sendNotification("League Promotion! 🎉", {
+        body: `Congratulations! You've been promoted to ${newLeague.charAt(0).toUpperCase() + newLeague.slice(1)} League ${leagueEmojis[newLeague] || ""}!`,
+        tag: "league-change",
+      });
+    },
+    [sendNotification]
+  );
+
+  const notifyLeagueDemotion = useCallback(
+    (newLeague: string) => {
+      sendNotification("League Update 📊", {
+        body: `You've moved to ${newLeague.charAt(0).toUpperCase() + newLeague.slice(1)} League. Keep practicing to climb back up!`,
+        tag: "league-change",
+      });
+    },
+    [sendNotification]
+  );
+
   return {
     requestPermission,
     sendNotification,
@@ -74,6 +100,8 @@ export function useNotifications() {
     notifyChallengeAlert,
     notifyAchievementUnlock,
     notifyHeartRefilled,
+    notifyLeaguePromotion,
+    notifyLeagueDemotion,
   };
 }
 
