@@ -205,6 +205,33 @@ export type Database = {
           },
         ]
       }
+      league_thresholds: {
+        Row: {
+          created_at: string
+          demotion_xp_threshold: number
+          id: string
+          league: string
+          promotion_xp_threshold: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          demotion_xp_threshold?: number
+          id?: string
+          league: string
+          promotion_xp_threshold?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          demotion_xp_threshold?: number
+          id?: string
+          league?: string
+          promotion_xp_threshold?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lesson_progress: {
         Row: {
           accuracy: number
@@ -332,6 +359,7 @@ export type Database = {
           hearts: number
           id: string
           last_practice_date: string | null
+          last_streak_freeze_used: string | null
           league: string
           streak_count: number
           streak_freeze_count: number
@@ -352,6 +380,7 @@ export type Database = {
           hearts?: number
           id?: string
           last_practice_date?: string | null
+          last_streak_freeze_used?: string | null
           league?: string
           streak_count?: number
           streak_freeze_count?: number
@@ -372,6 +401,7 @@ export type Database = {
           hearts?: number
           id?: string
           last_practice_date?: string | null
+          last_streak_freeze_used?: string | null
           league?: string
           streak_count?: number
           streak_freeze_count?: number

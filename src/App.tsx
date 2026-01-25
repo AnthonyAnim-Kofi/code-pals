@@ -20,6 +20,7 @@ import Achievements from "./pages/Achievements";
 import Practice from "./pages/Practice";
 import Lesson from "./pages/Lesson";
 import Languages from "./pages/Languages";
+import LeagueHistory from "./pages/LeagueHistory";
 import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
@@ -63,6 +64,7 @@ const App = () => (
               <Route path="/achievements" element={<Achievements />} />
               <Route path="/practice" element={<Practice />} />
               <Route path="/languages" element={<Languages />} />
+              <Route path="/league-history" element={<LeagueHistory />} />
             </Route>
 
             {/* Lesson (Full screen, no sidebar) - Protected */}

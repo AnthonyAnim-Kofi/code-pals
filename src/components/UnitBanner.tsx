@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitNotes } from "@/components/UnitNotes";
+import { UnitProgressIndicator } from "@/components/UnitProgressIndicator";
 
 interface UnitBannerProps {
   title: string;
@@ -11,6 +12,8 @@ interface UnitBannerProps {
   isActive?: boolean;
   currentLessonId?: number;
   unitId?: string;
+  completedLessons?: number;
+  totalLessons?: number;
 }
 
 const colorClasses = {
@@ -20,7 +23,16 @@ const colorClasses = {
   purple: "from-premium to-[hsl(280,80%,50%)]",
 };
 
-export function UnitBanner({ title, description, color, isActive = false, currentLessonId, unitId }: UnitBannerProps) {
+export function UnitBanner({ 
+  title, 
+  description, 
+  color, 
+  isActive = false, 
+  currentLessonId, 
+  unitId,
+  completedLessons = 0,
+  totalLessons = 0,
+}: UnitBannerProps) {
   return (
     <div 
       className={cn(
@@ -30,7 +42,15 @@ export function UnitBanner({ title, description, color, isActive = false, curren
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1">
-          <h2 className="text-xl font-extrabold text-white mb-1">{title}</h2>
+          <div className="flex items-center gap-3 mb-1">
+            <h2 className="text-xl font-extrabold text-white">{title}</h2>
+            {totalLessons > 0 && (
+              <UnitProgressIndicator 
+                completedLessons={completedLessons} 
+                totalLessons={totalLessons} 
+              />
+            )}
+          </div>
           <p className="text-sm text-white/80">{description}</p>
         </div>
         <div className="flex gap-2">

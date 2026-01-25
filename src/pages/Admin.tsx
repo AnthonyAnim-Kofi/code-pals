@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
   Upload,
+  Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ import {
   useCreateUnit,
   useLessons,
   useCreateLesson,
+  useDeleteLesson,
   useQuestions,
   useCreateQuestion,
   useDeleteQuestion,
@@ -44,6 +46,8 @@ import {
   useDeleteUnitNote,
 } from "@/hooks/useAdmin";
 import { BulkImport } from "@/components/admin/BulkImport";
+import { QuestManager } from "@/components/admin/QuestManager";
+import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
 import { cn } from "@/lib/utils";
 
 export default function Admin() {
@@ -69,6 +73,7 @@ export default function Admin() {
   const createLanguage = useCreateLanguage();
   const createUnit = useCreateUnit();
   const createLesson = useCreateLesson();
+  const deleteLesson = useDeleteLesson();
   const createQuestion = useCreateQuestion();
   const deleteQuestion = useDeleteQuestion();
   const createNote = useCreateUnitNote();
@@ -263,6 +268,10 @@ export default function Admin() {
             <TabsTrigger value="quests" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Target className="w-4 h-4 mr-2" />
               Quests
+            </TabsTrigger>
+            <TabsTrigger value="leagues" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              <Trophy className="w-4 h-4 mr-2" />
+              Leagues
             </TabsTrigger>
             <TabsTrigger value="import" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Upload className="w-4 h-4 mr-2" />
@@ -507,7 +516,30 @@ export default function Admin() {
                   </div>
                 )}
 
-                {/* Create Lesson */}
+                {/* Existing Lessons List */}
+                {selectedUnit && lessons.length > 0 && (
+                  <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                    <h3 className="text-lg font-bold mb-4">Lessons ({lessons.length})</h3>
+                    <div className="space-y-2">
+                      {lessons.map((lesson) => (
+                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                          <div>
+                            <p className="font-medium">{lesson.title}</p>
+                            <p className="text-xs text-slate-400">Order: {lesson.order_index}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteLesson.mutate({ lessonId: lesson.id, unitId: selectedUnit })}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {selectedUnit && (
                   <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
                     <h3 className="text-lg font-bold mb-4">Create Lesson</h3>
@@ -757,8 +789,14 @@ export default function Admin() {
           {/* Quests Tab */}
           <TabsContent value="quests">
             <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-              <h3 className="text-lg font-bold mb-4">Quest Management</h3>
-              <p className="text-slate-400">Coming soon: Create and manage daily/weekly quests</p>
+              <QuestManager />
+            </div>
+          </TabsContent>
+
+          {/* Leagues Tab */}
+          <TabsContent value="leagues">
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+              <LeagueThresholdsManager />
             </div>
           </TabsContent>
 

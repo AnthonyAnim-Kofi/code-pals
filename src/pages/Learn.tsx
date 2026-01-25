@@ -248,6 +248,12 @@ function DatabaseUnits({
     });
   }, []);
 
+  // Calculate completed lessons per unit
+  const getCompletedLessonsForUnit = (unitId: string) => {
+    const unitLessons = allLessonsData.get(unitId) || [];
+    return unitLessons.filter(id => completedLessonIds.includes(id)).length;
+  };
+
   return (
     <>
       {units.map((unit, unitIndex) => (
@@ -259,6 +265,7 @@ function DatabaseUnits({
           completedLessonIds={completedLessonIds}
           previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds, allLessonsData)}
           onLessonsLoaded={updateLessonsData}
+          completedLessonsCount={getCompletedLessonsForUnit(unit.id)}
         />
       ))}
     </>
@@ -292,7 +299,8 @@ function DatabaseUnit({
   totalUnits,
   completedLessonIds,
   previousUnitsComplete,
-  onLessonsLoaded
+  onLessonsLoaded,
+  completedLessonsCount
 }: { 
   unit: any; 
   unitIndex: number;
@@ -300,6 +308,7 @@ function DatabaseUnit({
   completedLessonIds: string[];
   previousUnitsComplete: boolean;
   onLessonsLoaded: (unitId: string, lessonIds: string[]) => void;
+  completedLessonsCount: number;
 }) {
   const { data: lessons = [], isLoading } = useLessonsForUnit(unit.id);
   const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
@@ -364,6 +373,8 @@ function DatabaseUnit({
         isActive={isUnitActive}
         currentLessonId={currentLessonId ? Number(currentLessonId.slice(-4)) : undefined}
         unitId={unit.id}
+        completedLessons={completedLessonsCount}
+        totalLessons={lessons.length}
       />
 
       <div className="flex flex-col items-center space-y-6 py-4">
