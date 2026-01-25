@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble } from "@/components/LessonBubble";
 import { useLessonProgress } from "@/hooks/useUserProgress";
 import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/useLanguages";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Lock } from "lucide-react";
 
 const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
 
@@ -236,6 +237,17 @@ function DatabaseUnits({
   units: any[]; 
   completedLessonIds: string[];
 }) {
+  // Track all lessons data for unit locking
+  const [allLessonsData, setAllLessonsData] = useState<Map<string, string[]>>(new Map());
+
+  const updateLessonsData = useCallback((unitId: string, lessonIds: string[]) => {
+    setAllLessonsData(prev => {
+      const next = new Map(prev);
+      next.set(unitId, lessonIds);
+      return next;
+    });
+  }, []);
+
   return (
     <>
       {units.map((unit, unitIndex) => (
@@ -245,18 +257,33 @@ function DatabaseUnits({
           unitIndex={unitIndex}
           totalUnits={units.length}
           completedLessonIds={completedLessonIds}
-          previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds)}
+          previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds, allLessonsData)}
+          onLessonsLoaded={updateLessonsData}
         />
       ))}
     </>
   );
 }
 
-function checkPreviousUnitsComplete(units: any[], currentUnitIndex: number, completedLessonIds: string[]): boolean {
+// This will be computed at render time when we have all lesson data
+function checkPreviousUnitsComplete(units: any[], currentUnitIndex: number, completedLessonIds: string[], allLessonsData: Map<string, string[]>): boolean {
   // For first unit, always return true
   if (currentUnitIndex === 0) return true;
-  // This is a simplified check - in reality we'd need to fetch all lessons
-  return true; // We'll rely on lesson-level checks
+  
+  // Check all previous units
+  for (let i = 0; i < currentUnitIndex; i++) {
+    const unitId = units[i].id;
+    const unitLessons = allLessonsData.get(unitId) || [];
+    
+    // If any lesson in this unit is not complete, return false
+    for (const lessonId of unitLessons) {
+      if (!completedLessonIds.includes(lessonId)) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
 }
 
 function DatabaseUnit({ 
@@ -264,18 +291,35 @@ function DatabaseUnit({
   unitIndex, 
   totalUnits,
   completedLessonIds,
-  previousUnitsComplete
+  previousUnitsComplete,
+  onLessonsLoaded
 }: { 
   unit: any; 
   unitIndex: number;
   totalUnits: number;
   completedLessonIds: string[];
   previousUnitsComplete: boolean;
+  onLessonsLoaded: (unitId: string, lessonIds: string[]) => void;
 }) {
   const { data: lessons = [], isLoading } = useLessonsForUnit(unit.id);
   const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
   
+  // Report lessons to parent for unit locking
+  useEffect(() => {
+    if (lessons.length > 0) {
+      onLessonsLoaded(unit.id, lessons.map(l => l.id));
+    }
+  }, [lessons, unit.id, onLessonsLoaded]);
+
+  // Check if this entire unit is locked (previous unit not complete)
+  const isUnitLocked = !previousUnitsComplete;
+  
   const getLessonStatus = (lessonId: string, lessonIndex: number): "complete" | "current" | "locked" => {
+    // If the entire unit is locked, all lessons are locked
+    if (isUnitLocked) {
+      return "locked";
+    }
+    
     if (completedLessonIds.includes(lessonId)) {
       return "complete";
     }
@@ -297,7 +341,7 @@ function DatabaseUnit({
     return "locked";
   };
 
-  const isUnitActive = lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current");
+  const isUnitActive = !isUnitLocked && lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current");
   const currentLessonId = lessons.find((lesson, idx) => getLessonStatus(lesson.id, idx) === "current")?.id;
 
   const colorMap: Record<string, "green" | "blue" | "orange" | "purple"> = {
