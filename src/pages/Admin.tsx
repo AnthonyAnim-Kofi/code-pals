@@ -35,6 +35,7 @@ import {
   useCreateLanguage,
   useUnits,
   useCreateUnit,
+  useDeleteUnit,
   useLessons,
   useCreateLesson,
   useDeleteLesson,
@@ -72,6 +73,7 @@ export default function Admin() {
   // Mutations
   const createLanguage = useCreateLanguage();
   const createUnit = useCreateUnit();
+  const deleteUnit = useDeleteUnit();
   const createLesson = useCreateLesson();
   const deleteLesson = useDeleteLesson();
   const createQuestion = useCreateQuestion();
@@ -512,6 +514,35 @@ export default function Admin() {
                         <Plus className="w-4 h-4 mr-2" />
                         Create Unit
                       </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Units List with Delete */}
+                {selectedLanguage && units.length > 0 && (
+                  <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                    <h3 className="text-lg font-bold mb-4">Units ({units.length})</h3>
+                    <div className="space-y-2">
+                      {units.map((unit) => (
+                        <div key={unit.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
+                          <div>
+                            <p className="font-medium">{unit.title}</p>
+                            <p className="text-xs text-slate-400">Order: {unit.order_index} • Color: {unit.color}</p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (confirm(`Delete unit "${unit.title}" and all its lessons and questions?`)) {
+                                deleteUnit.mutate({ unitId: unit.id, languageId: selectedLanguage });
+                              }
+                            }}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}

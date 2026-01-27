@@ -5,6 +5,7 @@ import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2 }
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
+import { StreakCalendar } from "@/components/StreakCalendar";
 import mascot from "@/assets/mascot.png";
 
 const achievements = [
@@ -124,6 +125,14 @@ export default function Profile() {
       <StreakFreezeIndicator
         freezeCount={profile?.streak_freeze_count || 0}
         lastUsed={profile?.last_streak_freeze_used || null}
+      />
+
+      {/* Streak Calendar */}
+      <StreakCalendar
+        currentStreak={profile?.streak_count || 0}
+        lastPracticeDate={profile?.last_practice_date || null}
+        streakFreezeCount={profile?.streak_freeze_count || 0}
+        lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
       />
 
       {/* Current Course */}

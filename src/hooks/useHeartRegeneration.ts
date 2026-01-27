@@ -100,9 +100,16 @@ export function useHeartRegeneration(currentHearts: number, regenStartedAt: stri
     return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }, []);
 
+  // Calculate time until all hearts are full
+  const heartsToRecover = MAX_HEARTS - currentHearts;
+  const timeUntilFullMs = timeUntilNextHeart !== null 
+    ? timeUntilNextHeart + ((heartsToRecover - 1) * REGEN_INTERVAL_MS)
+    : null;
+
   return {
     timeUntilNextHeart,
     formattedTime: formatTimeRemaining(timeUntilNextHeart),
+    timeUntilFull: formatTimeRemaining(timeUntilFullMs),
     isRegenerating: currentHearts < MAX_HEARTS,
   };
 }
