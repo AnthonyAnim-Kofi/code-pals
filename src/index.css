@@ -115,6 +115,58 @@
 }
 
 @layer components {
+  /* Mobile-only "attendance" look (yellow theme) */
+  .mobile-attendance-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(80px 80px at 85% 12%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 60%),
+      radial-gradient(140px 140px at 15% 35%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 65%),
+      linear-gradient(135deg, hsl(48 100% 55%) 0%, hsl(43 100% 50%) 40%, hsl(38 100% 45%) 100%);
+  }
+
+  .mobile-attendance-surface {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    padding: 16px 16px 24px;
+  }
+
+  /* Give every page a consistent card-like surface on mobile. */
+  .mobile-attendance-surface > * {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 24px;
+    box-shadow:
+      0 12px 35px rgba(0, 0, 0, 0.12),
+      0 4px 0 rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+  }
+
+  /* On mobile, many pages already have their own padding; avoid double padding. */
+  .mobile-attendance-surface > * > * {
+    border-radius: inherit;
+  }
+
+  /* Desktop/tablet: disable the mobile shell effects */
+  @media (min-width: 1024px) {
+    .mobile-attendance-bg {
+      display: none;
+    }
+    .mobile-attendance-surface {
+      padding: 0;
+      min-height: auto;
+    }
+    .mobile-attendance-surface > * {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+  }
+
   .btn-primary-shadow {
     box-shadow: 0 4px 0 hsl(100, 76%, 30%);
   }
