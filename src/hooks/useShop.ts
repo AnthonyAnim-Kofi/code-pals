@@ -64,7 +64,7 @@ export function usePurchaseStreakFreeze() {
       // Get current profile
       const { data: profile, error: fetchError } = await supabase
         .from("profiles")
-        .select("gems")
+        .select("gems, streak_freeze_count")
         .eq("user_id", user.id)
         .single();
 
@@ -75,11 +75,12 @@ export function usePurchaseStreakFreeze() {
         throw new Error("Not enough gems");
       }
 
-      // Deduct gems - streak freeze is applied when streak would break
+      // Deduct gems and add a streak freeze token
       const { data, error } = await supabase
         .from("profiles")
         .update({
           gems: (profile?.gems || 0) - cost,
+          streak_freeze_count: (profile?.streak_freeze_count || 0) + 1,
         })
         .eq("user_id", user.id)
         .select()
@@ -90,7 +91,7 @@ export function usePurchaseStreakFreeze() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
-      toast.success("Streak Freeze activated! 🧊 Your streak is protected for one day.");
+      toast.success("Streak Freeze purchased! 🧊 It will auto-save your streak if you miss a day.");
     },
     onError: (error) => {
       if (error.message === "Not enough gems") {

@@ -1,5 +1,14 @@
 import { useCallback, useEffect } from "react";
 
+async function showViaServiceWorker(title: string, options?: NotificationOptions) {
+  if (!("serviceWorker" in navigator)) return false;
+  const reg = await navigator.serviceWorker.ready.catch(() => null);
+  if (!reg) return false;
+  if (!("showNotification" in reg)) return false;
+  await reg.showNotification(title, options);
+  return true;
+}
+
 export function useNotifications() {
   const requestPermission = useCallback(async () => {
     if (!("Notification" in window)) {
@@ -24,11 +33,17 @@ export function useNotifications() {
       const hasPermission = await requestPermission();
       if (!hasPermission) return null;
 
-      return new Notification(title, {
+      const merged: NotificationOptions = {
         icon: "/favicon.ico",
         badge: "/favicon.ico",
         ...options,
-      });
+      };
+
+      // Prefer Service Worker notifications (more reliable on mobile)
+      const swShown = await showViaServiceWorker(title, merged);
+      if (swShown) return null;
+
+      return new Notification(title, merged);
     },
     [requestPermission]
   );

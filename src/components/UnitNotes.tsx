@@ -47,7 +47,7 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] p-0 overflow-hidden">
+        <DialogContent className="w-[95vw] max-w-2xl max-h-[85dvh] p-0 overflow-hidden">
           <DialogHeader className="p-6 pb-0">
             <DialogTitle className="flex items-center gap-2">
               <BookOpen className="w-5 h-5 text-primary" />
@@ -55,10 +55,10 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex h-[60vh]">
+          <div className="flex flex-col sm:flex-row h-[70dvh] sm:h-[60vh]">
             {/* Notes List */}
-            <div className="w-1/3 border-r border-border bg-muted/30">
-              <ScrollArea className="h-full">
+            <div className="w-full sm:w-1/3 sm:border-r border-border bg-muted/30">
+              <ScrollArea className="h-[22dvh] sm:h-full">
                 <div className="p-3 space-y-2">
                   {isLoading ? (
                     <p className="text-sm text-muted-foreground p-2">Loading...</p>
@@ -84,8 +84,8 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
             </div>
 
             {/* Note Content */}
-            <div className="flex-1">
-              <ScrollArea className="h-full">
+            <div className="flex-1 min-w-0">
+              <ScrollArea className="h-[48dvh] sm:h-full">
                 {selectedNote ? (
                   <div className="p-6">
                     <h2 className="text-xl font-bold mb-4">{selectedNote.title}</h2>

@@ -2,6 +2,19 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+function isoDate(d: Date) {
+  return d.toISOString().split("T")[0];
+}
+
+// Week resets on Sunday (use local time to match UX)
+export function getWeekStartSundayISO(now = new Date()) {
+  const d = new Date(now);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay(); // 0 = Sunday
+  d.setDate(d.getDate() - day);
+  return isoDate(d);
+}
+
 export interface Quest {
   id: string;
   title: string;
@@ -46,7 +59,8 @@ export function useQuestProgress() {
     queryFn: async () => {
       if (!user) return [];
       
-      const today = new Date().toISOString().split("T")[0];
+      const today = isoDate(new Date());
+      const weekStart = getWeekStartSundayISO();
       
       const { data, error } = await supabase
         .from("user_quest_progress")
@@ -55,7 +69,7 @@ export function useQuestProgress() {
           quest:daily_quests(*)
         `)
         .eq("user_id", user.id)
-        .eq("quest_date", today);
+        .in("quest_date", [today, weekStart]);
       
       if (error) throw error;
       return data as (QuestProgress & { quest: Quest })[];
@@ -72,18 +86,19 @@ export function useInitializeQuestProgress() {
     mutationFn: async (quests: Quest[]) => {
       if (!user) throw new Error("Not authenticated");
       
-      const today = new Date().toISOString().split("T")[0];
+      const today = isoDate(new Date());
+      const weekStart = getWeekStartSundayISO();
       
-      // Check existing progress for today
+      // Check existing progress for today (daily) and this week start (weekly)
       const { data: existing } = await supabase
         .from("user_quest_progress")
         .select("quest_id")
         .eq("user_id", user.id)
-        .eq("quest_date", today);
+        .in("quest_date", [today, weekStart]);
       
       const existingQuestIds = new Set(existing?.map((p) => p.quest_id) || []);
       
-      // Create progress entries for new quests
+      // Create progress entries for new quests (daily uses today, weekly uses weekStart)
       const newEntries = quests
         .filter((q) => !existingQuestIds.has(q.id))
         .map((quest) => ({
@@ -92,7 +107,7 @@ export function useInitializeQuestProgress() {
           current_value: 0,
           completed: false,
           claimed: false,
-          quest_date: today,
+          quest_date: quest.is_weekly ? weekStart : today,
         }));
       
       if (newEntries.length > 0) {
@@ -125,24 +140,26 @@ export function useUpdateQuestProgress() {
     }) => {
       if (!user) throw new Error("Not authenticated");
       
-      const today = new Date().toISOString().split("T")[0];
+      const today = isoDate(new Date());
+      const weekStart = getWeekStartSundayISO();
       
-      // Get all quests of this type
+      // Get all quests of this type (daily + weekly)
       const { data: quests } = await supabase
         .from("daily_quests")
-        .select("id, target_value")
+        .select("id, target_value, is_weekly")
         .eq("quest_type", questType);
       
       if (!quests || quests.length === 0) return;
       
       // Update progress for each matching quest
       for (const quest of quests) {
+        const questDate = quest.is_weekly ? weekStart : today;
         const { data: progress } = await supabase
           .from("user_quest_progress")
           .select("*")
           .eq("user_id", user.id)
           .eq("quest_id", quest.id)
-          .eq("quest_date", today)
+          .eq("quest_date", questDate)
           .maybeSingle();
         
         if (progress && !progress.claimed) {

@@ -5,9 +5,13 @@ import { Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { HeartTimer } from "@/components/HeartTimer";
 import { LeagueTimer } from "@/components/LeagueTimer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useState } from "react";
+import { StreakCalendar } from "@/components/StreakCalendar";
 
 export function UserProgress() {
   const { data: profile, isLoading } = useUserProfile();
+  const [streakOpen, setStreakOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -35,7 +39,12 @@ export function UserProgress() {
       <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
         <div className="grid grid-cols-2 gap-4">
           {/* Streak */}
-          <div className="flex items-center gap-3 p-3 bg-accent/10 rounded-xl">
+          <button
+            type="button"
+            onClick={() => setStreakOpen(true)}
+            className="flex items-center gap-3 p-3 bg-accent/10 rounded-xl text-left hover:bg-accent/15 transition-colors"
+            aria-label="Open streak calendar"
+          >
             <div className="flex items-center justify-center w-10 h-10 bg-accent rounded-lg">
               <Flame className="w-5 h-5 text-accent-foreground" />
             </div>
@@ -43,7 +52,7 @@ export function UserProgress() {
               <p className="text-2xl font-extrabold text-accent">{streak}</p>
               <p className="text-xs text-muted-foreground font-semibold">Day streak</p>
             </div>
-          </div>
+          </button>
 
           {/* XP */}
           <div className="flex items-center gap-3 p-3 bg-golden/10 rounded-xl">
@@ -117,6 +126,21 @@ export function UserProgress() {
         </div>
         <Progress value={dailyProgress} size="lg" indicatorColor="gradient" />
       </div>
+
+      {/* Streak calendar dialog (only) */}
+      <Dialog open={streakOpen} onOpenChange={setStreakOpen}>
+        <DialogContent className="w-[95vw] max-w-xl max-h-[90dvh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>Streak</DialogTitle>
+          </DialogHeader>
+          <StreakCalendar
+            currentStreak={streak}
+            lastPracticeDate={profile?.last_practice_date || null}
+            streakFreezeCount={profile?.streak_freeze_count || 0}
+            lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

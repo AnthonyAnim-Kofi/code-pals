@@ -250,34 +250,34 @@ export default function Admin() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-slate-800 border border-slate-700 p-1 mb-6">
+          <TabsList className="bg-slate-800 border border-slate-700 p-1 mb-6 w-full overflow-x-auto flex flex-nowrap justify-start gap-1">
             <TabsTrigger value="users" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Users className="w-4 h-4 mr-2" />
-              Users
+              <span className="whitespace-nowrap">Users</span>
             </TabsTrigger>
             <TabsTrigger value="languages" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Languages className="w-4 h-4 mr-2" />
-              Languages
+              <span className="whitespace-nowrap">Languages</span>
             </TabsTrigger>
             <TabsTrigger value="content" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <BookOpen className="w-4 h-4 mr-2" />
-              Content
+              <span className="whitespace-nowrap">Content</span>
             </TabsTrigger>
             <TabsTrigger value="notes" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
-              Notes
+              <span className="whitespace-nowrap">Notes</span>
             </TabsTrigger>
             <TabsTrigger value="quests" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Target className="w-4 h-4 mr-2" />
-              Quests
+              <span className="whitespace-nowrap">Quests</span>
             </TabsTrigger>
             <TabsTrigger value="leagues" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Trophy className="w-4 h-4 mr-2" />
-              Leagues
+              <span className="whitespace-nowrap">Leagues</span>
             </TabsTrigger>
             <TabsTrigger value="import" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Upload className="w-4 h-4 mr-2" />
-              Import
+              <span className="whitespace-nowrap">Import</span>
             </TabsTrigger>
           </TabsList>
 

@@ -19,6 +19,7 @@ export default function Shop() {
   const purchaseDoubleXP = usePurchaseDoubleXP();
 
   const gems = profile?.gems ?? 0;
+  const streakFreezes = profile?.streak_freeze_count ?? 0;
 
   const shopItems = [
     {
@@ -36,7 +37,7 @@ export default function Shop() {
     {
       id: 2,
       title: "Streak Freeze",
-      description: "Protect your streak for one day",
+      description: `Protect your streak if you miss a day (You have ${streakFreezes})`,
       icon: Zap,
       price: 200,
       currency: "gems",

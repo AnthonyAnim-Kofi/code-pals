@@ -2,4 +2,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Ignore SW registration failures (e.g., dev mode)
+    });
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
