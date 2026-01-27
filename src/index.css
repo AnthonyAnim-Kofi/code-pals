@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
 @layer base {
   :root {
@@ -129,24 +129,43 @@
   .mobile-attendance-surface {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
-    padding: 16px 16px 24px;
+    min-height: 100dvh;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 16px)
+      calc(env(safe-area-inset-right, 0px) + 16px)
+      calc(env(safe-area-inset-bottom, 0px) + 24px)
+      calc(env(safe-area-inset-left, 0px) + 16px);
   }
 
-  /* Give every page a consistent card-like surface on mobile. */
-  .mobile-attendance-surface > * {
+  /* Center the app on larger phones while staying fluid */
+  .mobile-attendance-container {
+    width: 100%;
+    max-width: 540px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Card surface wrapper (avoid styling arbitrary child trees) */
+  .mobile-attendance-card {
     background: rgba(255, 255, 255, 0.92);
     border: 1px solid rgba(255, 255, 255, 0.35);
-    border-radius: 24px;
+    border-radius: clamp(18px, 4vw, 28px);
     box-shadow:
       0 12px 35px rgba(0, 0, 0, 0.12),
       0 4px 0 rgba(0, 0, 0, 0.06);
-    overflow: hidden;
+    overflow: clip;
+    min-height: calc(100dvh - (env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px) + 40px));
   }
 
-  /* On mobile, many pages already have their own padding; avoid double padding. */
-  .mobile-attendance-surface > * > * {
-    border-radius: inherit;
+  /* Small phones: tighter padding */
+  @media (max-width: 360px) {
+    .mobile-attendance-surface {
+      padding:
+        calc(env(safe-area-inset-top, 0px) + 12px)
+        calc(env(safe-area-inset-right, 0px) + 12px)
+        calc(env(safe-area-inset-bottom, 0px) + 18px)
+        calc(env(safe-area-inset-left, 0px) + 12px);
+    }
   }
 
   /* Desktop/tablet: disable the mobile shell effects */
@@ -158,12 +177,17 @@
       padding: 0;
       min-height: auto;
     }
-    .mobile-attendance-surface > * {
+    .mobile-attendance-container {
+      max-width: none;
+      margin: 0;
+    }
+    .mobile-attendance-card {
       background: transparent;
       border: 0;
       border-radius: 0;
       box-shadow: none;
       overflow: visible;
+      min-height: auto;
     }
   }
 
