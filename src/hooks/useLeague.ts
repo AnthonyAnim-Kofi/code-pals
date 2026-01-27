@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -35,6 +36,32 @@ export const LEAGUES = [
 
 export function useLeagueLeaderboard(league?: string) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  // Set up realtime subscription
+  useEffect(() => {
+    if (!user) return;
+    
+    const channel = supabase
+      .channel('leaderboard-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+        },
+        () => {
+          // Invalidate query to refetch leaderboard data
+          queryClient.invalidateQueries({ queryKey: ["league-leaderboard", league] });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, league, queryClient]);
   
   return useQuery({
     queryKey: ["league-leaderboard", league],

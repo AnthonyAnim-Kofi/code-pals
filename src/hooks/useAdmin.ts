@@ -432,3 +432,55 @@ export function useDeleteLesson() {
     },
   });
 }
+
+// Admin - Delete unit (cascade deletes lessons and questions)
+export function useDeleteUnit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ unitId, languageId }: { unitId: string; languageId: string }) => {
+      // First delete all lessons in the unit (questions will cascade)
+      const { data: lessons } = await supabase
+        .from("lessons")
+        .select("id")
+        .eq("unit_id", unitId);
+      
+      if (lessons && lessons.length > 0) {
+        for (const lesson of lessons) {
+          // Delete questions for each lesson
+          await supabase
+            .from("questions")
+            .delete()
+            .eq("lesson_id", lesson.id);
+        }
+        
+        // Delete all lessons
+        await supabase
+          .from("lessons")
+          .delete()
+          .eq("unit_id", unitId);
+      }
+      
+      // Delete unit notes
+      await supabase
+        .from("unit_notes")
+        .delete()
+        .eq("unit_id", unitId);
+      
+      // Finally delete the unit
+      const { error } = await supabase
+        .from("units")
+        .delete()
+        .eq("id", unitId);
+
+      if (error) throw error;
+      return languageId;
+    },
+    onSuccess: (languageId) => {
+      queryClient.invalidateQueries({ queryKey: ["units", languageId] });
+      queryClient.invalidateQueries({ queryKey: ["lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["unit-notes"] });
+    },
+  });
+}

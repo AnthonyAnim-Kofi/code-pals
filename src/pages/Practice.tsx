@@ -1,30 +1,61 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { BookOpen, RotateCcw, CheckCircle, Loader2, Lock, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLessonProgress } from "@/hooks/useUserProgress";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-const lessonData = [
-  { id: 1, title: "Hello, Python!", description: "Learn to write your first Python code" },
-  { id: 2, title: "Variables & Data", description: "Store and manipulate data" },
-  { id: 3, title: "Conditionals", description: "Make decisions with if/else" },
-  { id: 4, title: "Loops", description: "Repeat actions with for and while" },
-  { id: 5, title: "Functions", description: "Create reusable code blocks" },
-  { id: 6, title: "Lists & Arrays", description: "Work with collections of data" },
-];
+interface DatabaseLesson {
+  id: string;
+  title: string;
+  unit_id: string;
+  order_index: number;
+  units: {
+    title: string;
+  };
+}
 
 export default function Practice() {
   const navigate = useNavigate();
-  const { data: lessonProgress, isLoading } = useLessonProgress();
+  const { user } = useAuth();
+  const { data: lessonProgress, isLoading: progressLoading } = useLessonProgress();
+  
+  // Fetch completed lessons from database with unit info
+  const { data: dbLessons, isLoading: lessonsLoading } = useQuery({
+    queryKey: ["all-lessons-for-practice"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lessons")
+        .select(`
+          id,
+          title,
+          unit_id,
+          order_index,
+          units!inner (
+            title
+          )
+        `)
+        .eq("is_active", true)
+        .order("order_index", { ascending: true });
+      
+      if (error) throw error;
+      return data as DatabaseLesson[];
+    },
+    enabled: !!user,
+  });
   
   const completedLessons = lessonProgress?.filter(p => p.completed) || [];
-  const completedIds = new Set(completedLessons.map(p => p.lesson_id));
+  const completedIds = new Set(completedLessons.map(p => String(p.lesson_id)));
 
-  const handlePractice = (lessonId: number) => {
+  const handlePractice = (lessonId: string) => {
     // Navigate to lesson in practice mode (no heart deduction)
     navigate(`/lesson/${lessonId}?mode=practice`);
   };
+
+  const isLoading = progressLoading || lessonsLoading;
 
   if (isLoading) {
     return (
@@ -33,6 +64,11 @@ export default function Practice() {
       </div>
     );
   }
+
+  // Filter to only show completed lessons
+  const practiceableLessons = dbLessons?.filter(lesson => 
+    completedIds.has(lesson.id) || completedIds.has(String(lesson.order_index + 1))
+  ) || [];
 
   return (
     <div className="space-y-8">
@@ -64,7 +100,7 @@ export default function Practice() {
           <div>
             <p className="font-bold text-foreground">Lessons Available</p>
             <p className="text-sm text-muted-foreground">
-              {completedLessons.length} of {lessonData.length} completed
+              {practiceableLessons.length} lessons ready to practice
             </p>
           </div>
         </div>
@@ -78,53 +114,39 @@ export default function Practice() {
         </h2>
         
         <div className="grid gap-4 sm:grid-cols-2">
-          {lessonData.map((lesson) => {
-            const isCompleted = completedIds.has(lesson.id);
-            const progress = completedLessons.find(p => p.lesson_id === lesson.id);
+          {practiceableLessons.map((lesson) => {
+            const progress = completedLessons.find(p => 
+              String(p.lesson_id) === lesson.id || p.lesson_id === lesson.order_index + 1
+            );
             
             return (
               <div
                 key={lesson.id}
-                className={cn(
-                  "p-4 rounded-2xl border transition-all",
-                  isCompleted
-                    ? "bg-card border-border hover:border-primary/50 cursor-pointer"
-                    : "bg-muted/50 border-border opacity-60"
-                )}
+                className="p-4 rounded-2xl border transition-all bg-card border-border hover:border-primary/50 cursor-pointer"
               >
                 <div className="flex items-start gap-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold",
-                    isCompleted
-                      ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  )}>
-                    {isCompleted ? lesson.id : <Lock className="w-5 h-5" />}
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+                    {lesson.order_index + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "font-bold",
-                      isCompleted ? "text-foreground" : "text-muted-foreground"
-                    )}>
+                    <p className="font-bold text-foreground">
                       {lesson.title}
                     </p>
-                    <p className="text-sm text-muted-foreground">{lesson.description}</p>
+                    <p className="text-sm text-muted-foreground">{lesson.units.title}</p>
                     {progress && (
                       <p className="text-xs text-muted-foreground mt-1">
                         Best: {progress.accuracy}% accuracy • {progress.xp_earned} XP
                       </p>
                     )}
                   </div>
-                  {isCompleted && (
-                    <Button
-                      size="sm"
-                      onClick={() => handlePractice(lesson.id)}
-                      className="rounded-lg shrink-0"
-                    >
-                      <Play className="w-4 h-4 mr-1" />
-                      Practice
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    onClick={() => handlePractice(lesson.id)}
+                    className="rounded-lg shrink-0"
+                  >
+                    <Play className="w-4 h-4 mr-1" />
+                    Practice
+                  </Button>
                 </div>
               </div>
             );
@@ -133,7 +155,7 @@ export default function Practice() {
       </div>
 
       {/* Empty State */}
-      {completedLessons.length === 0 && (
+      {practiceableLessons.length === 0 && (
         <div className="p-8 bg-card rounded-2xl border border-border text-center">
           <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-bold text-foreground mb-2">No lessons completed yet</h3>

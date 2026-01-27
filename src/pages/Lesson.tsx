@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import { X, Heart, Loader2 } from "lucide-react";
+import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { X, Heart, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LessonComplete } from "@/components/LessonComplete";
@@ -75,8 +75,12 @@ const fallbackLessonData = {
 
 export default function Lesson() {
   const { lessonId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { playCorrect, playIncorrect, playComplete } = useSoundEffects();
+  
+  // Check if we're in practice mode
+  const isPracticeMode = searchParams.get('mode') === 'practice';
 
   const { data: profile } = useUserProfile();
   const { data: lessonFromDb, isLoading: loadingLesson } = useLessonData(lessonId);
@@ -172,9 +176,14 @@ export default function Lesson() {
       setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
-      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      if (!isPracticeMode) {
+        updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      }
     } else {
-      deductHeart.mutate();
+      // Don't deduct hearts in practice mode
+      if (!isPracticeMode) {
+        deductHeart.mutate();
+      }
       playIncorrect();
     }
   };
@@ -190,12 +199,17 @@ export default function Lesson() {
       setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
-      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      if (!isPracticeMode) {
+        updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      }
     } else {
-      deductHeart.mutate();
+      // Don't deduct hearts in practice mode
+      if (!isPracticeMode) {
+        deductHeart.mutate();
+      }
       playIncorrect();
     }
-  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode]);
 
   const handleCodeRunnerAnswer = useCallback((isCorrect: boolean) => {
     setCodeRunnerChecked(true);
@@ -208,12 +222,17 @@ export default function Lesson() {
       setXpEarned((prev) => prev + xpReward);
       setCorrectAnswers((prev) => prev + 1);
       playCorrect();
-      updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      if (!isPracticeMode) {
+        updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
+      }
     } else {
-      deductHeart.mutate();
+      // Don't deduct hearts in practice mode
+      if (!isPracticeMode) {
+        deductHeart.mutate();
+      }
       playIncorrect();
     }
-  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress]);
+  }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode]);
 
   const handleContinue = async () => {
     // Mark current question as answered
@@ -229,16 +248,19 @@ export default function Lesson() {
       // Use the database lesson ID if available
       const dbLessonId = lessonFromDb?.id || lessonId;
       
-      await saveLessonProgress.mutateAsync({
-        lessonId: parseInt(dbLessonId || "1"),
-        xpEarned,
-        accuracy,
-      });
+      // In practice mode, don't save progress or add XP
+      if (!isPracticeMode) {
+        await saveLessonProgress.mutateAsync({
+          lessonId: parseInt(dbLessonId || "1"),
+          xpEarned,
+          accuracy,
+        });
 
-      await addXP.mutateAsync(xpEarned);
+        await addXP.mutateAsync(xpEarned);
 
-      updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
-      updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
+        updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
+        updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
+      }
 
       // Clear partial progress since lesson is complete
       if (lessonId) {
@@ -323,10 +345,18 @@ export default function Lesson() {
             <div className="flex-1">
               <Progress value={progress} size="default" indicatorColor="gradient" />
             </div>
+            
+            {/* Practice Mode Indicator */}
+            {isPracticeMode && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-secondary/20 rounded-lg text-secondary text-sm font-semibold">
+                <RotateCcw className="w-4 h-4" />
+                Practice
+              </div>
+            )}
 
             <div className="flex items-center gap-1 text-destructive">
               <Heart className="w-5 h-5 fill-current" />
-              <span className="font-bold">{hearts}</span>
+              <span className="font-bold">{isPracticeMode ? "∞" : hearts}</span>
             </div>
           </div>
         </div>

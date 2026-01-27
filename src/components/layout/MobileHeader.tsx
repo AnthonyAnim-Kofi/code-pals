@@ -4,13 +4,12 @@ import {
   Trophy, 
   Target, 
   ShoppingBag,
-  Heart,
   Flame,
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProgress";
-import { HeartTimer } from "@/components/HeartTimer";
+import { HeartTimerPopover } from "@/components/HeartTimerPopover";
 import { MobileMoreMenu } from "./MobileMoreMenu";
 
 const navItems = [
@@ -46,25 +45,21 @@ export function MobileHeader() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1 text-accent font-bold text-sm">
+            <Link to="/profile" className="flex items-center gap-1 text-accent font-bold text-sm">
               <Flame className="w-5 h-5" />
               <span>{streak}</span>
-            </div>
+            </Link>
             <div className="flex items-center gap-1 text-golden font-bold text-sm">
               <Zap className="w-5 h-5" />
               <span>{gems.toLocaleString()}</span>
             </div>
-            <div className="flex items-center gap-1 text-destructive font-bold text-sm">
-              <Heart className="w-5 h-5 fill-current" />
-              <span>{hearts}</span>
-              {hearts < 5 && <HeartTimer compact />}
-            </div>
+            <HeartTimerPopover hearts={hearts} compact />
           </div>
         </div>
       </header>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border pb-safe">
+      {/* Bottom Navigation - Fixed and always visible */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-card border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-center justify-around h-16">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
