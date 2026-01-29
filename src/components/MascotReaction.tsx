@@ -35,7 +35,7 @@ export function MascotReaction({ reaction, message }: MascotReactionProps) {
       >
         <img
           src={mascotImage}
-          alt="CodeOwl mascot"
+          alt="CodeBear mascot"
           className={cn(
             "w-full h-full object-cover transition-transform duration-300",
             reaction === "correct" && "scale-110",

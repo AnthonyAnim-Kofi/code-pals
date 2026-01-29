@@ -50,7 +50,7 @@ export default function Signup() {
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
             <Code2 className="w-6 h-6 text-primary-foreground" />
           </div>
-          <span className="text-xl font-extrabold text-foreground">CodeOwl</span>
+          <span className="text-xl font-extrabold text-foreground">CodeBear</span>
         </Link>
       </header>
 
@@ -58,7 +58,7 @@ export default function Signup() {
         <div className="w-full max-w-md">
           {/* Mascot */}
           <div className="flex justify-center mb-6">
-            <img src={mascot} alt="CodeOwl" className="w-24 h-24 animate-bounce-gentle" />
+            <img src={mascot} alt="CodeBear" className="w-24 h-24 animate-bounce-gentle" />
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-8 card-elevated">
