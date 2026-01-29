@@ -140,7 +140,7 @@ export default function Shop() {
           </div>
           <div>
             <h2 className="text-xl font-extrabold text-premium-foreground mb-1">
-              CodeOwl Pro
+              CodeBear Pro
             </h2>
             <p className="text-premium-foreground/80">
               Learn without limits. Cancel anytime.

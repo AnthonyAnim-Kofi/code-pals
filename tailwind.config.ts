@@ -111,7 +111,7 @@ export default {
         shimmer: "shimmer 2s linear infinite",
       },
       boxShadow: {
-        "button-primary": "0 4px 0 hsl(100, 76%, 30%)",
+        "button-primary": "0 4px 0 hsl(40, 100%, 35%)",
         "button-secondary": "0 4px 0 hsl(199, 89%, 35%)",
         "button-outline": "0 4px 0 hsl(220, 13%, 80%)",
         "card-elevated": "0 4px 0 hsl(220, 13%, 85%)",

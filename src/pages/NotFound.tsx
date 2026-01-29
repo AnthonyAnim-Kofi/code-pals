@@ -16,7 +16,7 @@ const NotFound = () => {
       <div className="text-center max-w-md">
         <img 
           src={mascot} 
-          alt="Lost CodeOwl" 
+          alt="Lost CodeBear" 
           className="w-40 h-40 mx-auto mb-6 animate-bounce-gentle opacity-80"
         />
         <h1 className="text-6xl font-extrabold text-foreground mb-4">404</h1>

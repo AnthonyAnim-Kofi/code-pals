@@ -65,7 +65,7 @@ export function Sidebar() {
           <Code2 className="w-6 h-6 text-sidebar-primary-foreground" />
         </div>
         <span className="text-xl font-extrabold text-sidebar-foreground">
-          CodeOwl
+          CodeBear
         </span>
       </Link>
 
@@ -130,7 +130,7 @@ export function Sidebar() {
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent">
           <img 
             src={mascot} 
-            alt="CodeOwl mascot" 
+            alt="CodeBear mascot" 
             className="w-12 h-12 object-contain"
           />
           <div>

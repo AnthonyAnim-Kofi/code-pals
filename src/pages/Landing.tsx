@@ -44,7 +44,7 @@ export default function Landing() {
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
                 <Code2 className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-extrabold text-foreground">CodeOwl</span>
+              <span className="text-xl font-extrabold text-foreground">CodeBear</span>
             </Link>
 
             <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ export default function Landing() {
 
             {/* Mascot */}
             <div className="flex-1 flex justify-center">
-              <img src={mascot} alt="CodeOwl mascot" className="w-64 lg:w-80 animate-float drop-shadow-2xl" />
+              <img src={mascot} alt="CodeBear mascot" className="w-64 lg:w-80 animate-float drop-shadow-2xl" />
             </div>
           </div>
         </div>
@@ -127,7 +127,7 @@ export default function Landing() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-extrabold text-center text-foreground mb-4">
-            Why learners love CodeOwl
+            Why learners love CodeBear
           </h2>
           <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
             Our unique approach makes learning to code as addictive as your favorite game
@@ -146,7 +146,7 @@ export default function Landing() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-gradient-to-r from-primary to-[hsl(120,70%,35%)]">
+      <section className="py-20 bg-gradient-to-r from-primary to-[hsl(40,100%,45%)]">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-extrabold text-primary-foreground mb-4">
             Start your coding journey today
@@ -171,10 +171,10 @@ export default function Landing() {
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sidebar-primary">
                 <Code2 className="w-5 h-5 text-sidebar-primary-foreground" />
               </div>
-              <span className="font-bold text-sidebar-foreground">CodeOwl</span>
+              <span className="font-bold text-sidebar-foreground">CodeBear</span>
             </div>
             <p className="text-sm text-sidebar-foreground/70">
-              © 2025 CodeOwl. Learn to code the fun way.
+              © 2025 CodeBear. Learn to code the fun way.
             </p>
           </div>
         </div>
