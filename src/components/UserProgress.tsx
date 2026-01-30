@@ -129,16 +129,15 @@ export function UserProgress() {
 
       {/* Streak calendar dialog (only) */}
       <Dialog open={streakOpen} onOpenChange={setStreakOpen}>
-        <DialogContent className="w-[95vw] max-w-xl max-h-[90dvh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle>Streak</DialogTitle>
-          </DialogHeader>
-          <StreakCalendar
-            currentStreak={streak}
-            lastPracticeDate={profile?.last_practice_date || null}
-            streakFreezeCount={profile?.streak_freeze_count || 0}
-            lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
-          />
+        <DialogContent className="w-[95vw] max-w-md max-h-[85dvh] overflow-auto p-0">
+          <div className="p-6">
+            <StreakCalendar
+              currentStreak={streak}
+              lastPracticeDate={profile?.last_practice_date || null}
+              streakFreezeCount={profile?.streak_freeze_count || 0}
+              lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

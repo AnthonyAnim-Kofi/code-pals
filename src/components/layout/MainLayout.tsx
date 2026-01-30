@@ -3,6 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { MobileHeader } from "./MobileHeader";
 import { UserProgress } from "@/components/UserProgress";
 import { NotificationManager } from "@/components/NotificationManager";
+import { UsernamePrompt } from "@/components/UsernamePrompt";
 import { useLeagueNotifications } from "@/hooks/useLeagueNotifications";
 
 export function MainLayout() {
@@ -12,6 +13,7 @@ export function MainLayout() {
   return (
     <div className="min-h-screen bg-background">
       <NotificationManager />
+      <UsernamePrompt />
       <Sidebar />
       <MobileHeader />
       
