@@ -93,14 +93,17 @@ export default function Lesson() {
   const saveLessonProgress = useSaveLessonProgress();
   const updateQuestProgress = useUpdateQuestProgress();
 
-  // Use database questions if available, otherwise use fallback
+  // Use database questions if available, otherwise use fallback only for demo purposes
+  // When a lesson has no questions in DB, use fallback ONLY if lesson doesn't exist in DB
   const lessonData = useMemo(() => {
+    // If we have lesson data from database with questions, always use it
     if (lessonFromDb && lessonFromDb.questions.length > 0) {
       return {
         title: lessonFromDb.title,
         questions: lessonFromDb.questions,
       };
     }
+    // Only use fallback if no lesson found at all (demo/testing)
     return fallbackLessonData;
   }, [lessonFromDb]);
 

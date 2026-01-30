@@ -4,12 +4,12 @@ import {
   Trophy, 
   Target, 
   ShoppingBag,
-  Flame,
   Zap
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { HeartTimerPopover } from "@/components/HeartTimerPopover";
+import { StreakPopover } from "@/components/StreakPopover";
 import { MobileMoreMenu } from "./MobileMoreMenu";
 
 const navItems = [
@@ -45,10 +45,7 @@ export function MobileHeader() {
           </Link>
 
           <div className="flex items-center gap-4">
-            <Link to="/profile" className="flex items-center gap-1 text-accent font-bold text-sm">
-              <Flame className="w-5 h-5" />
-              <span>{streak}</span>
-            </Link>
+            <StreakPopover streak={streak} />
             <div className="flex items-center gap-1 text-golden font-bold text-sm">
               <Zap className="w-5 h-5" />
               <span>{gems.toLocaleString()}</span>
