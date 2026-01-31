@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble } from "@/components/LessonBubble";
 import { useLessonProgress } from "@/hooks/useUserProgress";
@@ -10,12 +11,26 @@ import { Lock } from "lucide-react";
 const positionPattern: ("center" | "left" | "right")[] = ["center", "left", "right", "center", "right", "left"];
 
 export default function Learn() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const languageParam = searchParams.get("language");
   const { data: languages = [], isLoading: languagesLoading } = useLanguages();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   
-  // Auto-select first language
-  const activeLanguage = selectedLanguage || languages[0]?.id || null;
+  // Sync URL ?language= with selected language
+  useEffect(() => {
+    if (languageParam && languages.some((l) => l.id === languageParam)) {
+      setSelectedLanguage(languageParam);
+    }
+  }, [languageParam, languages]);
+  
+  // Auto-select first language when none selected
+  const activeLanguage = selectedLanguage || languageParam || languages[0]?.id || null;
   const currentLanguage = languages.find(l => l.id === activeLanguage);
+
+  const handleLanguageChange = (value: string) => {
+    setSelectedLanguage(value);
+    setSearchParams(value ? { language: value } : {});
+  };
   
   const { data: units = [], isLoading: unitsLoading } = useUnitsForLanguage(activeLanguage);
   const { data: lessonProgress = [] } = useLessonProgress();
@@ -131,7 +146,7 @@ export default function Learn() {
         </div>
         
         {languages.length > 1 && (
-          <Select value={activeLanguage || undefined} onValueChange={setSelectedLanguage}>
+          <Select value={activeLanguage || undefined} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select language" />
             </SelectTrigger>
@@ -371,23 +386,23 @@ function DatabaseUnit({
         description={unit.description || ""}
         color={colorMap[unit.color] || "green"}
         isActive={isUnitActive}
-        currentLessonId={currentLessonId ? Number(currentLessonId.slice(-4)) : undefined}
+        currentLessonId={currentLessonId ?? undefined}
         unitId={unit.id}
         completedLessons={completedLessonsCount}
         totalLessons={lessons.length}
       />
 
-      <div className="flex flex-col items-center space-y-6 py-4">
-        {lessons.map((lesson, lessonIndex) => (
-          <LessonBubble
-            key={lesson.id}
-            id={lessonIndex + 1 + (unitIndex * 10)} // Generate numeric ID for routing
-            status={getLessonStatus(lesson.id, lessonIndex)}
-            position={positionPattern[lessonIndex % positionPattern.length]}
-            lessonNumber={lessonIndex + 1}
-          />
-        ))}
-      </div>
+                <div className="flex flex-col items-center space-y-6 py-4">
+                  {lessons.map((lesson, lessonIndex) => (
+                    <LessonBubble
+                      key={lesson.id}
+                      id={lesson.id}
+                      status={getLessonStatus(lesson.id, lessonIndex)}
+                      position={positionPattern[lessonIndex % positionPattern.length]}
+                      lessonNumber={lessonIndex + 1}
+                    />
+                  ))}
+                </div>
 
       {unitIndex < totalUnits - 1 && (
         <div className="flex justify-center">

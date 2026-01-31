@@ -239,7 +239,7 @@ export type Database = {
           completed_at: string | null
           created_at: string
           id: string
-          lesson_id: number
+          lesson_id: string
           user_id: string
           xp_earned: number
         }
@@ -249,7 +249,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
-          lesson_id: number
+          lesson_id: string
           user_id: string
           xp_earned?: number
         }
@@ -259,7 +259,7 @@ export type Database = {
           completed_at?: string | null
           created_at?: string
           id?: string
-          lesson_id?: number
+          lesson_id?: string
           user_id?: string
           xp_earned?: number
         }

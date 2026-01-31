@@ -3,7 +3,8 @@ import { Check, Lock, Star, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LessonBubbleProps {
-  id: number;
+  /** Lesson ID for the link (UUID string from DB, or number for fallback) */
+  id: string | number;
   status: "complete" | "current" | "locked";
   position: "left" | "center" | "right";
   lessonNumber: number;
@@ -47,7 +48,7 @@ export function LessonBubble({ id, status, position, lessonNumber }: LessonBubbl
 
   if (isClickable) {
     return (
-      <Link to={`/lesson/${id}`} className="flex justify-center">
+      <Link to={`/lesson/${String(id)}`} className="flex justify-center">
         {bubbleContent}
       </Link>
     );

@@ -10,7 +10,8 @@ interface UnitBannerProps {
   description: string;
   color: "green" | "blue" | "orange" | "purple";
   isActive?: boolean;
-  currentLessonId?: number;
+  /** Lesson ID for Continue link (UUID string from DB, or number for fallback) */
+  currentLessonId?: string | number;
   unitId?: string;
   completedLessons?: number;
   totalLessons?: number;
@@ -61,7 +62,7 @@ export function UnitBanner({
               className="shadow-none"
               asChild
             >
-              <Link to={`/lesson/${currentLessonId}`}>
+              <Link to={`/lesson/${String(currentLessonId)}`}>
                 <BookOpen className="w-5 h-5" />
                 Continue
               </Link>

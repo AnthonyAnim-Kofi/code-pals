@@ -213,7 +213,7 @@ export function useSaveLessonProgress() {
       xpEarned,
       accuracy,
     }: {
-      lessonId: number;
+      lessonId: string;
       xpEarned: number;
       accuracy: number;
     }) => {

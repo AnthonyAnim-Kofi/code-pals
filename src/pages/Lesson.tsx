@@ -93,17 +93,16 @@ export default function Lesson() {
   const saveLessonProgress = useSaveLessonProgress();
   const updateQuestProgress = useUpdateQuestProgress();
 
-  // Use database questions if available, otherwise use fallback only for demo purposes
-  // When a lesson has no questions in DB, use fallback ONLY if lesson doesn't exist in DB
+  // Use database questions when lesson exists; only use fallback when lesson is not in DB (demo)
   const lessonData = useMemo(() => {
-    // If we have lesson data from database with questions, always use it
-    if (lessonFromDb && lessonFromDb.questions.length > 0) {
+    if (lessonFromDb) {
+      // Use admin-set questions; if none, show empty list (no hardcoded Python)
       return {
         title: lessonFromDb.title,
-        questions: lessonFromDb.questions,
+        questions: lessonFromDb.questions.length > 0 ? lessonFromDb.questions : [],
       };
     }
-    // Only use fallback if no lesson found at all (demo/testing)
+    // Only use fallback when lesson not found at all (demo/testing)
     return fallbackLessonData;
   }, [lessonFromDb]);
 
@@ -152,10 +151,11 @@ export default function Lesson() {
     }
   }, [lessonId, currentQuestion, answeredQuestions, xpEarned, correctAnswers, savePartialProgress]);
 
-  // Handle exit - save progress and navigate to correct language
+  // Handle exit - save progress and navigate to current lesson's language
   const handleExit = () => {
     saveProgress();
-    navigate("/learn");
+    const langParam = languageInfo?.id ? `?language=${languageInfo.id}` : "";
+    navigate(`/learn${langParam}`);
   };
 
   const handleCheck = async () => {
@@ -248,13 +248,13 @@ export default function Lesson() {
 
       const accuracy = Math.round((correctAnswers / lessonData.questions.length) * 100);
       
-      // Use the database lesson ID if available
-      const dbLessonId = lessonFromDb?.id || lessonId;
+      // Use the database lesson ID (UUID string)
+      const dbLessonId = lessonFromDb?.id || (typeof lessonId === "string" ? lessonId : String(lessonId));
       
       // In practice mode, don't save progress or add XP
       if (!isPracticeMode) {
         await saveLessonProgress.mutateAsync({
-          lessonId: parseInt(dbLessonId || "1"),
+          lessonId: dbLessonId,
           xpEarned,
           accuracy,
         });
@@ -310,13 +310,25 @@ export default function Lesson() {
   };
 
   const handleLessonComplete = () => {
-    navigate("/learn");
+    const langParam = languageInfo?.id ? `?language=${languageInfo.id}` : "";
+    navigate(`/learn${langParam}`);
   };
 
   if (loadingLesson) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (lessonFromDb && lessonData.questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <p className="text-muted-foreground text-center">No questions in this lesson yet.</p>
+        <Button variant="outline" className="mt-4" onClick={handleExit}>
+          Back to Learn
+        </Button>
       </div>
     );
   }

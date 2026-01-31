@@ -21,6 +21,8 @@ export function LessonComplete({
 }: LessonCompleteProps) {
   const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
   const isPerfect = accuracy === 100;
+  // 1 star >= 50%, 2 stars >= 80%, 3 stars = 100%
+  const starsEarned = totalQuestions === 0 ? 0 : accuracy >= 100 ? 3 : accuracy >= 80 ? 2 : accuracy >= 50 ? 1 : 0;
 
   useEffect(() => {
     // Trigger confetti celebration
@@ -29,6 +31,19 @@ export function LessonComplete({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/10 to-background flex flex-col items-center justify-center p-4 animate-fade-in">
+      {/* Star rating at top */}
+      <div className="flex justify-center gap-2 mb-4 animate-scale-in">
+        {[1, 2, 3].map((i) => (
+          <Star
+            key={i}
+            className={cn(
+              "w-10 h-10 transition-colors",
+              i <= starsEarned ? "text-golden fill-golden" : "text-muted-foreground/30"
+            )}
+          />
+        ))}
+      </div>
+
       {/* Celebration Header */}
       <div className="text-center mb-8">
         <div className="relative inline-block">
