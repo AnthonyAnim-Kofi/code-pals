@@ -86,7 +86,7 @@ export function HeartTimerPopover({ hearts, compact = false }: HeartTimerPopover
                   </div>
                   
                   <p className="text-xs text-center text-muted-foreground">
-                    Hearts regenerate 1 every 3 hours
+                    Hearts regenerate 1 every 50 minutes
                   </p>
                 </div>
               ) : (

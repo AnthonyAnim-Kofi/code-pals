@@ -94,6 +94,10 @@ export default function Admin() {
     hint: "",
     expected_output: "",
     initial_code: "",
+    blocks: [] as { id: string; code: string }[],
+    correct_order: [] as string[],
+    blocksJson: "", // Raw input for drag-order: [{"id":"1","code":"print(1)"},...]
+    correctOrderStr: "", // Comma-separated ids for drag-order: 1,2,3
   });
   const [newNote, setNewNote] = useState({ title: "", content: "" });
 
@@ -171,16 +175,37 @@ export default function Admin() {
   const handleCreateQuestion = async () => {
     if (!selectedLesson) return;
     try {
+      let blocks: { id: string; code: string }[] | undefined;
+      let correct_order: string[] | undefined;
+      if (newQuestion.type === "drag-order") {
+        try {
+          blocks = newQuestion.blocksJson.trim()
+            ? JSON.parse(newQuestion.blocksJson) as { id: string; code: string }[]
+            : newQuestion.blocks.length ? newQuestion.blocks : undefined;
+          correct_order = newQuestion.correctOrderStr.trim()
+            ? newQuestion.correctOrderStr.split(",").map((s) => s.trim()).filter(Boolean)
+            : newQuestion.correct_order.length ? newQuestion.correct_order : undefined;
+        } catch {
+          toast({ title: "Invalid blocks JSON for drag-order", variant: "destructive" });
+          return;
+        }
+        if (!blocks?.length || !correct_order?.length) {
+          toast({ title: "Drag-order needs blocks and correct order", variant: "destructive" });
+          return;
+        }
+      }
       await createQuestion.mutateAsync({
         lesson_id: selectedLesson,
         type: newQuestion.type as "fill-blank" | "multiple-choice" | "drag-order" | "code-runner",
         instruction: newQuestion.instruction,
-        code: newQuestion.code || undefined,
+        code: newQuestion.type === "fill-blank" ? newQuestion.code || undefined : undefined,
         answer: newQuestion.answer || undefined,
-        options: newQuestion.options.filter(o => o),
+        options: (newQuestion.type === "fill-blank" || newQuestion.type === "multiple-choice") ? newQuestion.options.filter(o => o) : undefined,
         hint: newQuestion.hint || undefined,
-        expected_output: newQuestion.expected_output || undefined,
-        initial_code: newQuestion.initial_code || undefined,
+        expected_output: newQuestion.type === "code-runner" ? newQuestion.expected_output || undefined : undefined,
+        initial_code: newQuestion.type === "code-runner" ? (newQuestion.initial_code || newQuestion.code) || undefined : undefined,
+        blocks: newQuestion.type === "drag-order" ? blocks : undefined,
+        correct_order: newQuestion.type === "drag-order" ? correct_order : undefined,
         order_index: questions.length,
         xp_reward: 10,
       });
@@ -193,6 +218,10 @@ export default function Admin() {
         hint: "",
         expected_output: "",
         initial_code: "",
+        blocks: [],
+        correct_order: [],
+        blocksJson: "",
+        correctOrderStr: "",
       });
       toast({ title: "Question created successfully!" });
     } catch (error) {
@@ -623,20 +652,44 @@ export default function Admin() {
                     </div>
                     {(newQuestion.type === "fill-blank" || newQuestion.type === "code-runner") && (
                       <div className="md:col-span-2">
-                        <Label>Code Template</Label>
+                        <Label>{newQuestion.type === "code-runner" ? "Initial code" : "Code Template"}</Label>
                         <Textarea
-                          value={newQuestion.code || newQuestion.initial_code}
+                          value={newQuestion.type === "code-runner" ? (newQuestion.initial_code || newQuestion.code) : newQuestion.code}
                           onChange={(e) =>
                             setNewQuestion({
                               ...newQuestion,
                               code: e.target.value,
-                              initial_code: e.target.value,
+                              initial_code: newQuestion.type === "code-runner" ? e.target.value : newQuestion.initial_code,
                             })
                           }
                           className="bg-slate-700 border-slate-600 font-mono"
-                          placeholder="print(___)"
+                          placeholder={newQuestion.type === "code-runner" ? "# Type your code below\n" : "print(___)"}
                         />
                       </div>
+                    )}
+                    {newQuestion.type === "drag-order" && (
+                      <>
+                        <div className="md:col-span-2">
+                          <Label>Blocks (JSON array)</Label>
+                          <Textarea
+                            value={newQuestion.blocksJson}
+                            onChange={(e) => setNewQuestion({ ...newQuestion, blocksJson: e.target.value })}
+                            className="bg-slate-700 border-slate-600 font-mono text-sm"
+                            placeholder={'[{"id":"1","code":"print(1)"},{"id":"2","code":"print(2)"},{"id":"3","code":"print(3)"}]'}
+                            rows={4}
+                          />
+                          <p className="text-xs text-slate-400 mt-1">Array of {"{ id, code }"} objects</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Label>Correct order (comma-separated block ids)</Label>
+                          <Input
+                            value={newQuestion.correctOrderStr}
+                            onChange={(e) => setNewQuestion({ ...newQuestion, correctOrderStr: e.target.value })}
+                            className="bg-slate-700 border-slate-600"
+                            placeholder="1, 2, 3"
+                          />
+                        </div>
+                      </>
                     )}
                     {newQuestion.type === "fill-blank" && (
                       <div>

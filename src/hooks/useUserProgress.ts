@@ -17,6 +17,8 @@ export interface UserProfile {
   updated_at: string;
   league: string;
   weekly_xp: number;
+  daily_xp?: number;
+  last_daily_reset_at?: string | null;
   streak_freeze_count: number;
   double_xp_until: string | null;
   heart_regeneration_started_at: string | null;
@@ -69,6 +71,10 @@ export function useUpdateProfile() {
   });
 }
 
+function todayISO() {
+  return new Date().toISOString().split("T")[0];
+}
+
 export function useAddXP() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -77,21 +83,28 @@ export function useAddXP() {
     mutationFn: async (xpAmount: number) => {
       if (!user) throw new Error("Not authenticated");
       
-      // Get current profile
+      const today = todayISO();
       const { data: profile, error: fetchError } = await supabase
         .from("profiles")
-        .select("xp, weekly_xp")
+        .select("xp, weekly_xp, daily_xp, last_daily_reset_at")
         .eq("user_id", user.id)
         .single();
       
       if (fetchError) throw fetchError;
       
-      // Update both total XP and weekly XP
+      // Reset daily XP when it's a new day
+      const lastReset = (profile as { last_daily_reset_at?: string | null })?.last_daily_reset_at;
+      const dailyXp = lastReset === today
+        ? ((profile as { daily_xp?: number })?.daily_xp ?? 0) + xpAmount
+        : xpAmount;
+      
       const { data, error } = await supabase
         .from("profiles")
         .update({ 
           xp: (profile?.xp || 0) + xpAmount,
-          weekly_xp: (profile?.weekly_xp || 0) + xpAmount
+          weekly_xp: (profile?.weekly_xp || 0) + xpAmount,
+          daily_xp: dailyXp,
+          last_daily_reset_at: today,
         })
         .eq("user_id", user.id)
         .select()

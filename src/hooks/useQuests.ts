@@ -151,7 +151,7 @@ export function useUpdateQuestProgress() {
       
       if (!quests || quests.length === 0) return;
       
-      // Update progress for each matching quest
+      // Update progress for each matching quest (create row if missing so lesson activity counts)
       for (const quest of quests) {
         const questDate = quest.is_weekly ? weekStart : today;
         const { data: progress } = await supabase
@@ -161,11 +161,12 @@ export function useUpdateQuestProgress() {
           .eq("quest_id", quest.id)
           .eq("quest_date", questDate)
           .maybeSingle();
-        
+
+        const currentValue = progress?.current_value ?? 0;
+        const newValue = Math.min(currentValue + incrementBy, quest.target_value);
+        const isCompleted = newValue >= quest.target_value;
+
         if (progress && !progress.claimed) {
-          const newValue = Math.min(progress.current_value + incrementBy, quest.target_value);
-          const isCompleted = newValue >= quest.target_value;
-          
           await supabase
             .from("user_quest_progress")
             .update({
@@ -174,6 +175,17 @@ export function useUpdateQuestProgress() {
               completed_at: isCompleted && !progress.completed ? new Date().toISOString() : progress.completed_at,
             })
             .eq("id", progress.id);
+        } else if (!progress) {
+          // Create progress row so quest page reflects lesson activity even if user hasn't visited Quests
+          await supabase.from("user_quest_progress").insert({
+            user_id: user.id,
+            quest_id: quest.id,
+            quest_date: questDate,
+            current_value: newValue,
+            completed: isCompleted,
+            completed_at: isCompleted ? new Date().toISOString() : null,
+            claimed: false,
+          });
         }
       }
     },

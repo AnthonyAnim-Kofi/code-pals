@@ -100,7 +100,7 @@ export function useIsAdmin() {
   });
 }
 
-// Admin - Get all users
+// Admin - Get all users (refetch on window focus so admin stays in sync with user activity)
 export function useAdminUsers() {
   return useQuery({
     queryKey: ["admin-users"],
@@ -113,6 +113,8 @@ export function useAdminUsers() {
       if (error) throw error;
       return data as AdminUser[];
     },
+    refetchOnWindowFocus: true,
+    staleTime: 30 * 1000, // Consider fresh for 30s, then refetch when tab focused
   });
 }
 

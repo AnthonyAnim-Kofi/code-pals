@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "./useNotifications";
 
-const REGEN_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+const REGEN_INTERVAL_MS = 50 * 60 * 1000; // 50 minutes in milliseconds
 const MAX_HEARTS = 5;
 
 export function useHeartRegeneration(currentHearts: number, regenStartedAt: string | null) {

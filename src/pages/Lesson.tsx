@@ -89,7 +89,9 @@ export default function Lesson() {
   const savePartialProgress = useSavePartialProgress();
   const clearPartialProgress = useClearPartialProgress();
   const addXP = useAddXP();
-  const deductHeart = useDeductHeart();
+  const deductHeartMutation = useDeductHeart();
+  // In practice mode never deduct hearts (no-op wrapper)
+  const deductHeart = isPracticeMode ? { mutate: () => {}, mutateAsync: async () => {} } : deductHeartMutation;
   const saveLessonProgress = useSaveLessonProgress();
   const updateQuestProgress = useUpdateQuestProgress();
 

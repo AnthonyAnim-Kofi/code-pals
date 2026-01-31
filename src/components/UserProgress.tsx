@@ -28,9 +28,9 @@ export function UserProgress() {
   const hearts = profile?.hearts || 5;
   const gems = profile?.gems || 0;
 
-  // Calculate daily goal progress (assuming 50 XP daily goal)
+  // Daily goal: use daily_xp (resets each day)
   const dailyGoal = 50;
-  const todayXp = xp % dailyGoal; // Simplified - in real app, track today's XP separately
+  const todayXp = profile?.daily_xp ?? 0;
   const dailyProgress = Math.min((todayXp / dailyGoal) * 100, 100);
 
   return (

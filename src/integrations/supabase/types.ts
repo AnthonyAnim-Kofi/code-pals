@@ -352,12 +352,14 @@ export type Database = {
           active_language_id: string | null
           avatar_url: string | null
           created_at: string
+          daily_xp: number
           display_name: string | null
           double_xp_until: string | null
           gems: number
           heart_regeneration_started_at: string | null
           hearts: number
           id: string
+          last_daily_reset_at: string | null
           last_practice_date: string | null
           last_streak_freeze_used: string | null
           league: string
@@ -373,12 +375,14 @@ export type Database = {
           active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          daily_xp?: number
           display_name?: string | null
           double_xp_until?: string | null
           gems?: number
           heart_regeneration_started_at?: string | null
           hearts?: number
           id?: string
+          last_daily_reset_at?: string | null
           last_practice_date?: string | null
           last_streak_freeze_used?: string | null
           league?: string
@@ -394,12 +398,14 @@ export type Database = {
           active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          daily_xp?: number
           display_name?: string | null
           double_xp_until?: string | null
           gems?: number
           heart_regeneration_started_at?: string | null
           hearts?: number
           id?: string
+          last_daily_reset_at?: string | null
           last_practice_date?: string | null
           last_streak_freeze_used?: string | null
           league?: string

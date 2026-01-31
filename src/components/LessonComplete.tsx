@@ -21,8 +21,17 @@ export function LessonComplete({
 }: LessonCompleteProps) {
   const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
   const isPerfect = accuracy === 100;
-  // 1 star >= 50%, 2 stars >= 80%, 3 stars = 100%
-  const starsEarned = totalQuestions === 0 ? 0 : accuracy >= 100 ? 3 : accuracy >= 80 ? 2 : accuracy >= 50 ? 1 : 0;
+  // Stars from correct/total: 1 star = at least 1/3 correct, 2 stars = at least 2/3, 3 stars = all correct
+  const starsEarned =
+    totalQuestions === 0
+      ? 0
+      : correctAnswers === totalQuestions
+        ? 3
+        : correctAnswers >= (2 / 3) * totalQuestions
+          ? 2
+          : correctAnswers >= totalQuestions / 3
+            ? 1
+            : 0;
 
   useEffect(() => {
     // Trigger confetti celebration
