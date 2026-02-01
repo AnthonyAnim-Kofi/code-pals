@@ -40,14 +40,17 @@ export function UnitBanner({
           </div>
           <p className="text-xs sm:text-sm text-white/80 line-clamp-2 sm:line-clamp-none">{description}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0 mx-[28px] px-[20px] py-0">
+        {/* Note icon and Continue on same line on all screen sizes to keep banner compact */}
+        <div className="flex flex-nowrap items-center gap-2 shrink-0">
           {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || false} />}
-          {isActive && currentLessonId && <Button variant="golden" size="sm" className="shadow-none w-full sm:w-auto" asChild>
+          {isActive && currentLessonId && (
+            <Button variant="golden" size="sm" className="shadow-none shrink-0" asChild>
               <Link to={`/lesson/${String(currentLessonId)}`}>
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="ml-1 sm:ml-2">Continue</span>
               </Link>
-            </Button>}
+            </Button>
+          )}
         </div>
       </div>
 
