@@ -3,9 +3,13 @@ import { Target, Gift, Zap, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useQuests, useQuestProgress, useInitializeQuestProgress, useClaimQuestReward } from "@/hooks/useQuests";
+import { useQuests, useQuestProgress, useInitializeQuestProgress, useClaimQuestReward, getWeekStartSundayISO } from "@/hooks/useQuests";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { toast } from "sonner";
+
+function todayISO() {
+  return new Date().toISOString().split("T")[0];
+}
 
 interface QuestCardProps {
   quest: {
@@ -130,9 +134,12 @@ export default function Quests() {
 
   const dailyQuests = quests?.filter((q) => !q.is_weekly) || [];
   const weeklyQuests = quests?.filter((q) => q.is_weekly) || [];
+  const today = todayISO();
+  const weekStart = getWeekStartSundayISO();
 
-  const getProgressForQuest = (questId: string) => {
-    return progressData?.find((p) => p.quest_id === questId) || null;
+  const getProgressForQuest = (quest: { id: string; is_weekly: boolean }) => {
+    const questDate = quest.is_weekly ? weekStart : today;
+    return progressData?.find((p) => p.quest_id === quest.id && p.quest_date === questDate) || null;
   };
 
   const totalClaimableGems = progressData
@@ -173,7 +180,7 @@ export default function Quests() {
             <QuestCard 
               key={quest.id} 
               quest={quest} 
-              progress={getProgressForQuest(quest.id)}
+              progress={getProgressForQuest(quest)}
               onClaim={handleClaim}
               isClaiming={claimReward.isPending}
             />
@@ -192,7 +199,7 @@ export default function Quests() {
             <QuestCard 
               key={quest.id} 
               quest={quest} 
-              progress={getProgressForQuest(quest.id)}
+              progress={getProgressForQuest(quest)}
               onClaim={handleClaim}
               isClaiming={claimReward.isPending}
             />

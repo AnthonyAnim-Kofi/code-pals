@@ -40,17 +40,22 @@ export function LessonComplete({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/10 to-background flex flex-col items-center justify-center p-4 animate-fade-in">
-      {/* Star rating at top */}
-      <div className="flex justify-center gap-2 mb-4 animate-scale-in">
-        {[1, 2, 3].map((i) => (
-          <Star
-            key={i}
-            className={cn(
-              "w-10 h-10 transition-colors",
-              i <= starsEarned ? "text-golden fill-golden" : "text-muted-foreground/30"
-            )}
-          />
-        ))}
+      {/* Performance: percentage + star rating (percentage used to calculate stars out of 3) */}
+      <div className="text-center mb-4 animate-scale-in">
+        <p className="text-lg font-semibold text-muted-foreground mb-1">
+          {totalQuestions > 0 ? `${accuracy}%` : "—"} · {starsEarned}/3 stars
+        </p>
+        <div className="flex justify-center gap-2">
+          {[1, 2, 3].map((i) => (
+            <Star
+              key={i}
+              className={cn(
+                "w-10 h-10 transition-colors",
+                i <= starsEarned ? "text-golden fill-golden" : "text-muted-foreground/30"
+              )}
+            />
+          ))}
+        </div>
       </div>
 
       {/* Celebration Header */}

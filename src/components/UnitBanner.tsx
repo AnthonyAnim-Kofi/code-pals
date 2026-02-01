@@ -37,14 +37,14 @@ export function UnitBanner({
   return (
     <div 
       className={cn(
-        "relative overflow-hidden rounded-2xl p-6 bg-gradient-to-r",
+        "relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-r",
         colorClasses[color]
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-1">
-            <h2 className="text-xl font-extrabold text-white">{title}</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+            <h2 className="text-base sm:text-xl font-extrabold text-white truncate">{title}</h2>
             {totalLessons > 0 && (
               <UnitProgressIndicator 
                 completedLessons={completedLessons} 
@@ -52,19 +52,20 @@ export function UnitBanner({
               />
             )}
           </div>
-          <p className="text-sm text-white/80">{description}</p>
+          <p className="text-xs sm:text-sm text-white/80 line-clamp-2 sm:line-clamp-none">{description}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || false} />}
           {isActive && currentLessonId && (
             <Button 
               variant="golden"
-              className="shadow-none"
+              size="sm"
+              className="shadow-none w-full sm:w-auto"
               asChild
             >
               <Link to={`/lesson/${String(currentLessonId)}`}>
-                <BookOpen className="w-5 h-5" />
-                Continue
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="ml-1 sm:ml-2">Continue</span>
               </Link>
             </Button>
           )}

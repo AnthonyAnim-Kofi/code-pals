@@ -1,6 +1,7 @@
+import { useEffect } from "react";
 import { Trophy, Star, Flame, BookOpen, Users, Swords, Target, Medal, Award, Gem, Crown, Zap, GraduationCap, Loader2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAchievements, useUserAchievements } from "@/hooks/useAchievements";
+import { useAchievements, useUserAchievements, useCheckAndAwardAchievements } from "@/hooks/useAchievements";
 import { Progress } from "@/components/ui/progress";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
 import { useFollowing, useChallenges } from "@/hooks/useSocial";
@@ -30,6 +31,7 @@ export default function Achievements() {
   const { data: lessonProgress } = useLessonProgress();
   const { data: following } = useFollowing();
   const { data: challenges } = useChallenges();
+  const checkAndAward = useCheckAndAwardAchievements();
 
   const earnedIds = new Set(userAchievements?.map(ua => ua.achievement_id) || []);
   
@@ -42,7 +44,7 @@ export default function Achievements() {
     perfectLessons: lessonProgress?.filter(p => p.accuracy === 100).length || 0,
   };
 
-  const getProgress = (achievement: any) => {
+  const getProgress = (achievement: any): { percent: number; current: number; target: number } => {
     let current = 0;
     switch (achievement.requirement_type) {
       case "lessons_completed":
@@ -64,12 +66,30 @@ export default function Achievements() {
         current = stats.perfectLessons;
         break;
       case "league":
-        const leagueLevel = { bronze: 0, silver: 1, gold: 2, diamond: 3 }[profile?.league || "bronze"] || 0;
-        current = leagueLevel;
+        current = { bronze: 0, silver: 1, gold: 2, diamond: 3 }[profile?.league || "bronze"] || 0;
         break;
+      default:
+        current = 0;
     }
-    return Math.min(100, (current / achievement.requirement_value) * 100);
+    const target = achievement.requirement_value;
+    const percent = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+    return { percent, current, target };
   };
+
+  // Sync and award achievements when page loads so progress is up to date
+  useEffect(() => {
+    if (!profile || lessonProgress === undefined || checkAndAward.isPending) return;
+    checkAndAward.mutate({
+      lessonsCompleted: stats.lessonsCompleted,
+      streak: stats.streak,
+      xp: stats.xp,
+      following: stats.following,
+      challenges: stats.challenges,
+      perfectLessons: stats.perfectLessons,
+      league: profile.league || "bronze",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run when profile/lessonProgress load
+  }, [profile?.id, lessonProgress === undefined ? null : lessonProgress.length]);
 
   const isLoading = loadingAchievements || loadingUserAchievements;
 
@@ -130,7 +150,6 @@ export default function Achievements() {
             ).map((achievement) => {
               const isEarned = earnedIds.has(achievement.id);
               const Icon = iconMap[achievement.icon] || Trophy;
-              const progress = getProgress(achievement);
               
               return (
                 <div
@@ -161,11 +180,15 @@ export default function Achievements() {
                         {achievement.name}
                       </p>
                       <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {!isEarned && (
-                        <div className="mt-2">
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      )}
+                      {!isEarned && (() => {
+                        const { percent, current, target } = getProgress(achievement);
+                        return (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">{current} / {target}</p>
+                            <Progress value={percent} className="h-1.5" />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -184,7 +207,6 @@ export default function Achievements() {
             {achievements?.filter(a => a.requirement_type === "streak").map((achievement) => {
               const isEarned = earnedIds.has(achievement.id);
               const Icon = iconMap[achievement.icon] || Flame;
-              const progress = getProgress(achievement);
               
               return (
                 <div
@@ -215,11 +237,15 @@ export default function Achievements() {
                         {achievement.name}
                       </p>
                       <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {!isEarned && (
-                        <div className="mt-2">
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      )}
+                      {!isEarned && (() => {
+                        const { percent, current, target } = getProgress(achievement);
+                        return (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">{current} / {target}</p>
+                            <Progress value={percent} className="h-1.5" />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -240,7 +266,6 @@ export default function Achievements() {
             ).map((achievement) => {
               const isEarned = earnedIds.has(achievement.id);
               const Icon = iconMap[achievement.icon] || Star;
-              const progress = getProgress(achievement);
               
               return (
                 <div
@@ -271,11 +296,15 @@ export default function Achievements() {
                         {achievement.name}
                       </p>
                       <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {!isEarned && (
-                        <div className="mt-2">
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      )}
+                      {!isEarned && (() => {
+                        const { percent, current, target } = getProgress(achievement);
+                        return (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">{current} / {target}</p>
+                            <Progress value={percent} className="h-1.5" />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
@@ -296,7 +325,6 @@ export default function Achievements() {
             ).map((achievement) => {
               const isEarned = earnedIds.has(achievement.id);
               const Icon = iconMap[achievement.icon] || Users;
-              const progress = getProgress(achievement);
               
               return (
                 <div
@@ -327,11 +355,15 @@ export default function Achievements() {
                         {achievement.name}
                       </p>
                       <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                      {!isEarned && (
-                        <div className="mt-2">
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      )}
+                      {!isEarned && (() => {
+                        const { percent, current, target } = getProgress(achievement);
+                        return (
+                          <div className="mt-2">
+                            <p className="text-xs text-muted-foreground mb-1">{current} / {target}</p>
+                            <Progress value={percent} className="h-1.5" />
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

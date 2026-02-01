@@ -8,7 +8,7 @@ import { DragOrderChallenge } from "@/components/challenges/DragOrderChallenge";
 import { CodeRunnerChallenge } from "@/components/challenges/CodeRunnerChallenge";
 import { MascotReaction } from "@/components/MascotReaction";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
-import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress } from "@/hooks/useUserProgress";
+import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress, useLessonProgress } from "@/hooks/useUserProgress";
 import { useUpdateQuestProgress } from "@/hooks/useQuests";
 import { 
   useLessonData, 
@@ -86,6 +86,7 @@ export default function Lesson() {
   const { data: lessonFromDb, isLoading: loadingLesson } = useLessonData(lessonId);
   const { data: languageInfo } = useLessonLanguageInfo(lessonId);
   const { data: savedProgress } = usePartialLessonProgress(lessonId);
+  const { data: lessonProgressList } = useLessonProgress();
   const savePartialProgress = useSavePartialProgress();
   const clearPartialProgress = useClearPartialProgress();
   const addXP = useAddXP();
@@ -133,6 +134,29 @@ export default function Lesson() {
       setInitialized(true);
     }
   }, [savedProgress, initialized]);
+
+  // Save partial progress when leaving (logout, close tab, navigate away) so user can continue later
+  useEffect(() => {
+    const saveOnUnload = () => {
+      if (lessonId && !isComplete) {
+        savePartialProgress.mutate({
+          lesson_id: lessonId,
+          current_question_index: currentQuestion,
+          answered_questions: Array.from(answeredQuestions),
+          xp_earned: xpEarned,
+          correct_answers: correctAnswers,
+        });
+      }
+    };
+    const handleBeforeUnload = () => {
+      saveOnUnload();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      saveOnUnload();
+    };
+  }, [lessonId, isComplete, currentQuestion, answeredQuestions, xpEarned, correctAnswers, savePartialProgress]);
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
@@ -252,9 +276,10 @@ export default function Lesson() {
       
       // Use the database lesson ID (UUID string)
       const dbLessonId = lessonFromDb?.id || (typeof lessonId === "string" ? lessonId : String(lessonId));
-      
-      // In practice mode, don't save progress or add XP
-      if (!isPracticeMode) {
+      const alreadyCompleted = lessonProgressList?.some((p) => String(p.lesson_id) === dbLessonId && p.completed);
+
+      // In practice mode or if lesson already completed (retake), don't affect XP/hearts/quests
+      if (!isPracticeMode && !alreadyCompleted) {
         await saveLessonProgress.mutateAsync({
           lessonId: dbLessonId,
           xpEarned,
@@ -299,15 +324,6 @@ export default function Lesson() {
       setDragOrderChecked(answeredQuestions.has(currentQuestion - 1));
       setCodeRunnerChecked(answeredQuestions.has(currentQuestion - 1));
       setMascotReaction("idle");
-    }
-  };
-
-  const handleSkip = () => {
-    // Mark as answered and go to next question
-    setAnsweredQuestions((prev) => new Set(prev).add(currentQuestion));
-    if (!isLastQuestion) {
-      goToNextQuestion();
-      saveProgress();
     }
   };
 
@@ -495,24 +511,14 @@ export default function Lesson() {
             )}
 
             {!isChecked && question.type !== "drag-order" && question.type !== "code-runner" ? (
-              <>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1"
-                  onClick={handleSkip}
-                >
-                  Skip
-                </Button>
-                <Button
-                  size="lg"
-                  className="flex-1"
-                  disabled={selectedAnswer === null}
-                  onClick={handleCheck}
-                >
-                  Check
-                </Button>
-              </>
+              <Button
+                size="lg"
+                className="flex-1"
+                disabled={selectedAnswer === null}
+                onClick={handleCheck}
+              >
+                Check
+              </Button>
             ) : isChecked ? (
               <Button
                 size="lg"

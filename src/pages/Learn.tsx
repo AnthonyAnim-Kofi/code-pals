@@ -134,34 +134,35 @@ export default function Learn() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground mb-2">
-            Learn {currentLanguage?.name || "Python"} {currentLanguage?.icon || "🐍"}
-          </h1>
-          <p className="text-muted-foreground">
-            {currentLanguage?.description || "Master the world's most popular programming language"}
-          </p>
+    <div className="space-y-6 sm:space-y-8 px-2 sm:px-0">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-foreground mb-1 sm:mb-2 truncate">
+              Learn {currentLanguage?.name || "Python"} {currentLanguage?.icon || "🐍"}
+            </h1>
+            <p className="text-sm sm:text-base text-muted-foreground line-clamp-2 sm:line-clamp-none">
+              {currentLanguage?.description || "Master the world's most popular programming language"}
+            </p>
+          </div>
+          {languages.length > 1 && (
+            <Select value={activeLanguage || undefined} onValueChange={handleLanguageChange}>
+              <SelectTrigger className="w-full sm:w-[200px] shrink-0 bg-background">
+                <SelectValue placeholder="Select language" />
+              </SelectTrigger>
+              <SelectContent>
+                {languages.map((lang) => (
+                  <SelectItem key={lang.id} value={lang.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{lang.icon}</span>
+                      <span>{lang.name}</span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
-        
-        {languages.length > 1 && (
-          <Select value={activeLanguage || undefined} onValueChange={handleLanguageChange}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select language" />
-            </SelectTrigger>
-            <SelectContent>
-              {languages.map((lang) => (
-                <SelectItem key={lang.id} value={lang.id}>
-                  <span className="flex items-center gap-2">
-                    <span>{lang.icon}</span>
-                    <span>{lang.name}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
       </div>
 
       {unitsLoading ? (
