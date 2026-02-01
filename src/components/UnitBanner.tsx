@@ -4,7 +4,6 @@ import { BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UnitNotes } from "@/components/UnitNotes";
 import { UnitProgressIndicator } from "@/components/UnitProgressIndicator";
-
 interface UnitBannerProps {
   title: string;
   description: string;
@@ -16,65 +15,44 @@ interface UnitBannerProps {
   completedLessons?: number;
   totalLessons?: number;
 }
-
 const colorClasses = {
   green: "from-primary to-[hsl(120,70%,35%)]",
   blue: "from-secondary to-[hsl(210,100%,45%)]",
   orange: "from-accent to-[hsl(20,100%,45%)]",
-  purple: "from-premium to-[hsl(280,80%,50%)]",
+  purple: "from-premium to-[hsl(280,80%,50%)]"
 };
-
-export function UnitBanner({ 
-  title, 
-  description, 
-  color, 
-  isActive = false, 
-  currentLessonId, 
+export function UnitBanner({
+  title,
+  description,
+  color,
+  isActive = false,
+  currentLessonId,
   unitId,
   completedLessons = 0,
-  totalLessons = 0,
+  totalLessons = 0
 }: UnitBannerProps) {
-  return (
-    <div 
-      className={cn(
-        "relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-r",
-        colorClasses[color]
-      )}
-    >
+  return <div className={cn("relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-gradient-to-r", colorClasses[color])}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
             <h2 className="text-base sm:text-xl font-extrabold text-white truncate">{title}</h2>
-            {totalLessons > 0 && (
-              <UnitProgressIndicator 
-                completedLessons={completedLessons} 
-                totalLessons={totalLessons} 
-              />
-            )}
+            {totalLessons > 0 && <UnitProgressIndicator completedLessons={completedLessons} totalLessons={totalLessons} />}
           </div>
           <p className="text-xs sm:text-sm text-white/80 line-clamp-2 sm:line-clamp-none">{description}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0 mx-[28px] px-[20px] py-0">
           {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || false} />}
-          {isActive && currentLessonId && (
-            <Button 
-              variant="golden"
-              size="sm"
-              className="shadow-none w-full sm:w-auto"
-              asChild
-            >
+          {isActive && currentLessonId && <Button variant="golden" size="sm" className="shadow-none w-full sm:w-auto" asChild>
               <Link to={`/lesson/${String(currentLessonId)}`}>
                 <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span className="ml-1 sm:ml-2">Continue</span>
               </Link>
-            </Button>
-          )}
+            </Button>}
         </div>
       </div>
 
       {/* Decorative elements */}
       <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full" />
       <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/10 rounded-full" />
-    </div>
-  );
+    </div>;
 }
