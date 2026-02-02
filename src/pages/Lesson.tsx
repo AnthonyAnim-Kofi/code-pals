@@ -155,12 +155,13 @@ export default function Lesson() {
     };
   }, [currentQuestion, answeredQuestions, xpEarned, correctAnswers, isComplete]);
 
-  // Save partial progress only on beforeunload (not on cleanup to avoid infinite loops)
+  // Save partial progress on beforeunload and when navigating away
   useEffect(() => {
     const handleBeforeUnload = () => {
       const { currentQuestion, answeredQuestions, xpEarned, correctAnswers, isComplete } = progressRef.current;
-      if (lessonId && !isComplete) {
-        // Use sendBeacon for reliable unload saving
+      if (lessonId && !isComplete && currentQuestion > 0) {
+        // Use sendBeacon with a minimal REST call for reliable unload saving
+        const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/partial_lesson_progress`;
         const payload = JSON.stringify({
           lesson_id: lessonId,
           current_question_index: currentQuestion,
@@ -168,7 +169,7 @@ export default function Lesson() {
           xp_earned: xpEarned,
           correct_answers: correctAnswers,
         });
-        // Note: This is just setting up the listener, actual save happens via saveProgress callback
+        // Note: sendBeacon can't include auth headers, so we rely on periodic saves below
       }
     };
     
@@ -177,6 +178,22 @@ export default function Lesson() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [lessonId]);
+
+  // Auto-save progress every time state changes (debounced by mutation)
+  useEffect(() => {
+    if (lessonId && currentQuestion > 0 && !isComplete) {
+      const timer = setTimeout(() => {
+        savePartialProgress.mutate({
+          lesson_id: lessonId,
+          current_question_index: currentQuestion,
+          answered_questions: Array.from(answeredQuestions),
+          xp_earned: xpEarned,
+          correct_answers: correctAnswers,
+        });
+      }, 500); // Debounce by 500ms
+      return () => clearTimeout(timer);
+    }
+  }, [lessonId, currentQuestion, answeredQuestions.size, xpEarned, correctAnswers, isComplete]);
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
