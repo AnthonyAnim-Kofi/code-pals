@@ -160,8 +160,9 @@ export default function Lesson() {
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
-  const progress = ((currentQuestion) / lessonData.questions.length) * 100;
-  const isLastQuestion = currentQuestion === lessonData.questions.length - 1;
+  const totalQuestions = lessonData.questions.length;
+  const progress = totalQuestions > 0 ? ((currentQuestion) / totalQuestions) * 100 : 0;
+  const isLastQuestion = totalQuestions > 0 && currentQuestion === totalQuestions - 1;
   const isFirstQuestion = currentQuestion === 0;
 
   // Save partial progress when state changes
@@ -340,7 +341,8 @@ export default function Lesson() {
     );
   }
 
-  if (lessonFromDb && lessonData.questions.length === 0) {
+  // Handle empty questions or invalid question index
+  if (lessonData.questions.length === 0 || !question) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground text-center">No questions in this lesson yet.</p>
