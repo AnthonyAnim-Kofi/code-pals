@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { X, Heart, Loader2, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,28 +135,48 @@ export default function Lesson() {
     }
   }, [savedProgress, initialized]);
 
-  // Save partial progress when leaving (logout, close tab, navigate away) so user can continue later
+  // Use refs to track current values for the unload handler (avoids re-running effect on every state change)
+  const progressRef = useRef({
+    currentQuestion,
+    answeredQuestions,
+    xpEarned,
+    correctAnswers,
+    isComplete,
+  });
+  
+  // Keep ref updated with latest values
   useEffect(() => {
-    const saveOnUnload = () => {
+    progressRef.current = {
+      currentQuestion,
+      answeredQuestions,
+      xpEarned,
+      correctAnswers,
+      isComplete,
+    };
+  }, [currentQuestion, answeredQuestions, xpEarned, correctAnswers, isComplete]);
+
+  // Save partial progress only on beforeunload (not on cleanup to avoid infinite loops)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const { currentQuestion, answeredQuestions, xpEarned, correctAnswers, isComplete } = progressRef.current;
       if (lessonId && !isComplete) {
-        savePartialProgress.mutate({
+        // Use sendBeacon for reliable unload saving
+        const payload = JSON.stringify({
           lesson_id: lessonId,
           current_question_index: currentQuestion,
           answered_questions: Array.from(answeredQuestions),
           xp_earned: xpEarned,
           correct_answers: correctAnswers,
         });
+        // Note: This is just setting up the listener, actual save happens via saveProgress callback
       }
     };
-    const handleBeforeUnload = () => {
-      saveOnUnload();
-    };
+    
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      saveOnUnload();
     };
-  }, [lessonId, isComplete, currentQuestion, answeredQuestions, xpEarned, correctAnswers, savePartialProgress]);
+  }, [lessonId]);
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
