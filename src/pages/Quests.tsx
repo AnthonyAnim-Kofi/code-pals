@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Target, Gift, Zap, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -25,15 +25,16 @@ interface QuestCardProps {
     completed: boolean;
     claimed: boolean;
   } | null;
-  onClaim: (progressId: string, gemReward: number) => void;
-  isClaiming: boolean;
+  onClaim: (progressId: string, gemReward: number) => Promise<void>;
+  claimingId: string | null;
 }
 
-function QuestCard({ quest, progress, onClaim, isClaiming }: QuestCardProps) {
+function QuestCard({ quest, progress, onClaim, claimingId }: QuestCardProps) {
   const currentValue = progress?.current_value || 0;
   const progressPercent = Math.min((currentValue / quest.target_value) * 100, 100);
   const isCompleted = progress?.completed || false;
   const isClaimed = progress?.claimed || false;
+  const isThisOneClaiming = claimingId === progress?.id;
 
   return (
     <div
@@ -85,9 +86,9 @@ function QuestCard({ quest, progress, onClaim, isClaiming }: QuestCardProps) {
                   variant="golden" 
                   className="h-8"
                   onClick={() => onClaim(progress!.id, quest.gem_reward)}
-                  disabled={isClaiming}
+                  disabled={claimingId !== null}
                 >
-                  {isClaiming ? (
+                  {isThisOneClaiming ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     "Claim"
@@ -111,6 +112,7 @@ export default function Quests() {
   const { data: profile } = useUserProfile();
   const initializeProgress = useInitializeQuestProgress();
   const claimReward = useClaimQuestReward();
+  const [claimingId, setClaimingId] = useState<string | null>(null);
 
   // Initialize quest progress for today when quests are loaded
   useEffect(() => {
@@ -120,6 +122,7 @@ export default function Quests() {
   }, [quests]);
 
   const handleClaim = async (progressId: string, gemReward: number) => {
+    setClaimingId(progressId);
     try {
       await claimReward.mutateAsync({ progressId, gemReward });
       toast.success(`+${gemReward} gems claimed!`, {
@@ -127,6 +130,8 @@ export default function Quests() {
       });
     } catch (error) {
       toast.error("Failed to claim reward");
+    } finally {
+      setClaimingId(null);
     }
   };
 
@@ -182,7 +187,7 @@ export default function Quests() {
               quest={quest} 
               progress={getProgressForQuest(quest)}
               onClaim={handleClaim}
-              isClaiming={claimReward.isPending}
+              claimingId={claimingId}
             />
           ))}
         </div>
@@ -201,7 +206,7 @@ export default function Quests() {
               quest={quest} 
               progress={getProgressForQuest(quest)}
               onClaim={handleClaim}
-              isClaiming={claimReward.isPending}
+              claimingId={claimingId}
             />
           ))}
         </div>
