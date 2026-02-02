@@ -65,9 +65,9 @@ export default function Practice() {
     );
   }
 
-  // Filter to only show completed lessons
+  // Filter to only show completed lessons (compare UUIDs only)
   const practiceableLessons = dbLessons?.filter(lesson => 
-    completedIds.has(lesson.id) || completedIds.has(String(lesson.order_index + 1))
+    completedIds.has(lesson.id)
   ) || [];
 
   return (
@@ -116,7 +116,7 @@ export default function Practice() {
         <div className="grid gap-4 sm:grid-cols-2">
           {practiceableLessons.map((lesson) => {
             const progress = completedLessons.find(p => 
-              String(p.lesson_id) === lesson.id || p.lesson_id === lesson.order_index + 1
+              String(p.lesson_id) === lesson.id
             );
             
             return (
