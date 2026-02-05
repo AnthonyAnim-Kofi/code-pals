@@ -47,6 +47,7 @@ import {
   useDeleteUnitNote,
 } from "@/hooks/useAdmin";
 import { BulkImport } from "@/components/admin/BulkImport";
+import { BulkImportNotes } from "@/components/admin/BulkImportNotes";
 import { QuestManager } from "@/components/admin/QuestManager";
 import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
 import { cn } from "@/lib/utils";
@@ -886,7 +887,10 @@ export default function Admin() {
 
           {/* Import Tab */}
           <TabsContent value="import">
-            <BulkImport />
+            <div className="space-y-6">
+              <BulkImport />
+              <BulkImportNotes />
+            </div>
           </TabsContent>
         </Tabs>
       </main>
