@@ -179,21 +179,32 @@ export default function Lesson() {
     };
   }, [lessonId]);
 
-  // Auto-save progress every time state changes (debounced by mutation)
+  // Auto-save progress after answering a question (debounced)
+  // IMPORTANT: We save with answeredQuestions so we know which questions are done
+  // The user should resume from the first unanswered question
   useEffect(() => {
-    if (lessonId && currentQuestion > 0 && !isComplete) {
+    if (lessonId && answeredQuestions.size > 0 && !isComplete) {
       const timer = setTimeout(() => {
+        // Find the first unanswered question index for resume
+        const firstUnansweredIndex = lessonData.questions.findIndex(
+          (_, idx) => !answeredQuestions.has(idx)
+        );
+        // If all answered, point to the last question
+        const resumeIndex = firstUnansweredIndex === -1 
+          ? lessonData.questions.length - 1 
+          : firstUnansweredIndex;
+        
         savePartialProgress.mutate({
           lesson_id: lessonId,
-          current_question_index: currentQuestion,
+          current_question_index: resumeIndex,
           answered_questions: Array.from(answeredQuestions),
           xp_earned: xpEarned,
           correct_answers: correctAnswers,
         });
-      }, 500); // Debounce by 500ms
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [lessonId, currentQuestion, answeredQuestions.size, xpEarned, correctAnswers, isComplete]);
+  }, [lessonId, answeredQuestions.size, xpEarned, correctAnswers, isComplete, lessonData.questions]);
 
   const hearts = profile?.hearts ?? 5;
   const question = lessonData.questions[currentQuestion];
@@ -202,18 +213,26 @@ export default function Lesson() {
   const isLastQuestion = totalQuestions > 0 && currentQuestion === totalQuestions - 1;
   const isFirstQuestion = currentQuestion === 0;
 
-  // Save partial progress when state changes
+  // Save partial progress - save with NEXT question index after current is answered
   const saveProgress = useCallback(() => {
     if (lessonId) {
+      // Find the first unanswered question for proper resume
+      const firstUnansweredIndex = lessonData.questions.findIndex(
+        (_, idx) => !answeredQuestions.has(idx)
+      );
+      const resumeIndex = firstUnansweredIndex === -1 
+        ? lessonData.questions.length - 1 
+        : firstUnansweredIndex;
+      
       savePartialProgress.mutate({
         lesson_id: lessonId,
-        current_question_index: currentQuestion,
+        current_question_index: resumeIndex,
         answered_questions: Array.from(answeredQuestions),
         xp_earned: xpEarned,
         correct_answers: correctAnswers,
       });
     }
-  }, [lessonId, currentQuestion, answeredQuestions, xpEarned, correctAnswers, savePartialProgress]);
+  }, [lessonId, answeredQuestions, xpEarned, correctAnswers, savePartialProgress, lessonData.questions]);
 
   // Handle exit - save progress and navigate to current lesson's language
   const handleExit = () => {

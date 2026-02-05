@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, FileJson, FileSpreadsheet, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, FileJson, FileSpreadsheet, Loader2, AlertCircle, CheckCircle, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useLanguages, useUnits, useLessons } from "@/hooks/useAdmin";
+import { useLanguages, useUnits } from "@/hooks/useAdmin";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface ImportResult {
@@ -28,17 +28,15 @@ interface ImportProgress {
   percent: number;
 }
 
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 50;
 
-export function BulkImport() {
+export function BulkImportNotes() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [importType, setImportType] = useState<"lessons" | "questions">("lessons");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
-  const [selectedLesson, setSelectedLesson] = useState<string>("");
   const [jsonContent, setJsonContent] = useState("");
   const [csvContent, setCsvContent] = useState("");
   const [isImporting, setIsImporting] = useState(false);
@@ -47,7 +45,6 @@ export function BulkImport() {
 
   const { data: languages = [] } = useLanguages();
   const { data: units = [] } = useUnits(selectedLanguage);
-  const { data: lessons = [] } = useLessons(selectedUnit);
 
   const parseCSV = (csv: string): Record<string, string>[] => {
     const lines = csv.trim().split("\n");
@@ -101,7 +98,7 @@ export function BulkImport() {
     }
   };
 
-  const importLessons = async (data: any[]): Promise<ImportResult> => {
+  const importNotes = async (data: any[]): Promise<ImportResult> => {
     let success = 0;
     const errors: string[] = [];
     
@@ -116,17 +113,17 @@ export function BulkImport() {
       
       for (const item of batch) {
         try {
-          const { error } = await supabase.from("lessons").insert({
+          const { error } = await supabase.from("unit_notes").insert({
             unit_id: selectedUnit,
             title: item.title,
+            content: item.content,
             order_index: item.order_index || 0,
-            is_active: item.is_active !== false,
           });
 
           if (error) throw error;
           success++;
         } catch (err: any) {
-          errors.push(`Lesson "${item.title}": ${err.message}`);
+          errors.push(`Note "${item.title}": ${err.message}`);
         }
       }
       
@@ -137,90 +134,7 @@ export function BulkImport() {
         total: data.length,
         percent: Math.round((Math.min(imported, data.length) / data.length) * 100),
       });
-      
-      // Yield to UI thread
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
 
-    return { success, errors };
-  };
-
-  const importQuestions = async (data: any[]): Promise<ImportResult> => {
-    let success = 0;
-    const errors: string[] = [];
-    
-    // Process in batches
-    const batches: any[][] = [];
-    for (let i = 0; i < data.length; i += BATCH_SIZE) {
-      batches.push(data.slice(i, i + BATCH_SIZE));
-    }
-
-    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-      const batch = batches[batchIndex];
-      
-      for (const item of batch) {
-        try {
-          // Parse options if it's a string
-          let options = item.options;
-          if (typeof options === "string") {
-            try {
-              options = JSON.parse(options);
-            } catch {
-              options = options.split("|").map((o: string) => o.trim());
-            }
-          }
-
-          // Parse blocks for drag-order
-          let blocks = item.blocks;
-          if (typeof blocks === "string") {
-            try {
-              blocks = JSON.parse(blocks);
-            } catch {
-              blocks = undefined;
-            }
-          }
-
-          // Parse correct_order for drag-order
-          let correct_order = item.correct_order;
-          if (typeof correct_order === "string") {
-            try {
-              correct_order = JSON.parse(correct_order);
-            } catch {
-              correct_order = correct_order.split("|").map((o: string) => o.trim());
-            }
-          }
-
-          const { error } = await supabase.from("questions").insert({
-            lesson_id: selectedLesson,
-            type: item.type,
-            instruction: item.instruction,
-            code: item.code || null,
-            answer: item.answer || null,
-            options: options || null,
-            blocks: blocks || null,
-            correct_order: correct_order || null,
-            hint: item.hint || null,
-            initial_code: item.initial_code || null,
-            expected_output: item.expected_output || null,
-            order_index: item.order_index || 0,
-            xp_reward: item.xp_reward || 10,
-          });
-
-          if (error) throw error;
-          success++;
-        } catch (err: any) {
-          errors.push(`Question "${item.instruction?.substring(0, 30)}...": ${err.message}`);
-        }
-      }
-      
-      // Update progress
-      const imported = (batchIndex + 1) * BATCH_SIZE;
-      setProgress({
-        current: Math.min(imported, data.length),
-        total: data.length,
-        percent: Math.round((Math.min(imported, data.length) / data.length) * 100),
-      });
-      
       // Yield to UI thread
       await new Promise((resolve) => setTimeout(resolve, 50));
     }
@@ -229,12 +143,8 @@ export function BulkImport() {
   };
 
   const handleImport = async () => {
-    if (importType === "lessons" && !selectedUnit) {
+    if (!selectedUnit) {
       toast({ title: "Please select a unit", variant: "destructive" });
-      return;
-    }
-    if (importType === "questions" && !selectedLesson) {
-      toast({ title: "Please select a lesson", variant: "destructive" });
       return;
     }
 
@@ -257,15 +167,14 @@ export function BulkImport() {
         return;
       }
 
-      const importResult =
-        importType === "lessons" ? await importLessons(data) : await importQuestions(data);
-
+      setProgress({ current: 0, total: data.length, percent: 0 });
+      
+      const importResult = await importNotes(data);
       setResult(importResult);
 
       if (importResult.success > 0) {
-        toast({ title: `Successfully imported ${importResult.success} ${importType}!` });
-        queryClient.invalidateQueries({ queryKey: ["lessons"] });
-        queryClient.invalidateQueries({ queryKey: ["questions"] });
+        toast({ title: `Successfully imported ${importResult.success} notes!` });
+        queryClient.invalidateQueries({ queryKey: ["unit-notes"] });
       }
 
       if (importResult.errors.length > 0) {
@@ -281,40 +190,21 @@ export function BulkImport() {
     }
   };
 
-  const sampleLessonsCSV = `title,order_index
-"Introduction to Loops",0
-"While Loops",1
-"For Loops",2`;
+  const sampleNotesCSV = `title,content,order_index
+"Introduction to Variables","Variables store data values. In Python, you create a variable by assigning a value to it using the = operator.",0
+"Data Types","Python has several data types: int, float, str, bool, list, tuple, dict, and set.",1`;
 
-  const sampleQuestionsCSV = `type,instruction,code,answer,options,hint
-"fill-blank","Complete the print statement","print(___)","Hello|World","""Hello""|""World""|""Hi""|""Bye""","Use print to display text"
-"multiple-choice","What does print() do?","","0","""Displays output""|""Takes input""|""Creates variable""|""Imports module""","Think about output"`;
-
-  const sampleLessonsJSON = JSON.stringify(
+  const sampleNotesJSON = JSON.stringify(
     [
-      { title: "Introduction to Loops", order_index: 0 },
-      { title: "While Loops", order_index: 1 },
-      { title: "For Loops", order_index: 2 },
-    ],
-    null,
-    2
-  );
-
-  const sampleQuestionsJSON = JSON.stringify(
-    [
-      {
-        type: "fill-blank",
-        instruction: "Complete the print statement",
-        code: 'print(___)',
-        answer: '"Hello, World!"',
-        options: ['"Hello, World!"', '"Hi"', '"Bye"', '"Test"'],
-        hint: "Use quotes around the string",
+      { 
+        title: "Introduction to Variables", 
+        content: "Variables store data values. In Python, you create a variable by assigning a value to it using the = operator.\n\n## Key Concepts\n- Variables don't need explicit type declaration\n- Use meaningful variable names\n- Follow snake_case naming convention",
+        order_index: 0 
       },
-      {
-        type: "multiple-choice",
-        instruction: "What does print() do?",
-        options: ["Displays output", "Takes input", "Creates variable", "Imports module"],
-        answer: "0",
+      { 
+        title: "Data Types", 
+        content: "Python has several built-in data types:\n\n### Numeric Types\n- int: whole numbers\n- float: decimal numbers\n\n### Text Type\n- str: string of characters",
+        order_index: 1 
       },
     ],
     null,
@@ -325,30 +215,13 @@ export function BulkImport() {
     <div className="space-y-6">
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
         <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <Upload className="w-5 h-5" />
-          Bulk Import
+          <BookOpen className="w-5 h-5" />
+          Import Study Notes
         </h3>
 
         <div className="space-y-4">
-          {/* Import Type Selection */}
-          <div>
-            <Label>What do you want to import?</Label>
-            <Select
-              value={importType}
-              onValueChange={(v) => setImportType(v as "lessons" | "questions")}
-            >
-              <SelectTrigger className="bg-slate-700 border-slate-600">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lessons">Lessons</SelectItem>
-                <SelectItem value="questions">Questions</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Selectors */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Language</Label>
               <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
@@ -383,27 +256,6 @@ export function BulkImport() {
                 </SelectContent>
               </Select>
             </div>
-            {importType === "questions" && (
-              <div>
-                <Label>Lesson</Label>
-                <Select
-                  value={selectedLesson}
-                  onValueChange={setSelectedLesson}
-                  disabled={!selectedUnit}
-                >
-                  <SelectTrigger className="bg-slate-700 border-slate-600">
-                    <SelectValue placeholder="Select lesson" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {lessons.map((lesson) => (
-                      <SelectItem key={lesson.id} value={lesson.id}>
-                        {lesson.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
           </div>
 
           {/* Input Methods */}
@@ -432,8 +284,8 @@ export function BulkImport() {
               />
               <div className="p-3 bg-slate-700/50 rounded-lg">
                 <p className="text-xs text-slate-400 mb-2">Example format:</p>
-                <pre className="text-xs text-slate-300 overflow-x-auto">
-                  {importType === "lessons" ? sampleLessonsJSON : sampleQuestionsJSON}
+                <pre className="text-xs text-slate-300 overflow-x-auto max-h-40">
+                  {sampleNotesJSON}
                 </pre>
               </div>
             </TabsContent>
@@ -448,7 +300,7 @@ export function BulkImport() {
               <div className="p-3 bg-slate-700/50 rounded-lg">
                 <p className="text-xs text-slate-400 mb-2">Example format:</p>
                 <pre className="text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap">
-                  {importType === "lessons" ? sampleLessonsCSV : sampleQuestionsCSV}
+                  {sampleNotesCSV}
                 </pre>
               </div>
             </TabsContent>
@@ -497,7 +349,7 @@ export function BulkImport() {
             ) : (
               <>
                 <Upload className="w-4 h-4 mr-2" />
-                Import {importType}
+                Import Notes
               </>
             )}
           </Button>
@@ -508,7 +360,7 @@ export function BulkImport() {
               {result.success > 0 && (
                 <div className="flex items-center gap-2 text-green-400">
                   <CheckCircle className="w-4 h-4" />
-                  <span>Successfully imported {result.success} items</span>
+                  <span>Successfully imported {result.success} notes</span>
                 </div>
               )}
               {result.errors.length > 0 && (
