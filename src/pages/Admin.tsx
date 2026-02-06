@@ -50,7 +50,16 @@ import { BulkImport } from "@/components/admin/BulkImport";
 import { BulkImportNotes } from "@/components/admin/BulkImportNotes";
 import { QuestManager } from "@/components/admin/QuestManager";
 import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
+import { AdminEditDialog, EditField } from "@/components/admin/AdminEditDialog";
+import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
+import { LanguageIcon } from "@/components/LanguageIcon";
 import { cn } from "@/lib/utils";
+import {
+  useUpdateLanguage,
+  useUpdateUnit,
+  useUpdateLesson,
+  useUpdateQuestion,
+} from "@/hooks/useAdmin";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -62,6 +71,21 @@ export default function Admin() {
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
   const [selectedUnit, setSelectedUnit] = useState<string>("");
   const [selectedLesson, setSelectedLesson] = useState<string>("");
+
+  // Edit mutations
+  const updateLanguage = useUpdateLanguage();
+  const updateUnit = useUpdateUnit();
+  const updateLesson = useUpdateLesson();
+  const updateQuestion = useUpdateQuestion();
+
+  // Edit dialog state
+  const [editDialog, setEditDialog] = useState<{
+    open: boolean; title: string; fields: EditField[];
+    initialValues: Record<string, string>;
+    onSave: (values: Record<string, string>) => Promise<void>;
+  }>({ open: false, title: "", fields: [], initialValues: {}, onSave: async () => {} });
+
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Queries
   const { data: users = [], isLoading: loadingUsers } = useAdminUsers();
@@ -97,8 +121,8 @@ export default function Admin() {
     initial_code: "",
     blocks: [] as { id: string; code: string }[],
     correct_order: [] as string[],
-    blocksJson: "", // Raw input for drag-order: [{"id":"1","code":"print(1)"},...]
-    correctOrderStr: "", // Comma-separated ids for drag-order: 1,2,3
+    blocksJson: "",
+    correctOrderStr: "",
   });
   const [newNote, setNewNote] = useState({ title: "", content: "" });
 
@@ -250,6 +274,74 @@ export default function Admin() {
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  /** Opens edit dialog for a language */
+  const editLanguage = (lang: any) => {
+    setEditDialog({
+      open: true, title: `Edit ${lang.name}`,
+      fields: [
+        { key: "name", label: "Name", type: "text" },
+        { key: "slug", label: "Slug", type: "text" },
+        { key: "icon", label: "Icon (Emoji)", type: "text" },
+        { key: "description", label: "Description", type: "textarea" },
+      ],
+      initialValues: { name: lang.name, slug: lang.slug, icon: lang.icon, description: lang.description || "" },
+      onSave: async (values) => {
+        await updateLanguage.mutateAsync({ id: lang.id, ...values } as any);
+        toast({ title: "Language updated!" });
+      },
+    });
+  };
+
+  /** Opens edit dialog for a unit */
+  const editUnit = (unit: any) => {
+    setEditDialog({
+      open: true, title: `Edit ${unit.title}`,
+      fields: [
+        { key: "title", label: "Title", type: "text" },
+        { key: "description", label: "Description", type: "textarea" },
+        { key: "color", label: "Color", type: "select", options: [
+          { value: "green", label: "Green" }, { value: "blue", label: "Blue" },
+          { value: "orange", label: "Orange" }, { value: "purple", label: "Purple" },
+        ]},
+      ],
+      initialValues: { title: unit.title, description: unit.description || "", color: unit.color },
+      onSave: async (values) => {
+        await updateUnit.mutateAsync({ id: unit.id, ...values } as any);
+        toast({ title: "Unit updated!" });
+      },
+    });
+  };
+
+  /** Opens edit dialog for a lesson */
+  const editLesson = (lesson: any) => {
+    setEditDialog({
+      open: true, title: `Edit ${lesson.title}`,
+      fields: [{ key: "title", label: "Title", type: "text" }],
+      initialValues: { title: lesson.title },
+      onSave: async (values) => {
+        await updateLesson.mutateAsync({ id: lesson.id, unitId: selectedUnit, ...values } as any);
+        toast({ title: "Lesson updated!" });
+      },
+    });
+  };
+
+  /** Opens edit dialog for a question */
+  const editQuestionItem = (q: any) => {
+    setEditDialog({
+      open: true, title: "Edit Question",
+      fields: [
+        { key: "instruction", label: "Instruction", type: "textarea" },
+        { key: "answer", label: "Answer", type: "text" },
+        { key: "hint", label: "Hint", type: "text" },
+      ],
+      initialValues: { instruction: q.instruction, answer: q.answer || "", hint: q.hint || "" },
+      onSave: async (values) => {
+        await updateQuestion.mutateAsync({ id: q.id, lessonId: selectedLesson, ...values } as any);
+        toast({ title: "Question updated!" });
+      },
+    });
   };
 
   return (
