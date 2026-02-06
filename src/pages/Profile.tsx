@@ -1,3 +1,8 @@
+/**
+ * Profile – User profile page displaying stats, achievements, streak info, and course progress.
+ * Contains a logout button with confirmation dialog.
+ */
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
@@ -6,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
 import { StreakCalendar } from "@/components/StreakCalendar";
+import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import mascot from "@/assets/mascot.png";
 
+/** Quick profile achievements shown as emoji badges */
 const achievements = [
   { emoji: "🔥", title: "7 Day Streak", condition: (streak: number) => streak >= 7 },
   { emoji: "⚡", title: "100 XP in a Day", condition: (xp: number) => xp >= 100 },
@@ -22,7 +29,9 @@ export default function Profile() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: lessonProgress, isLoading: progressLoading } = useLessonProgress();
   const navigate = useNavigate();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
+  /** Handles confirmed logout */
   const handleLogout = async () => {
     await signOut();
     navigate("/");
@@ -39,7 +48,7 @@ export default function Profile() {
   }
 
   const completedLessons = lessonProgress?.filter((l) => l.completed).length || 0;
-  const totalLessons = 17; // Total lessons in the course
+  const totalLessons = 17;
   const courseProgress = Math.round((completedLessons / totalLessons) * 100);
 
   const getLeague = (xp: number) => {
@@ -61,13 +70,12 @@ export default function Profile() {
     { icon: Calendar, label: "Joined", value: formatDate(profile?.created_at || null), color: "text-muted-foreground" },
   ];
 
-  // Check which achievements are unlocked
   const unlockedAchievements = achievements.map((achievement, i) => {
     let unlocked = false;
     switch (i) {
       case 0: unlocked = (profile?.streak_count || 0) >= 7; break;
       case 1: unlocked = (profile?.xp || 0) >= 100; break;
-      case 2: unlocked = false; break; // First place needs leaderboard check
+      case 2: unlocked = false; break;
       case 3: unlocked = completedLessons >= 5; break;
       case 4: unlocked = (profile?.gems || 0) >= 1000; break;
       case 5: unlocked = lessonProgress?.some((l) => l.accuracy === 100) || false; break;
@@ -104,10 +112,7 @@ export default function Profile() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4">
         {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="p-4 bg-card rounded-2xl border border-border card-elevated"
-          >
+          <div key={i} className="p-4 bg-card rounded-2xl border border-border card-elevated">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-xl bg-muted ${stat.color}`}>
                 <stat.icon className="w-5 h-5" />
@@ -121,7 +126,7 @@ export default function Profile() {
         ))}
       </div>
 
-      {/* Streak Freeze Indicator */}
+      {/* Streak Freeze */}
       <StreakFreezeIndicator
         freezeCount={profile?.streak_freeze_count || 0}
         lastUsed={profile?.last_streak_freeze_used || null}
@@ -135,7 +140,7 @@ export default function Profile() {
         lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
       />
 
-      {/* Current Course */}
+      {/* Current Course Progress */}
       <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
@@ -172,9 +177,7 @@ export default function Profile() {
               }`}
             >
               <span className="text-3xl mb-2 block">{achievement.emoji}</span>
-              <p className="text-xs font-semibold text-foreground truncate">
-                {achievement.title}
-              </p>
+              <p className="text-xs font-semibold text-foreground truncate">{achievement.title}</p>
             </div>
           ))}
         </div>
@@ -192,12 +195,19 @@ export default function Profile() {
           variant="outline" 
           className="w-full justify-start text-destructive hover:text-destructive" 
           size="lg"
-          onClick={handleLogout}
+          onClick={() => setShowLogoutDialog(true)}
         >
           <LogOut className="w-5 h-5" />
           Log Out
         </Button>
       </div>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        onConfirm={handleLogout}
+      />
     </div>
   );
 }

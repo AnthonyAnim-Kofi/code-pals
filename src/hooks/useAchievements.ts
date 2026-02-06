@@ -1,7 +1,13 @@
+/**
+ * useAchievements – Hooks for fetching achievements and checking/awarding new ones.
+ * Achievement types: lessons_completed, streak, xp, following, challenges, perfect_lesson, league.
+ * Sends browser notifications AND in-app toast notifications when achievements are earned.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
+import { toast } from "sonner";
 
 export interface Achievement {
   id: string;
@@ -21,6 +27,7 @@ export interface UserAchievement {
   achievement?: Achievement;
 }
 
+/** Fetches all available achievements sorted by requirement value */
 export function useAchievements() {
   return useQuery({
     queryKey: ["achievements"],
@@ -36,6 +43,7 @@ export function useAchievements() {
   });
 }
 
+/** Fetches the current user's earned achievements */
 export function useUserAchievements() {
   const { user } = useAuth();
   
@@ -55,6 +63,10 @@ export function useUserAchievements() {
   });
 }
 
+/**
+ * Checks user stats against all achievements and awards any newly earned ones.
+ * Sends both browser push notifications and in-app toast notifications.
+ */
 export function useCheckAndAwardAchievements() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -72,20 +84,19 @@ export function useCheckAndAwardAchievements() {
     }) => {
       if (!user) throw new Error("Not authenticated");
       
-      // Get all achievements
       const { data: achievements } = await supabase
         .from("achievements")
         .select("*");
       
-      // Get user's existing achievements
       const { data: userAchievements } = await supabase
         .from("user_achievements")
         .select("achievement_id")
         .eq("user_id", user.id);
       
       const earnedIds = new Set(userAchievements?.map(ua => ua.achievement_id) || []);
-      const newAchievements: Array<{ id: string; name: string }> = [];
+      const newAchievements: Array<{ id: string; name: string; icon: string }> = [];
       
+      // Check each achievement against user's current stats
       for (const achievement of achievements || []) {
         if (earnedIds.has(achievement.id)) continue;
         
@@ -116,11 +127,11 @@ export function useCheckAndAwardAchievements() {
         }
         
         if (earned) {
-          newAchievements.push({ id: achievement.id, name: achievement.name });
+          newAchievements.push({ id: achievement.id, name: achievement.name, icon: achievement.icon });
         }
       }
       
-      // Insert new achievements
+      // Insert newly earned achievements and send notifications
       if (newAchievements.length > 0) {
         await supabase
           .from("user_achievements")
@@ -129,9 +140,16 @@ export function useCheckAndAwardAchievements() {
             achievement_id: a.id,
           })));
         
-        // Send notifications for each new achievement
+        // Send both browser notification AND in-app toast for each achievement
         for (const achievement of newAchievements) {
+          // Browser push notification
           notifyAchievementUnlock(achievement.name);
+          
+          // In-app toast notification with achievement icon
+          toast.success(`🏆 Achievement Unlocked!`, {
+            description: `${achievement.icon} ${achievement.name}`,
+            duration: 6000,
+          });
         }
       }
       

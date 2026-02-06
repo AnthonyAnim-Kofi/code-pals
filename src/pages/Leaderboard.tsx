@@ -1,18 +1,37 @@
+/**
+ * Leaderboard – Displays weekly league rankings with promotion/demotion zones.
+ * Uses weekly_xp (not total XP) for rankings, ensuring fair weekly competition.
+ * Includes league tabs for browsing different league tiers.
+ */
 import { useState } from "react";
 import { Trophy, Medal, Loader2, Users, ArrowUp, ArrowDown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { useLeagueLeaderboard, LEAGUES, getDaysUntilWeekEnd, getLeagueInfo } from "@/hooks/useLeague";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLeagueThresholds } from "@/hooks/useLeagueThresholds";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import mascot from "@/assets/mascot.png";
 
 export default function Leaderboard() {
   const { data: profile } = useUserProfile();
   const [selectedLeague, setSelectedLeague] = useState(profile?.league || "bronze");
   const { data: leaderboardData, isLoading } = useLeagueLeaderboard(selectedLeague);
+  const { data: thresholds } = useLeagueThresholds();
 
   const daysLeft = getDaysUntilWeekEnd();
   const currentLeagueInfo = getLeagueInfo(profile?.league || "bronze");
+
+  /** Get XP threshold for promotion from the admin-defined thresholds table */
+  const getPromotionThreshold = (league: string) => {
+    const t = thresholds?.find(th => th.league === league);
+    return t?.promotion_xp_threshold ?? Infinity;
+  };
+
+  /** Get XP threshold for demotion from the admin-defined thresholds table */
+  const getDemotionThreshold = (league: string) => {
+    const t = thresholds?.find(th => th.league === league);
+    return t?.demotion_xp_threshold ?? 0;
+  };
 
   if (isLoading) {
     return (
@@ -24,19 +43,18 @@ export default function Leaderboard() {
 
   const users = leaderboardData || [];
   const currentUserRank = users.findIndex((u) => u.user_id === profile?.user_id) + 1;
-  const promoteThreshold = Math.max(1, Math.ceil(users.length * 0.2));
-  const demoteThreshold = users.length - Math.max(1, Math.ceil(users.length * 0.2));
+  
+  // Determine promotion/demotion based on weekly_xp thresholds
+  const promotionXp = getPromotionThreshold(selectedLeague);
+  const demotionXp = getDemotionThreshold(selectedLeague);
+  const userWeeklyXp = profile?.weekly_xp || 0;
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1:
-        return <Trophy className="w-5 h-5 text-golden" />;
-      case 2:
-        return <Medal className="w-5 h-5 text-[#C0C0C0]" />;
-      case 3:
-        return <Medal className="w-5 h-5 text-[#CD7F32]" />;
-      default:
-        return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{rank}</span>;
+      case 1: return <Trophy className="w-5 h-5 text-golden" />;
+      case 2: return <Medal className="w-5 h-5 text-[#C0C0C0]" />;
+      case 3: return <Medal className="w-5 h-5 text-[#CD7F32]" />;
+      default: return <span className="text-sm font-bold text-muted-foreground w-5 text-center">{rank}</span>;
     }
   };
 
@@ -50,13 +68,13 @@ export default function Leaderboard() {
         <p className="text-muted-foreground">Compete with other learners in your league</p>
       </div>
 
-      {/* Week Info */}
+      {/* Week countdown info */}
       <div className="flex items-center gap-2 p-3 bg-muted rounded-xl text-sm">
         <Clock className="w-4 h-4 text-muted-foreground" />
         <span className="text-muted-foreground">Week resets in <span className="font-bold text-foreground">{daysLeft} days</span></span>
       </div>
 
-      {/* League Card */}
+      {/* Current league card showing user's position and weekly XP */}
       <div className={cn("p-6 rounded-2xl border", currentLeagueInfo.bgColor, "border-current/20")}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -67,17 +85,17 @@ export default function Leaderboard() {
               <p className={cn("text-2xl font-extrabold capitalize", currentLeagueInfo.color)}>
                 {profile?.league} League
               </p>
-              <p className="text-muted-foreground">{profile?.weekly_xp || 0} XP this week</p>
+              <p className="text-muted-foreground">{userWeeklyXp} XP this week</p>
             </div>
           </div>
           {currentUserRank > 0 && (
             <div className="text-right">
               <p className="text-3xl font-extrabold text-foreground">#{currentUserRank}</p>
               <div className="flex items-center gap-1 text-sm">
-                {currentUserRank <= promoteThreshold && selectedLeague !== "diamond" && (
+                {userWeeklyXp >= promotionXp && selectedLeague !== "diamond" && (
                   <span className="text-green-600 flex items-center gap-1"><ArrowUp className="w-4 h-4" /> Promotion</span>
                 )}
-                {currentUserRank > demoteThreshold && selectedLeague !== "bronze" && (
+                {userWeeklyXp < demotionXp && selectedLeague !== "bronze" && (
                   <span className="text-red-600 flex items-center gap-1"><ArrowDown className="w-4 h-4" /> Demotion</span>
                 )}
               </div>
@@ -86,7 +104,7 @@ export default function Leaderboard() {
         </div>
       </div>
 
-      {/* League Tabs */}
+      {/* League tier tabs */}
       <Tabs value={selectedLeague} onValueChange={setSelectedLeague}>
         <TabsList className="grid w-full grid-cols-4 h-auto p-1 bg-muted rounded-xl">
           {LEAGUES.map((league) => (
@@ -97,7 +115,7 @@ export default function Leaderboard() {
         </TabsList>
       </Tabs>
 
-      {/* Rankings */}
+      {/* User rankings list – sorted by weekly_xp */}
       {users.length === 0 ? (
         <div className="p-8 bg-card rounded-2xl border border-border text-center">
           <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
@@ -109,8 +127,9 @@ export default function Leaderboard() {
           {users.map((leaderUser, index) => {
             const rank = index + 1;
             const isCurrentUser = leaderUser.user_id === profile?.user_id;
-            const inPromotionZone = rank <= promoteThreshold && selectedLeague !== "diamond";
-            const inDemotionZone = rank > demoteThreshold && selectedLeague !== "bronze";
+            // Determine promotion/demotion zone based on weekly XP thresholds
+            const inPromotionZone = leaderUser.weekly_xp >= promotionXp && selectedLeague !== "diamond";
+            const inDemotionZone = leaderUser.weekly_xp < demotionXp && selectedLeague !== "bronze";
 
             return (
               <div
@@ -118,8 +137,8 @@ export default function Leaderboard() {
                 className={cn(
                   "flex items-center gap-4 p-4 border-b border-border last:border-b-0 transition-colors",
                   isCurrentUser && "bg-primary/5",
-                  inPromotionZone && "bg-green-50",
-                  inDemotionZone && "bg-red-50"
+                  inPromotionZone && !isCurrentUser && "bg-green-50 dark:bg-green-950/20",
+                  inDemotionZone && !isCurrentUser && "bg-red-50 dark:bg-red-950/20"
                 )}
               >
                 <div className="w-8 flex justify-center">{getRankIcon(rank)}</div>
@@ -138,6 +157,7 @@ export default function Leaderboard() {
                   <p className="text-sm text-muted-foreground">🔥 {leaderUser.streak_count || 0} day streak</p>
                 </div>
                 <div className="text-right">
+                  {/* Display weekly XP, not total XP */}
                   <p className="font-bold text-golden">{leaderUser.weekly_xp?.toLocaleString() || 0}</p>
                   <p className="text-xs text-muted-foreground">XP this week</p>
                 </div>

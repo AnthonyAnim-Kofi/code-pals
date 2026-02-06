@@ -1,12 +1,26 @@
+/**
+ * useQuests – Hooks for managing daily and weekly quest progress.
+ * Handles quest initialization, progress tracking, and reward claiming.
+ * 
+ * Quest types include:
+ * - complete_lessons: Track lesson completions
+ * - earn_xp: Track XP earned
+ * - correct_answers: Track correct answers in lessons
+ * - maintain_streak: Track streak maintenance (synced from profile)
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
+/** Returns today's date as ISO string (YYYY-MM-DD) */
 function isoDate(d: Date) {
   return d.toISOString().split("T")[0];
 }
 
-// Week resets on Sunday (use local time to match UX)
+/**
+ * Returns the ISO date of the most recent Sunday (week start).
+ * Used as the quest_date for weekly quests.
+ */
 export function getWeekStartSundayISO(now = new Date()) {
   const d = new Date(now);
   d.setHours(0, 0, 0, 0);
@@ -36,6 +50,7 @@ export interface QuestProgress {
   quest?: Quest;
 }
 
+/** Fetches all available quests (both daily and weekly) */
 export function useQuests() {
   return useQuery({
     queryKey: ["quests"],
@@ -51,6 +66,7 @@ export function useQuests() {
   });
 }
 
+/** Fetches user's quest progress for today (daily) and this week (weekly) */
 export function useQuestProgress() {
   const { user } = useAuth();
 
@@ -64,10 +80,7 @@ export function useQuestProgress() {
       
       const { data, error } = await supabase
         .from("user_quest_progress")
-        .select(`
-          *,
-          quest:daily_quests(*)
-        `)
+        .select(`*, quest:daily_quests(*)`)
         .eq("user_id", user.id)
         .in("quest_date", [today, weekStart]);
       
@@ -78,6 +91,10 @@ export function useQuestProgress() {
   });
 }
 
+/**
+ * Initializes quest progress entries for new quests.
+ * Also syncs streak-based quests with the user's current streak count.
+ */
 export function useInitializeQuestProgress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -89,16 +106,16 @@ export function useInitializeQuestProgress() {
       const today = isoDate(new Date());
       const weekStart = getWeekStartSundayISO();
       
-      // Check existing progress for today (daily) and this week start (weekly)
+      // Check existing progress
       const { data: existing } = await supabase
         .from("user_quest_progress")
-        .select("quest_id")
+        .select("quest_id, id, current_value, quest_date")
         .eq("user_id", user.id)
         .in("quest_date", [today, weekStart]);
       
       const existingQuestIds = new Set(existing?.map((p) => p.quest_id) || []);
       
-      // Create progress entries for new quests (daily uses today, weekly uses weekStart)
+      // Create progress entries for quests that don't have one yet
       const newEntries = quests
         .filter((q) => !existingQuestIds.has(q.id))
         .map((quest) => ({
@@ -114,8 +131,39 @@ export function useInitializeQuestProgress() {
         const { error } = await supabase
           .from("user_quest_progress")
           .insert(newEntries);
-        
         if (error) throw error;
+      }
+
+      // Sync streak-based quests with the user's actual streak count
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("streak_count")
+        .eq("user_id", user.id)
+        .single();
+
+      if (profile) {
+        const streakQuests = quests.filter(q => q.quest_type === "maintain_streak");
+        for (const quest of streakQuests) {
+          const questDate = quest.is_weekly ? weekStart : today;
+          const existingProgress = existing?.find(
+            p => p.quest_id === quest.id && p.quest_date === questDate
+          );
+          
+          if (existingProgress) {
+            // Update streak quest progress to match actual streak
+            const newValue = Math.min(profile.streak_count, quest.target_value);
+            if (newValue !== existingProgress.current_value) {
+              await supabase
+                .from("user_quest_progress")
+                .update({
+                  current_value: newValue,
+                  completed: newValue >= quest.target_value,
+                  completed_at: newValue >= quest.target_value ? new Date().toISOString() : null,
+                })
+                .eq("id", existingProgress.id);
+            }
+          }
+        }
       }
       
       return true;
@@ -126,14 +174,17 @@ export function useInitializeQuestProgress() {
   });
 }
 
+/**
+ * Updates quest progress when a user performs an action (e.g., completes a lesson, earns XP).
+ * Creates progress rows if they don't exist yet.
+ */
 export function useUpdateQuestProgress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({
-      questType,
-      incrementBy,
+      questType, incrementBy,
     }: {
       questType: string;
       incrementBy: number;
@@ -143,7 +194,7 @@ export function useUpdateQuestProgress() {
       const today = isoDate(new Date());
       const weekStart = getWeekStartSundayISO();
       
-      // Get all quests of this type (daily + weekly)
+      // Find all quests of this type (both daily and weekly)
       const { data: quests } = await supabase
         .from("daily_quests")
         .select("id, target_value, is_weekly")
@@ -151,7 +202,6 @@ export function useUpdateQuestProgress() {
       
       if (!quests || quests.length === 0) return;
       
-      // Update progress for each matching quest (create row if missing so lesson activity counts)
       for (const quest of quests) {
         const questDate = quest.is_weekly ? weekStart : today;
         const { data: progress } = await supabase
@@ -176,7 +226,6 @@ export function useUpdateQuestProgress() {
             })
             .eq("id", progress.id);
         } else if (!progress) {
-          // Create progress row so quest page reflects lesson activity even if user hasn't visited Quests
           await supabase.from("user_quest_progress").insert({
             user_id: user.id,
             quest_id: quest.id,
@@ -195,6 +244,7 @@ export function useUpdateQuestProgress() {
   });
 }
 
+/** Claims a quest reward, adding gems to the user's profile */
 export function useClaimQuestReward() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -203,19 +253,16 @@ export function useClaimQuestReward() {
     mutationFn: async ({ progressId, gemReward }: { progressId: string; gemReward: number }) => {
       if (!user) throw new Error("Not authenticated");
       
-      // Mark as claimed
+      // Mark quest as claimed
       const { error: updateError } = await supabase
         .from("user_quest_progress")
-        .update({
-          claimed: true,
-          claimed_at: new Date().toISOString(),
-        })
+        .update({ claimed: true, claimed_at: new Date().toISOString() })
         .eq("id", progressId)
         .eq("user_id", user.id);
       
       if (updateError) throw updateError;
       
-      // Add gems to user profile
+      // Add gems to user's profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("gems")

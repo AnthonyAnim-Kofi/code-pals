@@ -1,8 +1,13 @@
+/**
+ * useAdmin – Admin hooks for CRUD operations on languages, units, lessons, questions, and notes.
+ * Includes both create and update mutations for all admin-managed entities.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Type definitions
+// ─── Type Definitions ───
+
 export interface Language {
   id: string;
   name: string;
@@ -77,22 +82,21 @@ export interface AdminUser {
   created_at: string;
 }
 
-// Check if user is admin
+// ─── Admin Role Check ───
+
+/** Checks if the current user has admin role */
 export function useIsAdmin() {
   const { user } = useAuth();
-
   return useQuery({
     queryKey: ["is-admin", user?.id],
     queryFn: async () => {
       if (!user) return false;
-      
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-
       if (error) return false;
       return !!data;
     },
@@ -100,7 +104,9 @@ export function useIsAdmin() {
   });
 }
 
-// Admin - Get all users (refetch on window focus so admin stays in sync with user activity)
+// ─── Users ───
+
+/** Fetches all user profiles for admin user management */
 export function useAdminUsers() {
   return useQuery({
     queryKey: ["admin-users"],
@@ -109,16 +115,37 @@ export function useAdminUsers() {
         .from("profiles")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (error) throw error;
       return data as AdminUser[];
     },
     refetchOnWindowFocus: true,
-    staleTime: 30 * 1000, // Consider fresh for 30s, then refetch when tab focused
+    staleTime: 30 * 1000,
   });
 }
 
-// Admin - Get all languages
+/** Updates a user's profile data */
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<AdminUser> }) => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(updates)
+        .eq("user_id", userId)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+  });
+}
+
+// ─── Languages ───
+
+/** Fetches all languages (including inactive) for admin management */
 export function useLanguages() {
   return useQuery({
     queryKey: ["languages"],
@@ -127,45 +154,52 @@ export function useLanguages() {
         .from("languages")
         .select("*")
         .order("created_at", { ascending: true });
-
       if (error) throw error;
       return data as Language[];
     },
   });
 }
 
-// Admin - Create language
+/** Creates a new programming language */
 export function useCreateLanguage() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (language: Omit<Language, "id" | "created_at">) => {
-      const { data, error } = await supabase
-        .from("languages")
-        .insert(language)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from("languages").insert(language).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["languages"] });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["languages"] }); },
   });
 }
 
-// Admin - Get units by language
+/** Updates an existing language's details */
+export function useUpdateLanguage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Language> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("languages")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["languages"] }); },
+  });
+}
+
+// ─── Units ───
+
+/** Fetches units for a specific language */
 export function useUnits(languageId?: string) {
   return useQuery({
     queryKey: ["units", languageId],
     queryFn: async () => {
       let query = supabase.from("units").select("*").order("order_index", { ascending: true });
-      
-      if (languageId) {
-        query = query.eq("language_id", languageId);
-      }
-
+      if (languageId) query = query.eq("language_id", languageId);
       const { data, error } = await query;
       if (error) throw error;
       return data as Unit[];
@@ -173,38 +207,72 @@ export function useUnits(languageId?: string) {
   });
 }
 
-// Admin - Create unit
+/** Creates a new unit within a language */
 export function useCreateUnit() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (unit: Omit<Unit, "id" | "created_at">) => {
-      const { data, error } = await supabase
-        .from("units")
-        .insert(unit)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from("units").insert(unit).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["units"] }); },
+  });
+}
+
+/** Updates an existing unit's details */
+export function useUpdateUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: Partial<Unit> & { id: string }) => {
+      const { data, error } = await supabase
+        .from("units")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["units"] }); },
+  });
+}
+
+/** Deletes a unit and cascades to its lessons, questions, and notes */
+export function useDeleteUnit() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ unitId, languageId }: { unitId: string; languageId: string }) => {
+      const { data: lessons } = await supabase.from("lessons").select("id").eq("unit_id", unitId);
+      if (lessons && lessons.length > 0) {
+        for (const lesson of lessons) {
+          await supabase.from("questions").delete().eq("lesson_id", lesson.id);
+        }
+        await supabase.from("lessons").delete().eq("unit_id", unitId);
+      }
+      await supabase.from("unit_notes").delete().eq("unit_id", unitId);
+      const { error } = await supabase.from("units").delete().eq("id", unitId);
+      if (error) throw error;
+      return languageId;
+    },
+    onSuccess: (languageId) => {
+      queryClient.invalidateQueries({ queryKey: ["units", languageId] });
+      queryClient.invalidateQueries({ queryKey: ["lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["questions"] });
+      queryClient.invalidateQueries({ queryKey: ["unit-notes"] });
     },
   });
 }
 
-// Admin - Get lessons by unit
+// ─── Lessons ───
+
+/** Fetches lessons for a specific unit */
 export function useLessons(unitId?: string) {
   return useQuery({
     queryKey: ["lessons", unitId],
     queryFn: async () => {
       let query = supabase.from("lessons").select("*").order("order_index", { ascending: true });
-      
-      if (unitId) {
-        query = query.eq("unit_id", unitId);
-      }
-
+      if (unitId) query = query.eq("unit_id", unitId);
       const { data, error } = await query;
       if (error) throw error;
       return data as Lesson[];
@@ -213,40 +281,63 @@ export function useLessons(unitId?: string) {
   });
 }
 
-// Admin - Create lesson
+/** Creates a new lesson within a unit */
 export function useCreateLesson() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (lesson: Omit<Lesson, "id" | "created_at">) => {
-      const { data, error } = await supabase
-        .from("lessons")
-        .insert(lesson)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from("lessons").insert(lesson).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["lessons"] });
-    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["lessons"] }); },
   });
 }
 
-// Admin - Get questions by lesson
+/** Updates an existing lesson */
+export function useUpdateLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, unitId, ...updates }: Partial<Lesson> & { id: string; unitId: string }) => {
+      const { data, error } = await supabase
+        .from("lessons")
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return { data, unitId };
+    },
+    onSuccess: (result) => { queryClient.invalidateQueries({ queryKey: ["lessons", result.unitId] }); },
+  });
+}
+
+/** Deletes a lesson */
+export function useDeleteLesson() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ lessonId, unitId }: { lessonId: string; unitId: string }) => {
+      const { error } = await supabase.from("lessons").delete().eq("id", lessonId);
+      if (error) throw error;
+      return unitId;
+    },
+    onSuccess: (unitId) => { queryClient.invalidateQueries({ queryKey: ["lessons", unitId] }); },
+  });
+}
+
+// ─── Questions ───
+
+/** Fetches questions for a specific lesson */
 export function useQuestions(lessonId?: string) {
   return useQuery({
     queryKey: ["questions", lessonId],
     queryFn: async () => {
       if (!lessonId) return [];
-      
       const { data, error } = await supabase
         .from("questions")
         .select("*")
         .eq("lesson_id", lessonId)
         .order("order_index", { ascending: true });
-
       if (error) throw error;
       return data as Question[];
     },
@@ -254,10 +345,9 @@ export function useQuestions(lessonId?: string) {
   });
 }
 
-// Admin - Create question
+/** Creates a new question within a lesson */
 export function useCreateQuestion() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (question: Omit<Question, "id">) => {
       const insertData = {
@@ -275,12 +365,7 @@ export function useCreateQuestion() {
         order_index: question.order_index,
         xp_reward: question.xp_reward,
       };
-      const { data, error } = await supabase
-        .from("questions")
-        .insert(insertData as any)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from("questions").insert(insertData as any).select().single();
       if (error) throw error;
       return data;
     },
@@ -290,39 +375,50 @@ export function useCreateQuestion() {
   });
 }
 
-// Admin - Delete question
-export function useDeleteQuestion() {
+/** Updates an existing question */
+export function useUpdateQuestion() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async ({ questionId, lessonId }: { questionId: string; lessonId: string }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, lessonId, ...updates }: Partial<Question> & { id: string; lessonId: string }) => {
+      const { data, error } = await supabase
         .from("questions")
-        .delete()
-        .eq("id", questionId);
-
+        .update({ ...updates, updated_at: new Date().toISOString() } as any)
+        .eq("id", id)
+        .select()
+        .single();
       if (error) throw error;
-      return lessonId;
+      return { data, lessonId };
     },
-    onSuccess: (lessonId) => {
-      queryClient.invalidateQueries({ queryKey: ["questions", lessonId] });
-    },
+    onSuccess: (result) => { queryClient.invalidateQueries({ queryKey: ["questions", result.lessonId] }); },
   });
 }
 
-// Admin - Get unit notes
+/** Deletes a question */
+export function useDeleteQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ questionId, lessonId }: { questionId: string; lessonId: string }) => {
+      const { error } = await supabase.from("questions").delete().eq("id", questionId);
+      if (error) throw error;
+      return lessonId;
+    },
+    onSuccess: (lessonId) => { queryClient.invalidateQueries({ queryKey: ["questions", lessonId] }); },
+  });
+}
+
+// ─── Unit Notes ───
+
+/** Fetches notes for a specific unit */
 export function useUnitNotes(unitId?: string) {
   return useQuery({
     queryKey: ["unit-notes", unitId],
     queryFn: async () => {
       if (!unitId) return [];
-      
       const { data, error } = await supabase
         .from("unit_notes")
         .select("*")
         .eq("unit_id", unitId)
         .order("order_index", { ascending: true });
-
       if (error) throw error;
       return data as UnitNote[];
     },
@@ -330,18 +426,12 @@ export function useUnitNotes(unitId?: string) {
   });
 }
 
-// Admin - Create unit note
+/** Creates a new unit note */
 export function useCreateUnitNote() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (note: Omit<UnitNote, "id" | "created_at">) => {
-      const { data, error } = await supabase
-        .from("unit_notes")
-        .insert(note)
-        .select()
-        .single();
-
+      const { data, error } = await supabase.from("unit_notes").insert(note).select().single();
       if (error) throw error;
       return data;
     },
@@ -351,10 +441,9 @@ export function useCreateUnitNote() {
   });
 }
 
-// Admin - Update unit note
+/** Updates an existing unit note */
 export function useUpdateUnitNote() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ id, unitId, ...updates }: Partial<UnitNote> & { id: string; unitId: string }) => {
       const { data, error } = await supabase
@@ -363,7 +452,6 @@ export function useUpdateUnitNote() {
         .eq("id", id)
         .select()
         .single();
-
       if (error) throw error;
       return { data, unitId };
     },
@@ -373,116 +461,17 @@ export function useUpdateUnitNote() {
   });
 }
 
-// Admin - Delete unit note
+/** Deletes a unit note */
 export function useDeleteUnitNote() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ noteId, unitId }: { noteId: string; unitId: string }) => {
-      const { error } = await supabase
-        .from("unit_notes")
-        .delete()
-        .eq("id", noteId);
-
+      const { error } = await supabase.from("unit_notes").delete().eq("id", noteId);
       if (error) throw error;
       return unitId;
     },
     onSuccess: (unitId) => {
       queryClient.invalidateQueries({ queryKey: ["unit-notes", unitId] });
-    },
-  });
-}
-
-// Admin - Update user
-export function useUpdateUser() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<AdminUser> }) => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(updates)
-        .eq("user_id", userId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-  });
-}
-
-// Admin - Delete lesson
-export function useDeleteLesson() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ lessonId, unitId }: { lessonId: string; unitId: string }) => {
-      const { error } = await supabase
-        .from("lessons")
-        .delete()
-        .eq("id", lessonId);
-
-      if (error) throw error;
-      return unitId;
-    },
-    onSuccess: (unitId) => {
-      queryClient.invalidateQueries({ queryKey: ["lessons", unitId] });
-    },
-  });
-}
-
-// Admin - Delete unit (cascade deletes lessons and questions)
-export function useDeleteUnit() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ unitId, languageId }: { unitId: string; languageId: string }) => {
-      // First delete all lessons in the unit (questions will cascade)
-      const { data: lessons } = await supabase
-        .from("lessons")
-        .select("id")
-        .eq("unit_id", unitId);
-      
-      if (lessons && lessons.length > 0) {
-        for (const lesson of lessons) {
-          // Delete questions for each lesson
-          await supabase
-            .from("questions")
-            .delete()
-            .eq("lesson_id", lesson.id);
-        }
-        
-        // Delete all lessons
-        await supabase
-          .from("lessons")
-          .delete()
-          .eq("unit_id", unitId);
-      }
-      
-      // Delete unit notes
-      await supabase
-        .from("unit_notes")
-        .delete()
-        .eq("unit_id", unitId);
-      
-      // Finally delete the unit
-      const { error } = await supabase
-        .from("units")
-        .delete()
-        .eq("id", unitId);
-
-      if (error) throw error;
-      return languageId;
-    },
-    onSuccess: (languageId) => {
-      queryClient.invalidateQueries({ queryKey: ["units", languageId] });
-      queryClient.invalidateQueries({ queryKey: ["lessons"] });
-      queryClient.invalidateQueries({ queryKey: ["questions"] });
-      queryClient.invalidateQueries({ queryKey: ["unit-notes"] });
     },
   });
 }

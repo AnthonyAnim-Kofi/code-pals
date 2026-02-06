@@ -1,3 +1,8 @@
+/**
+ * Languages – Page showing all available programming languages with progress tracking.
+ * Users can switch their active language and see lessons completed, XP earned, and status.
+ * Uses LanguageIcon component for recognizable language icons instead of emojis.
+ */
 import { useState } from "react";
 import { useLanguages } from "@/hooks/useLanguages";
 import { useUserLanguageProgress } from "@/hooks/useUserLanguageProgress";
@@ -9,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Check, Star, Trophy, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { LanguageIcon } from "@/components/LanguageIcon";
 
 export default function Languages() {
   const { data: languages, isLoading: loadingLanguages } = useLanguages();
@@ -28,6 +34,7 @@ export default function Languages() {
 
   const activeLanguage = (profile as any)?.active_language_id;
 
+  /** Switches the user's active language */
   const handleSwitchLanguage = async (languageId: string) => {
     setSwitching(languageId);
     try {
@@ -40,6 +47,7 @@ export default function Languages() {
     }
   };
 
+  /** Gets the progress data for a specific language */
   const getLanguageProgress = (languageId: string) => {
     const langProgress = progress?.find((p) => p.language_id === languageId);
     return langProgress || { completed_lessons: 0, total_lessons: 0, total_xp: 0 };
@@ -80,7 +88,8 @@ export default function Languages() {
               
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-4xl">{language.icon}</span>
+                  {/* Real language icon instead of emoji */}
+                  <LanguageIcon slug={language.slug} icon={language.icon} size={40} />
                   <div>
                     <CardTitle className="text-lg">{language.name}</CardTitle>
                     <p className="text-sm text-muted-foreground">{language.description}</p>
@@ -98,7 +107,7 @@ export default function Languages() {
                   <Progress value={progressPercent} indicatorColor="gradient" />
                 </div>
 
-                {/* Stats */}
+                {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2 bg-muted rounded-lg">
                     <BookOpen className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />

@@ -1,29 +1,21 @@
+/**
+ * Sidebar – Desktop navigation sidebar for the main app layout.
+ * Contains primary navigation links, secondary links, and a logout button.
+ * Uses the shared LogoutConfirmDialog for logout confirmation.
+ */
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
-  BookOpen, 
-  Trophy, 
-  Target, 
-  ShoppingBag, 
-  User,
-  Home,
-  Code2,
-  LogOut
+  BookOpen, Trophy, Target, ShoppingBag, User,
+  Home, Code2, LogOut,
+  Users, RotateCcw, Award, Settings, Globe, History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import mascot from "@/assets/mascot.png";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 
+/** Primary navigation items shown at the top of the sidebar */
 const navItems = [
   { icon: Home, label: "Learn", path: "/learn" },
   { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
@@ -32,8 +24,7 @@ const navItems = [
   { icon: User, label: "Profile", path: "/profile" },
 ];
 
-import { Users, RotateCcw, Award, Settings, Globe, History } from "lucide-react";
-
+/** Secondary navigation items shown below the divider */
 const moreItems = [
   { icon: Globe, label: "Languages", path: "/languages" },
   { icon: Users, label: "Social", path: "/social" },
@@ -49,6 +40,7 @@ export function Sidebar() {
   const { signOut } = useAuth();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
+  /** Handles confirmed logout – signs out and redirects to landing page */
   const handleLogout = async () => {
     await signOut();
     navigate("/");
@@ -56,7 +48,7 @@ export function Sidebar() {
 
   return (
     <aside className="fixed left-0 top-0 z-50 flex h-full w-[256px] flex-col border-r border-sidebar-border bg-sidebar lg:flex hidden overflow-hidden">
-      {/* Logo */}
+      {/* App Logo */}
       <Link 
         to="/" 
         className="flex items-center gap-3 px-6 py-6 border-b border-sidebar-border shrink-0"
@@ -64,12 +56,10 @@ export function Sidebar() {
         <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sidebar-primary">
           <Code2 className="w-6 h-6 text-sidebar-primary-foreground" />
         </div>
-        <span className="text-xl font-extrabold text-sidebar-foreground">
-          CodeBear
-        </span>
+        <span className="text-xl font-extrabold text-sidebar-foreground">CodeBear</span>
       </Link>
 
-      {/* Navigation - Scrollable */}
+      {/* Navigation Links – Scrollable */}
       <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -113,6 +103,7 @@ export function Sidebar() {
         
         <div className="border-t border-sidebar-border my-4" />
         
+        {/* Logout button with confirmation */}
         <button
           onClick={() => setShowLogoutDialog(true)}
           className={cn(
@@ -125,14 +116,10 @@ export function Sidebar() {
         </button>
       </nav>
 
-      {/* Mascot */}
+      {/* Mascot Encouragement */}
       <div className="px-4 py-6 border-t border-sidebar-border shrink-0">
         <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-sidebar-accent">
-          <img 
-            src={mascot} 
-            alt="CodeBear mascot" 
-            className="w-12 h-12 object-contain"
-          />
+          <img src={mascot} alt="CodeBear mascot" className="w-12 h-12 object-contain" />
           <div>
             <p className="text-sm font-bold text-sidebar-foreground">Keep going!</p>
             <p className="text-xs text-sidebar-foreground/70">5 day streak 🔥</p>
@@ -141,25 +128,11 @@ export function Sidebar() {
       </div>
 
       {/* Logout Confirmation Dialog */}
-      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Logout</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to log out? Your progress will be saved, but you'll need to log in again to continue learning.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLogout}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Log Out
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LogoutConfirmDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        onConfirm={handleLogout}
+      />
     </aside>
   );
 }
