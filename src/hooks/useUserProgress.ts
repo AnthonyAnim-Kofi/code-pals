@@ -1,3 +1,8 @@
+/**
+ * useUserProgress – Hooks for managing user profile data, XP, hearts, gems, and lesson progress.
+ * Provides mutations for updating XP (with daily/weekly tracking), deducting hearts,
+ * adding gems, and saving/fetching lesson completion records.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";

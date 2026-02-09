@@ -1,3 +1,8 @@
+/**
+ * AuthContext – Provides authentication state and methods (signIn, signUp, signOut)
+ * to the entire application via React Context. Listens for auth state changes
+ * from the backend and keeps session/user state in sync.
+ */
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";

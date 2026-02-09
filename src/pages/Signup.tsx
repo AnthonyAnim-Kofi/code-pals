@@ -1,3 +1,7 @@
+/**
+ * Signup – User registration page with email/password and Google OAuth.
+ * Validates password match and minimum length before submission.
+ */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";

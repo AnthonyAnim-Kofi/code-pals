@@ -1,3 +1,7 @@
+/**
+ * useLanguages – Hooks for fetching active languages, units, lessons, and questions.
+ * Used by the Learn page and other components to display available content.
+ */
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 

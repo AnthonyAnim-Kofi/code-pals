@@ -1,3 +1,7 @@
+/**
+ * useNotifications – Browser push notification hooks for streaks, achievements,
+ * challenges, hearts, and league changes. Uses Service Worker for reliability.
+ */
 import { useCallback, useEffect } from "react";
 
 async function showViaServiceWorker(title: string, options?: NotificationOptions) {

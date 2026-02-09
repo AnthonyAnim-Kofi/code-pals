@@ -1,3 +1,8 @@
+/**
+ * Quests – Daily and weekly quest tracker with gem reward claiming.
+ * Each quest card shows progress independently; claiming only shows
+ * a loading spinner on the specific quest being claimed.
+ */
 import { useEffect, useState } from "react";
 import { Target, Gift, Zap, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";

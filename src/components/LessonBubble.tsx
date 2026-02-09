@@ -79,9 +79,9 @@ export function LessonBubble({
 
   if (isClickable) {
     return (
-      <div className="flex justify-center relative">
+      <Link to={`/lesson/${id}`} className="flex justify-center relative hover-scale">
         {bubbleContent}
-      </div>
+      </Link>
     );
   }
 

@@ -1,3 +1,8 @@
+/**
+ * useLessonData – Hooks for fetching lesson questions, tracking partial lesson progress,
+ * and managing save/clear operations for lesson continuation.
+ * Supports auto-save so users can resume lessons from the exact point they left off.
+ */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
