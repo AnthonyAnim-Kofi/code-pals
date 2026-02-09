@@ -1,3 +1,8 @@
+/**
+ * useLeague – Hooks and utilities for the tiered league system (Bronze, Silver, Gold, Diamond).
+ * Provides real-time leaderboard subscriptions, league history, and helper functions
+ * for league info, progression, and week-end countdowns.
+ */
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";

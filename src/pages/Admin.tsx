@@ -1,3 +1,8 @@
+/**
+ * Admin – Administrative dashboard for managing users, languages, units, lessons,
+ * questions, notes, quests, leagues, and bulk imports. Requires admin role.
+ * Includes edit functionality for all content items via AdminEditDialog.
+ */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -54,6 +59,7 @@ import { AdminEditDialog, EditField } from "@/components/admin/AdminEditDialog";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { LanguageIcon } from "@/components/LanguageIcon";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useUpdateLanguage,
   useUpdateUnit,
@@ -360,7 +366,7 @@ export default function Admin() {
           </div>
           <Button
             variant="outline"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutDialog(true)}
             className="border-slate-600 text-slate-300 hover:bg-slate-700"
           >
             <LogOut className="w-4 h-4 mr-2" />
@@ -368,6 +374,16 @@ export default function Admin() {
           </Button>
         </div>
       </header>
+
+      {/* Logout Confirmation Dialog */}
+      <LogoutConfirmDialog
+        open={showLogoutDialog}
+        onOpenChange={setShowLogoutDialog}
+        onConfirm={handleLogout}
+      />
+
+      {/* Edit Dialog for languages, units, lessons, questions, notes */}
+      <AdminEditDialog {...editDialog} onOpenChange={(open) => setEditDialog(prev => ({ ...prev, open }))} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-6">
@@ -523,15 +539,20 @@ export default function Admin() {
                   {languages.map((lang) => (
                     <div key={lang.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
                       <div className="flex items-center gap-3">
-                        <span className="text-2xl">{lang.icon}</span>
+                        <LanguageIcon slug={lang.slug} icon={lang.icon} size={28} />
                         <div>
                           <p className="font-semibold">{lang.name}</p>
                           <p className="text-xs text-slate-400">{lang.slug}</p>
                         </div>
                       </div>
-                      <span className={cn("px-2 py-1 rounded text-xs", lang.is_active ? "bg-green-600" : "bg-red-600")}>
-                        {lang.is_active ? "Active" : "Inactive"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className={cn("px-2 py-1 rounded text-xs", lang.is_active ? "bg-green-600" : "bg-red-600")}>
+                          {lang.is_active ? "Active" : "Inactive"}
+                        </span>
+                        <Button size="sm" variant="ghost" onClick={() => editLanguage(lang)} className="text-amber-400 hover:text-amber-300">
+                          ✏️
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   {languages.length === 0 && (
@@ -651,18 +672,23 @@ export default function Admin() {
                             <p className="font-medium">{unit.title}</p>
                             <p className="text-xs text-slate-400">Order: {unit.order_index} • Color: {unit.color}</p>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              if (confirm(`Delete unit "${unit.title}" and all its lessons and questions?`)) {
-                                deleteUnit.mutate({ unitId: unit.id, languageId: selectedLanguage });
-                              }
-                            }}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => editUnit(unit)} className="text-amber-400 hover:text-amber-300">
+                              ✏️
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                if (confirm(`Delete unit "${unit.title}" and all its lessons and questions?`)) {
+                                  deleteUnit.mutate({ unitId: unit.id, languageId: selectedLanguage });
+                                }
+                              }}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -680,14 +706,19 @@ export default function Admin() {
                             <p className="font-medium">{lesson.title}</p>
                             <p className="text-xs text-slate-400">Order: {lesson.order_index}</p>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteLesson.mutate({ lessonId: lesson.id, unitId: selectedUnit })}
-                            className="text-red-400 hover:text-red-300"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => editLesson(lesson)} className="text-amber-400 hover:text-amber-300">
+                              ✏️
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => deleteLesson.mutate({ lessonId: lesson.id, unitId: selectedUnit })}
+                              className="text-red-400 hover:text-red-300"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -846,18 +877,23 @@ export default function Admin() {
                     <h4 className="font-semibold text-slate-300">Questions ({questions.length})</h4>
                     {questions.map((q, i) => (
                       <div key={q.id} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg">
-                        <div>
+                        <div className="flex-1 min-w-0 mr-2">
                           <span className="text-xs text-amber-400 mr-2">{q.type}</span>
                           <span className="text-sm">{q.instruction}</span>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteQuestion.mutate({ questionId: q.id, lessonId: selectedLesson })}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button size="sm" variant="ghost" onClick={() => editQuestionItem(q)} className="text-amber-400 hover:text-amber-300">
+                            ✏️
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deleteQuestion.mutate({ questionId: q.id, lessonId: selectedLesson })}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -941,14 +977,32 @@ export default function Admin() {
                         <div key={note.id} className="p-4 bg-slate-700 rounded-lg">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="font-semibold">{note.title}</h4>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => deleteNote.mutate({ noteId: note.id, unitId: selectedUnit })}
-                              className="text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="ghost" onClick={() => {
+                                setEditDialog({
+                                  open: true, title: `Edit ${note.title}`,
+                                  fields: [
+                                    { key: "title", label: "Title", type: "text" },
+                                    { key: "content", label: "Content", type: "textarea" },
+                                  ],
+                                  initialValues: { title: note.title, content: note.content },
+                                  onSave: async (values) => {
+                                    await supabase.from("unit_notes").update({ ...values, updated_at: new Date().toISOString() }).eq("id", note.id);
+                                    toast({ title: "Note updated!" });
+                                  },
+                                });
+                              }} className="text-amber-400 hover:text-amber-300">
+                                ✏️
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteNote.mutate({ noteId: note.id, unitId: selectedUnit })}
+                                className="text-red-400 hover:text-red-300"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </div>
                           <p className="text-sm text-slate-400 line-clamp-3">{note.content}</p>
                         </div>

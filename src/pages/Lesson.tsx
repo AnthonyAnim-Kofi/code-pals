@@ -1,3 +1,9 @@
+/**
+ * Lesson – Interactive lesson engine for question-by-question learning.
+ * Supports fill-blank, multiple-choice, drag-order, and code-runner question types.
+ * Auto-saves progress via debounced writes so users can resume where they left off.
+ * Uses useRef for progress tracking to prevent infinite re-render loops.
+ */
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Link, useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { X, Heart, Loader2, RotateCcw } from "lucide-react";

@@ -1,3 +1,7 @@
+/**
+ * Login – User login page with email/password and Google OAuth authentication.
+ * Redirects to /learn on successful login.
+ */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
