@@ -4,6 +4,7 @@ import { Code2, Sparkles, Trophy, Zap, ArrowRight } from "lucide-react";
 import mascot from "@/assets/mascot.png";
 import heroBg from "@/assets/hero-bg.png";
 import { useLanguages } from "@/hooks/useLanguages";
+import { LanguageIcon } from "@/components/LanguageIcon";
 
 const features = [{
   icon: Sparkles,
@@ -32,8 +33,8 @@ export default function Landing() {
   
   // Use database languages if available, otherwise fallback
   const languages = dbLanguages.length > 0 
-    ? dbLanguages.map(l => ({ name: l.name, icon: l.icon, color: "bg-primary" }))
-    : fallbackLanguages;
+    ? dbLanguages.map(l => ({ name: l.name, slug: l.slug, icon: l.icon, color: "bg-primary" }))
+    : fallbackLanguages.map(l => ({ ...l, slug: l.name.toLowerCase() }));
 
   return <div className="min-h-screen bg-background">
       {/* Header */}
@@ -116,7 +117,7 @@ export default function Landing() {
           </h2>
           <div className="flex flex-wrap justify-center gap-4">
             {languages.map(lang => <div key={lang.name} className="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated hover:scale-105 transition-transform cursor-pointer">
-                <span className="text-2xl">{lang.icon}</span>
+                <LanguageIcon slug={lang.slug} icon={lang.icon} size={28} />
                 <span className="font-bold text-foreground">{lang.name}</span>
               </div>)}
           </div>
