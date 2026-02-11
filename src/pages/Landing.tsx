@@ -84,7 +84,11 @@ export default function Landing() {
                     <ArrowRight className="w-5 h-5" />
                   </Link>
                 </Button>
-                
+                <Button size="xl" variant="outline" asChild>
+                  <Link to="/login">
+                    Log In
+                  </Link>
+                </Button>
               </div>
 
               {/* Social Proof */}

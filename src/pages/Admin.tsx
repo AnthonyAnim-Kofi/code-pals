@@ -365,9 +365,8 @@ export default function Admin() {
             </div>
           </div>
           <Button
-            variant="outline"
             onClick={() => setShowLogoutDialog(true)}
-            className="border-slate-600 text-slate-300 hover:bg-slate-700"
+            className="bg-red-600 hover:bg-red-700 text-white border-none"
           >
             <LogOut className="w-4 h-4 mr-2" />
             Logout
