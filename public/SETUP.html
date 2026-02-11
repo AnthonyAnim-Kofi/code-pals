@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanilla JS Version - CodeBear</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+    }
+    
+    .highlight {
+      background: linear-gradient(135deg, hsl(25, 100%, 50%) 0%, hsl(40, 100%, 50%) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-12">
+    <div class="bg-white rounded-2xl shadow-lg p-8">
+      <h1 class="text-4xl font-extrabold mb-4">
+        <span class="highlight">CodeBear</span> Vanilla JS Version
+      </h1>
+      <p class="text-gray-600 mb-8">
+        Successfully converted from React to vanilla JavaScript, HTML, CSS, and Tailwind!
+      </p>
+
+      <div class="space-y-6">
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">📁 Files Created</h2>
+          <ul class="space-y-2 text-gray-700">
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/index.html</code> - Landing page</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/login.html</code> - Login page</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/signup.html</code> - Signup page</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/learn.html</code> - Protected dashboard</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/auth.js</code> - Authentication manager</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/config.js</code> - Supabase config</li>
+            <li>✅ <code class="bg-gray-100 px-2 py-1 rounded">public/README.md</code> - Setup instructions</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">🚀 Quick Start</h2>
+          
+          <div class="space-y-4">
+            <div>
+              <h3 class="font-semibold text-lg mb-2">Step 1: Configure Supabase</h3>
+              <p class="text-gray-600 mb-2">Edit <code class="bg-gray-100 px-2 py-1 rounded">public/config.js</code>:</p>
+              <pre class="code-block"><code>window.VITE_SUPABASE_URL = 'https://your-project.supabase.co';
+window.VITE_SUPABASE_PUBLISHABLE_KEY = 'your-anon-key-here';</code></pre>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-lg mb-2">Step 2: Start a Local Server</h3>
+              <p class="text-gray-600 mb-2">Choose one of these options:</p>
+              <pre class="code-block"><code># Python
+cd public
+python -m http.server 8080
+
+# Node.js
+npm install -g http-server
+cd public
+http-server -p 8080
+
+# VS Code Live Server
+# Right-click index.html → Open with Live Server</code></pre>
+            </div>
+
+            <div>
+              <h3 class="font-semibold text-lg mb-2">Step 3: Open in Browser</h3>
+              <p class="text-gray-600">Navigate to <code class="bg-gray-100 px-2 py-1 rounded">http://localhost:8080</code></p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">🔧 Features</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold mb-2">✅ Authentication</h3>
+              <p class="text-sm text-gray-600">Email/password login via Supabase</p>
+            </div>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold mb-2">✅ Protected Routes</h3>
+              <p class="text-sm text-gray-600">Auth required for learn page</p>
+            </div>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold mb-2">✅ Tailwind CSS</h3>
+              <p class="text-sm text-gray-600">Responsive design via CDN</p>
+            </div>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="font-semibold mb-2">✅ Session Persistence</h3>
+              <p class="text-sm text-gray-600">Stay logged in across sessions</p>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">🔐 OAuth Setup (Optional)</h2>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p class="text-gray-700 mb-2">
+              <strong>Google OAuth is disabled by default.</strong> The error you saw was because OAuth requires setup:
+            </p>
+            <ol class="list-decimal list-inside space-y-1 text-sm text-gray-600">
+              <li>Go to Supabase Dashboard → Authentication → Providers</li>
+              <li>Enable Google OAuth</li>
+              <li>Add Google OAuth credentials</li>
+              <li>Configure redirect URLs</li>
+              <li>Remove <code class="bg-gray-100 px-1">hidden</code> class from Google button in HTML</li>
+            </ol>
+            <p class="mt-2 text-sm text-gray-600">
+              <strong>For now, use email/password authentication instead!</strong>
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">📚 Technology Stack</h2>
+          <div class="flex flex-wrap gap-2">
+            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Vanilla JavaScript</span>
+            <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">HTML5</span>
+            <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">Tailwind CSS</span>
+            <span class="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">Supabase</span>
+            <span class="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">TypeScript (minimal)</span>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="text-2xl font-bold mb-3 text-gray-800">🎯 What Changed</h2>
+          <div class="space-y-2 text-gray-700">
+            <p>✅ Removed React dependencies</p>
+            <p>✅ Converted JSX to pure HTML</p>
+            <p>✅ Replaced React hooks with vanilla JS</p>
+            <p>✅ Created AuthManager class (replaces AuthContext)</p>
+            <p>✅ Used Tailwind CDN (no build step needed)</p>
+            <p>✅ Removed all Lovable AI references</p>
+            <p>✅ Fixed Google OAuth error by hiding the button</p>
+          </div>
+        </section>
+
+        <div class="bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg p-6 text-white mt-8">
+          <h3 class="text-xl font-bold mb-2">🎉 Ready to Go!</h3>
+          <p class="mb-4">Your vanilla JS version is ready. Just configure Supabase and start coding!</p>
+          <a href="index.html" class="inline-block bg-white text-orange-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+            View Landing Page →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-center text-gray-500 mt-8">
+      <p>© 2026 CodeBear. Learn to code the fun way.</p>
+    </footer>
+  </div>
+</body>
+</html>

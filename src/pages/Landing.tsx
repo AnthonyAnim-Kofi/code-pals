@@ -174,7 +174,7 @@ export default function Landing() {
               <span className="font-bold text-sidebar-foreground">CodeBear</span>
             </div>
             <p className="text-sm text-sidebar-foreground/70">
-              © 2025 CodeBear. Learn to code the fun way.
+              © 2026 CodeBear. Learn to code the fun way.
             </p>
           </div>
         </div>

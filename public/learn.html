@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Learn - CodeBear</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'hsl(25, 100%, 50%)',
+            'primary-foreground': 'hsl(0, 0%, 100%)',
+            background: 'hsl(0, 0%, 100%)',
+            foreground: 'hsl(222.2, 84%, 4.9%)',
+            card: 'hsl(0, 0%, 100%)',
+            border: 'hsl(214.3, 31.8%, 91.4%)',
+            muted: 'hsl(210, 40%, 96.1%)',
+            'muted-foreground': 'hsl(215.4, 16.3%, 46.9%)',
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    .btn-primary {
+      background: linear-gradient(135deg, hsl(25, 100%, 50%) 0%, hsl(40, 100%, 50%) 100%);
+    }
+  </style>
+  
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="min-h-screen bg-background">
+  <!-- Header -->
+  <header class="border-b border-border bg-white sticky top-0 z-50">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <a href="index.html" class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <span class="text-xl font-extrabold text-foreground">CodeBear</span>
+        </a>
+
+        <div class="flex items-center gap-4">
+          <span id="userEmail" class="text-sm text-muted-foreground"></span>
+          <button id="logoutButton" class="px-4 py-2 text-sm font-medium text-foreground hover:bg-muted rounded-lg transition-colors">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-extrabold text-foreground mb-2">Welcome to CodeBear!</h1>
+      <p class="text-muted-foreground mb-8">Start your learning journey</p>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Placeholder cards for learning content -->
+        <div class="p-6 bg-card border border-border rounded-2xl shadow-sm">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+            <span class="text-2xl">🐍</span>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Python Basics</h3>
+          <p class="text-muted-foreground mb-4">Learn the fundamentals of Python programming</p>
+          <div class="w-full bg-muted rounded-full h-2 mb-2">
+            <div class="bg-primary h-2 rounded-full" style="width: 30%"></div>
+          </div>
+          <p class="text-sm text-muted-foreground">30% Complete</p>
+        </div>
+
+        <div class="p-6 bg-card border border-border rounded-2xl shadow-sm">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+            <span class="text-2xl">⚡</span>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">JavaScript Fundamentals</h3>
+          <p class="text-muted-foreground mb-4">Master the language of the web</p>
+          <div class="w-full bg-muted rounded-full h-2 mb-2">
+            <div class="bg-primary h-2 rounded-full" style="width: 10%"></div>
+          </div>
+          <p class="text-sm text-muted-foreground">10% Complete</p>
+        </div>
+
+        <div class="p-6 bg-card border border-border rounded-2xl shadow-sm">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+            <span class="text-2xl">📘</span>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">TypeScript Basics</h3>
+          <p class="text-muted-foreground mb-4">Type-safe JavaScript development</p>
+          <div class="w-full bg-muted rounded-full h-2 mb-2">
+            <div class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+          </div>
+          <p class="text-sm text-muted-foreground">Not Started</p>
+        </div>
+
+        <div class="p-6 bg-card border border-border rounded-2xl shadow-sm">
+          <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4">
+            <span class="text-2xl">🗄️</span>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">SQL Essentials</h3>
+          <p class="text-muted-foreground mb-4">Database queries and management</p>
+          <div class="w-full bg-muted rounded-full h-2 mb-2">
+            <div class="bg-primary h-2 rounded-full" style="width: 0%"></div>
+          </div>
+          <p class="text-sm text-muted-foreground">Not Started</p>
+        </div>
+      </div>
+
+      <div class="mt-8 p-6 bg-muted/50 rounded-2xl border border-border">
+        <h2 class="text-xl font-bold text-foreground mb-2">🎯 Your Daily Goal</h2>
+        <p class="text-muted-foreground mb-4">Complete 1 lesson today to maintain your streak!</p>
+        <div class="flex items-center gap-2">
+          <div class="flex-1 bg-background rounded-full h-3">
+            <div class="bg-primary h-3 rounded-full" style="width: 0%"></div>
+          </div>
+          <span class="text-sm font-medium text-foreground">0/1</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Load Config & Auth Manager -->
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  
+  <script>
+    const userEmail = document.getElementById('userEmail');
+    const logoutButton = document.getElementById('logoutButton');
+
+    // Check authentication
+    window.authManager.subscribe((state) => {
+      if (!state.user && !state.loading) {
+        // Not authenticated, redirect to login
+        window.location.href = 'login.html';
+      } else if (state.user) {
+        // Display user email
+        userEmail.textContent = state.user.email;
+      }
+    });
+
+    // Handle logout
+    logoutButton.addEventListener('click', async () => {
+      await window.authManager.signOut();
+      window.location.href = 'index.html';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeBear - Learn to Code the Fun Way</title>
+  <meta name="description" content="Master programming with bite-sized lessons, interactive challenges, and a gamified experience.">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: 'hsl(25, 100%, 50%)',
+            'primary-foreground': 'hsl(0, 0%, 100%)',
+            background: 'hsl(0, 0%, 100%)',
+            foreground: 'hsl(222.2, 84%, 4.9%)',
+            card: 'hsl(0, 0%, 100%)',
+            'card-foreground': 'hsl(222.2, 84%, 4.9%)',
+            border: 'hsl(214.3, 31.8%, 91.4%)',
+            muted: 'hsl(210, 40%, 96.1%)',
+            'muted-foreground': 'hsl(215.4, 16.3%, 46.9%)',
+            sidebar: 'hsl(240, 5.9%, 10%)',
+            'sidebar-foreground': 'hsl(240, 4.8%, 95.9%)',
+            'sidebar-primary': 'hsl(25, 100%, 50%)',
+            'sidebar-primary-foreground': 'hsl(0, 0%, 100%)',
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-20px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    .text-gradient-primary {
+      background: linear-gradient(135deg, hsl(25, 100%, 50%) 0%, hsl(40, 100%, 50%) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .card-elevated {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: transform 0.2s;
+    }
+    
+    .card-elevated:hover {
+      transform: scale(1.05);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, hsl(25, 100%, 50%) 0%, hsl(40, 100%, 50%) 100%);
+      transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(255, 127, 0, 0.4);
+    }
+    
+    .btn-golden {
+      background: linear-gradient(135deg, hsl(45, 100%, 51%) 0%, hsl(40, 100%, 45%) 100%);
+      color: hsl(0, 0%, 0%);
+      font-weight: 700;
+    }
+    
+    .btn-golden:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px -5px rgba(255, 215, 0, 0.5);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-background">
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <a href="index.html" class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <span class="text-xl font-extrabold text-foreground">CodeBear</span>
+        </a>
+
+        <div class="flex items-center gap-3">
+          <a href="login.html" class="px-4 py-2 text-foreground hover:bg-muted rounded-lg transition-colors font-medium">
+            Login
+          </a>
+          <a href="signup.html" class="px-4 py-2 text-white font-semibold rounded-lg btn-primary">
+            Get Started
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden" style="background-image: url('hero-bg.png'); background-size: cover; background-position: center;">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col lg:flex-row items-center gap-12">
+        <div class="flex-1 text-center lg:text-left">
+          <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground mb-6 leading-tight">
+            Learn to code the 
+            <span class="text-gradient-primary">fun way</span>
+          </h1>
+          <p class="mb-8 max-w-lg mx-auto lg:mx-0 text-foreground/80 text-xl font-semibold">
+            Master programming with bite-sized lessons, interactive challenges, 
+            and a gamified experience that keeps you coming back for more.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+            <a href="signup.html" class="px-8 py-4 text-white font-bold rounded-lg btn-primary flex items-center justify-center gap-2 text-lg">
+              Start Learning Free
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12h14"></path>
+                <path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </a>
+          </div>
+
+          <!-- Social Proof -->
+          <div class="mt-10 flex items-center gap-6 justify-center lg:justify-start">
+            <div class="flex -space-x-3">
+              <div class="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">😊</div>
+              <div class="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">🤓</div>
+              <div class="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">😎</div>
+              <div class="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">🧑‍💻</div>
+              <div class="w-10 h-10 rounded-full bg-muted border-2 border-background flex items-center justify-center text-lg">👩‍💻</div>
+            </div>
+            <div class="text-left">
+              <p class="font-bold text-foreground">50,000+ learners</p>
+              <p class="text-sm text-muted-foreground">already coding</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mascot -->
+        <div class="flex-1 flex justify-center">
+          <img src="mascot.png" alt="CodeBear mascot" class="w-64 lg:w-80 animate-float drop-shadow-2xl">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Languages Section -->
+  <section class="py-16 bg-muted/30">
+    <div class="container mx-auto px-4">
+      <h2 class="text-2xl font-extrabold text-center text-foreground mb-8">
+        Learn popular programming languages
+      </h2>
+      <div class="flex flex-wrap justify-center gap-4" id="languagesContainer">
+        <!-- Languages will be loaded dynamically or use fallback -->
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">🐍</span>
+          <span class="font-bold text-foreground">Python</span>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">⚡</span>
+          <span class="font-bold text-foreground">JavaScript</span>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">📘</span>
+          <span class="font-bold text-foreground">TypeScript</span>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">🦀</span>
+          <span class="font-bold text-foreground">Rust</span>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">🐹</span>
+          <span class="font-bold text-foreground">Go</span>
+        </div>
+        <div class="flex items-center gap-3 px-5 py-3 bg-card rounded-2xl border border-border card-elevated cursor-pointer">
+          <span class="text-2xl">🗄️</span>
+          <span class="font-bold text-foreground">SQL</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-extrabold text-center text-foreground mb-4">
+        Why learners love CodeBear
+      </h2>
+      <p class="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+        Our unique approach makes learning to code as addictive as your favorite game
+      </p>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="p-6 bg-card rounded-2xl border border-border card-elevated text-center group">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Bite-sized lessons</h3>
+          <p class="text-muted-foreground">Learn to code in quick, fun, 5-minute lessons. Perfect for busy schedules.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="p-6 bg-card rounded-2xl border border-border card-elevated text-center group">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 2v7.31"></path>
+              <path d="M14 9.3V1.99"></path>
+              <path d="M8.5 2h7"></path>
+              <path d="M14 9.3a6.5 6.5 0 1 1-4 0"></path>
+              <path d="M5.58 16.5h12.85"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Practice by doing</h3>
+          <p class="text-muted-foreground">Write real code from day one. Interactive challenges keep you engaged.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="p-6 bg-card rounded-2xl border border-border card-elevated text-center group">
+          <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+              <path d="M4 22h16"></path>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-foreground mb-2">Stay motivated</h3>
+          <p class="text-muted-foreground">Earn XP, unlock achievements, and compete with friends on leaderboards.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="py-20" style="background: linear-gradient(to right, hsl(25, 100%, 50%), hsl(40, 100%, 45%));">
+    <div class="container mx-auto px-4 text-center">
+      <h2 class="text-3xl lg:text-4xl font-extrabold text-primary-foreground mb-4">
+        Start your coding journey today
+      </h2>
+      <p class="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
+        Join thousands of learners who are building real skills, one lesson at a time.
+      </p>
+      <a href="learn.html" class="inline-flex items-center gap-2 px-8 py-4 text-lg font-bold rounded-lg btn-golden">
+        Get Started — It's Free
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12h14"></path>
+          <path d="m12 5 7 7-7 7"></path>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="py-10 bg-sidebar">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <div class="flex items-center justify-center w-8 h-8 rounded-lg bg-sidebar-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-sidebar-primary-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <span class="font-bold text-sidebar-foreground">CodeBear</span>
+        </div>
+        <p class="text-sm text-sidebar-foreground/70">
+          © 2026 CodeBear. Learn to code the fun way.
+        </p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
