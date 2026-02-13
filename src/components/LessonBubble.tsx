@@ -108,7 +108,7 @@ interface LessonPathProps {
 export function LessonPath({ children, lessons }: LessonPathProps) {
   return (
     <div className="relative flex flex-col items-center py-4">
-      {/* SVG connector lines between lessons */}
+      {/* SVG curved connector lines between lessons */}
       <svg
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{ zIndex: 0 }}
@@ -117,26 +117,26 @@ export function LessonPath({ children, lessons }: LessonPathProps) {
           if (i === 0) return null;
           const prev = lessons[i - 1];
           
-          // Calculate positions (center of container + offset)
-          const centerX = "50%";
           const prevOffsetX = getOffsetX(prev.position);
           const currOffsetX = getOffsetX(lesson.position);
           
-          // Vertical spacing: each lesson is ~88px apart (space-y-6 = 24px + 64px bubble)
           const spacing = 88;
-          const prevY = (i - 1) * spacing + 32; // center of bubble
+          const prevY = (i - 1) * spacing + 32;
           const currY = i * spacing + 32;
+          const midY = (prevY + currY) / 2;
           
           const isCompleted = prev.status === "complete";
           const isCurrent = lesson.status === "current";
+
+          // Use cubic bezier for smooth S-curves
+          const x1 = prevOffsetX;
+          const x2 = currOffsetX;
           
           return (
-            <line
+            <path
               key={`connector-${i}`}
-              x1={`calc(50% + ${prevOffsetX}px)`}
-              y1={prevY}
-              x2={`calc(50% + ${currOffsetX}px)`}
-              y2={currY}
+              d={`M calc(50% + ${x1}px) ${prevY} C calc(50% + ${x1}px) ${midY}, calc(50% + ${x2}px) ${midY}, calc(50% + ${x2}px) ${currY}`}
+              fill="none"
               stroke={isCompleted || isCurrent ? "hsl(var(--primary))" : "hsl(var(--border))"}
               strokeWidth={isCompleted || isCurrent ? 4 : 3}
               strokeLinecap="round"
