@@ -4,8 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import heroBg from "@/assets/hero-bg.png";
-import { Code2, Mail, Lock, ArrowRight, Loader2, User } from "lucide-react";
+import authBg from "@/assets/auth-bg.png";
+import { Code2, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import mascot from "@/assets/mascot.png";
 
 export default function Signup() {
@@ -39,24 +39,29 @@ export default function Signup() {
       setError(error.message);
       setLoading(false);
     } else {
-      navigate("/learn");
+      navigate("/onboarding");
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <img src={authBg} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-[2px]" />
+      </div>
+
       {/* Header */}
-      <header className="p-4">
+      <header className="p-4 relative z-10">
         <Link to="/" className="flex items-center gap-2 w-fit">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/30">
             <Code2 className="w-6 h-6 text-primary-foreground" />
           </div>
           <span className="text-xl font-extrabold text-foreground">CodeBear</span>
         </Link>
       </header>
 
-      
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">
           {/* Mascot */}
           <div className="flex justify-center mb-6">

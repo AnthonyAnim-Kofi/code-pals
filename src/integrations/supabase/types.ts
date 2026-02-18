@@ -360,6 +360,7 @@ export type Database = {
           active_language_id: string | null
           avatar_url: string | null
           created_at: string
+          daily_goal_minutes: number
           daily_xp: number
           display_name: string | null
           double_xp_until: string | null
@@ -371,6 +372,9 @@ export type Database = {
           last_practice_date: string | null
           last_streak_freeze_used: string | null
           league: string
+          onboarding_completed: boolean
+          referral_code: string | null
+          referred_by: string | null
           streak_count: number
           streak_freeze_count: number
           updated_at: string
@@ -383,6 +387,7 @@ export type Database = {
           active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           daily_xp?: number
           display_name?: string | null
           double_xp_until?: string | null
@@ -394,6 +399,9 @@ export type Database = {
           last_practice_date?: string | null
           last_streak_freeze_used?: string | null
           league?: string
+          onboarding_completed?: boolean
+          referral_code?: string | null
+          referred_by?: string | null
           streak_count?: number
           streak_freeze_count?: number
           updated_at?: string
@@ -406,6 +414,7 @@ export type Database = {
           active_language_id?: string | null
           avatar_url?: string | null
           created_at?: string
+          daily_goal_minutes?: number
           daily_xp?: number
           display_name?: string | null
           double_xp_until?: string | null
@@ -417,6 +426,9 @@ export type Database = {
           last_practice_date?: string | null
           last_streak_freeze_used?: string | null
           league?: string
+          onboarding_completed?: boolean
+          referral_code?: string | null
+          referred_by?: string | null
           streak_count?: number
           streak_freeze_count?: number
           updated_at?: string
@@ -497,6 +509,48 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lessons"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          gems_awarded: number
+          id: string
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Insert: {
+          created_at?: string
+          gems_awarded?: number
+          id?: string
+          referral_code: string
+          referred_user_id: string
+          referrer_id: string
+        }
+        Update: {
+          created_at?: string
+          gems_awarded?: number
+          id?: string
+          referral_code?: string
+          referred_user_id?: string
+          referrer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

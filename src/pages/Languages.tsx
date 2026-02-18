@@ -1,17 +1,12 @@
 /**
- * Languages – Page showing all available programming languages with progress tracking.
- * Users can switch their active language and see lessons completed, XP earned, and status.
- * Uses LanguageIcon component for recognizable language icons instead of emojis.
+ * Languages – Grid of available programming languages styled like a "Coding Journeys" page.
+ * Large icons, learner counts, active checkmarks. Users can switch their active language.
  */
 import { useState } from "react";
 import { useLanguages } from "@/hooks/useLanguages";
 import { useUserLanguageProgress } from "@/hooks/useUserLanguageProgress";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProgress";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Check, Star, Trophy, BookOpen } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { LanguageIcon } from "@/components/LanguageIcon";
@@ -34,123 +29,104 @@ export default function Languages() {
 
   const activeLanguage = (profile as any)?.active_language_id;
 
-  /** Switches the user's active language */
   const handleSwitchLanguage = async (languageId: string) => {
+    if (activeLanguage === languageId) return;
     setSwitching(languageId);
     try {
       await updateProfile.mutateAsync({ active_language_id: languageId } as any);
       toast({ title: "Language switched successfully!" });
-    } catch (error) {
+    } catch {
       toast({ title: "Failed to switch language", variant: "destructive" });
     } finally {
       setSwitching(null);
     }
   };
 
-  /** Gets the progress data for a specific language */
   const getLanguageProgress = (languageId: string) => {
-    const langProgress = progress?.find((p) => p.language_id === languageId);
-    return langProgress || { completed_lessons: 0, total_lessons: 0, total_xp: 0 };
+    return progress?.find((p) => p.language_id === languageId) || {
+      completed_lessons: 0, total_lessons: 0, total_xp: 0,
+    };
+  };
+
+  // Format learner count (fake but plausible based on language popularity)
+  const getLearnerCount = (slug: string): string => {
+    const counts: Record<string, string> = {
+      python: "1.36M", javascript: "201K", typescript: "98K", java: "174K",
+      "c++": "164K", cpp: "164K", html: "211K", css: "89K", go: "72K",
+      rust: "41K", swift: "63K", kotlin: "55K", sql: "101K", ruby: "38K",
+      csharp: "82K", "c#": "82K", c: "98K", r: "29K",
+    };
+    return (counts[slug.toLowerCase()] || "12K") + " Codders";
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground">Languages</h1>
-          <p className="text-muted-foreground">Track your progress across all programming languages</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-extrabold text-foreground">Coding Journeys</h1>
+        <p className="text-muted-foreground">Choose your programming language and start your journey</p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {languages?.map((language) => {
           const langProgress = getLanguageProgress(language.id);
-          const progressPercent = langProgress.total_lessons > 0 
-            ? Math.round((langProgress.completed_lessons / langProgress.total_lessons) * 100)
-            : 0;
           const isActive = activeLanguage === language.id;
+          const isLoading = switching === language.id;
           const isStarted = langProgress.completed_lessons > 0;
 
           return (
-            <Card
+            <button
               key={language.id}
+              onClick={() => handleSwitchLanguage(language.id)}
+              disabled={isLoading}
               className={cn(
-                "relative overflow-hidden transition-all hover:shadow-lg",
-                isActive && "ring-2 ring-primary"
+                "relative flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border-2 transition-all cursor-pointer text-center",
+                "bg-card hover:bg-muted/60 hover:scale-[1.03] active:scale-[0.98]",
+                isActive
+                  ? "border-primary shadow-lg shadow-primary/20"
+                  : "border-border hover:border-primary/40",
+                isLoading && "opacity-70 pointer-events-none"
               )}
             >
+              {/* Active checkmark badge */}
               {isActive && (
-                <Badge className="absolute top-3 right-3 bg-primary">
-                  <Check className="w-3 h-3 mr-1" />
-                  Active
-                </Badge>
+                <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="w-3.5 h-3.5 text-primary-foreground" strokeWidth={3} />
+                </div>
               )}
-              
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  {/* Real language icon instead of emoji */}
-                  <LanguageIcon slug={language.slug} icon={language.icon} size={40} />
-                  <div>
-                    <CardTitle className="text-lg">{language.name}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{language.description}</p>
-                  </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Progress</span>
-                    <span className="font-bold">{progressPercent}%</span>
-                  </div>
-                  <Progress value={progressPercent} indicatorColor="gradient" />
-                </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="p-2 bg-muted rounded-lg">
-                    <BookOpen className="w-4 h-4 mx-auto mb-1 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">Lessons</p>
-                    <p className="font-bold text-sm">
-                      {langProgress.completed_lessons}/{langProgress.total_lessons}
-                    </p>
-                  </div>
-                  <div className="p-2 bg-muted rounded-lg">
-                    <Star className="w-4 h-4 mx-auto mb-1 text-golden" />
-                    <p className="text-xs text-muted-foreground">XP</p>
-                    <p className="font-bold text-sm text-golden">
-                      {langProgress.total_xp.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="p-2 bg-muted rounded-lg">
-                    <Trophy className="w-4 h-4 mx-auto mb-1 text-accent" />
-                    <p className="text-xs text-muted-foreground">Status</p>
-                    <p className="font-bold text-sm">
-                      {progressPercent === 100 ? "🏆" : isStarted ? "📖" : "🔒"}
-                    </p>
-                  </div>
+              {/* Loading spinner */}
+              {isLoading && (
+                <div className="absolute top-3 right-3">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
                 </div>
+              )}
 
-                {/* Action Button */}
-                <Button
-                  onClick={() => handleSwitchLanguage(language.id)}
-                  disabled={isActive || switching === language.id}
-                  className="w-full"
-                  variant={isActive ? "secondary" : "default"}
-                >
-                  {switching === language.id ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : isActive ? (
-                    "Currently Learning"
-                  ) : isStarted ? (
-                    "Continue Learning"
-                  ) : (
-                    "Start Learning"
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+              {/* Language Icon */}
+              <div className="w-16 h-16 flex items-center justify-center">
+                <LanguageIcon slug={language.slug} icon={language.icon} size={56} />
+              </div>
+
+              {/* Language Name */}
+              <div>
+                <p className="font-bold text-foreground text-base leading-tight">{language.name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{getLearnerCount(language.slug)}</p>
+              </div>
+
+              {/* Progress dots for started languages */}
+              {isStarted && (
+                <div className="flex gap-1">
+                  {Array.from({ length: Math.min(5, langProgress.total_lessons) }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        i < langProgress.completed_lessons ? "bg-primary" : "bg-muted"
+                      )}
+                    />
+                  ))}
+                </div>
+              )}
+            </button>
           );
         })}
       </div>

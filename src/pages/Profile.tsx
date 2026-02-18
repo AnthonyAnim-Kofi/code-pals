@@ -1,17 +1,18 @@
 /**
  * Profile – User profile page displaying stats, achievements, streak info, and course progress.
- * Contains a logout button with confirmation dialog.
+ * Contains a logout button with confirmation dialog and a referral code section.
  */
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
-import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2 } from "lucide-react";
+import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2, Gift, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
 import { StreakCalendar } from "@/components/StreakCalendar";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
+import { useToast } from "@/hooks/use-toast";
 import mascot from "@/assets/mascot.png";
 
 /** Quick profile achievements shown as emoji badges */
@@ -29,12 +30,28 @@ export default function Profile() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
   const { data: lessonProgress, isLoading: progressLoading } = useLessonProgress();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [copiedReferral, setCopiedReferral] = useState(false);
 
   /** Handles confirmed logout */
   const handleLogout = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const referralCode = (profile as any)?.referral_code;
+  const referralLink = referralCode
+    ? `${window.location.origin}/signup?ref=${referralCode}`
+    : null;
+
+  const handleCopyReferral = () => {
+    if (referralLink) {
+      navigator.clipboard.writeText(referralLink);
+      setCopiedReferral(true);
+      toast({ title: "Referral link copied!" });
+      setTimeout(() => setCopiedReferral(false), 2000);
+    }
   };
 
   const isLoading = profileLoading || progressLoading;
@@ -182,6 +199,27 @@ export default function Profile() {
           ))}
         </div>
       </div>
+
+      {/* Referral Section */}
+      {referralCode && (
+        <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
+          <div className="flex items-center gap-2 mb-3">
+            <Gift className="w-5 h-5 text-primary" />
+            <h3 className="font-bold text-foreground">Invite Friends</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Share your referral code and earn <span className="font-bold text-golden">50 gems</span> for each friend who joins!
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 px-3 py-2 bg-muted rounded-lg font-mono text-sm font-bold text-foreground truncate">
+              {referralCode}
+            </div>
+            <Button size="sm" variant="outline" onClick={handleCopyReferral} className="shrink-0">
+              {copiedReferral ? <Check className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="space-y-3">
