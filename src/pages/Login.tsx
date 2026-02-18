@@ -32,18 +32,24 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <img src={authBg} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-[2px]" />
+      </div>
+
       {/* Header */}
-      <header className="p-4">
+      <header className="p-4 relative z-10">
         <Link to="/" className="flex items-center gap-2 w-fit">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/30">
             <Code2 className="w-6 h-6 text-primary-foreground" />
           </div>
           <span className="text-xl font-extrabold text-foreground">CodeBear</span>
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4">
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="w-full max-w-md">
           {/* Mascot */}
           <div className="flex justify-center mb-6">
