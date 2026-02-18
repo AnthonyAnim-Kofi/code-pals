@@ -1,16 +1,12 @@
-/**
- * Login – User login page with email/password authentication.
- * Redirects to /learn on successful login.
- */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import authBg from "@/assets/auth-bg.png";
 import { Code2, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import mascot from "@/assets/mascot.png";
-import authBg from "@/assets/auth-bg.jpg";
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -36,12 +32,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <div className="absolute inset-0 z-0">
-        <img src={authBg} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      </div>
-      <header className="p-4 relative z-10">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="p-4">
         <Link to="/" className="flex items-center gap-2 w-fit">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
             <Code2 className="w-6 h-6 text-primary-foreground" />
@@ -50,8 +43,9 @@ export default function Login() {
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+      <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Mascot */}
           <div className="flex justify-center mb-6">
             <img src={mascot} alt="CodeBear" className="w-24 h-24 animate-bounce-gentle" />
           </div>

@@ -1,16 +1,12 @@
-/**
- * Signup – User registration page with email/password authentication.
- * Validates password match and minimum length before submission.
- */
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Code2, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import heroBg from "@/assets/hero-bg.png";
+import { Code2, Mail, Lock, ArrowRight, Loader2, User } from "lucide-react";
 import mascot from "@/assets/mascot.png";
-import authBg from "@/assets/auth-bg.jpg";
 
 export default function Signup() {
   const { signUp } = useAuth();
@@ -48,12 +44,9 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <div className="absolute inset-0 z-0">
-        <img src={authBg} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      </div>
-      <header className="p-4 relative z-10">
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <header className="p-4">
         <Link to="/" className="flex items-center gap-2 w-fit">
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
             <Code2 className="w-6 h-6 text-primary-foreground" />
@@ -62,11 +55,14 @@ export default function Signup() {
         </Link>
       </header>
 
-      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+      
+      <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Mascot */}
           <div className="flex justify-center mb-6">
             <img src={mascot} alt="CodeBear" className="w-24 h-24 animate-bounce-gentle" />
           </div>
+          
 
           <div className="bg-card rounded-2xl border border-border p-8 card-elevated">
             <h1 className="text-2xl font-extrabold text-center text-foreground mb-2">
@@ -93,6 +89,7 @@ export default function Signup() {
                 </div>
               </div>
 
+              
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -161,5 +158,6 @@ export default function Signup() {
         </div>
       </main>
     </div>
+
   );
 }
