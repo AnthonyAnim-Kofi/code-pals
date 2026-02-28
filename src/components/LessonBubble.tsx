@@ -25,10 +25,10 @@ const getOffsetX = (position: "left" | "center" | "right") => {
   }
 };
 
-/** Hexagon SVG clip path for the lesson bubble */
+/** Hexagon SVG with inner highlight for 3D depth; wrapper provides clickable 3D lift */
 function HexagonBubble({ status }: { status: "complete" | "current" | "locked" }) {
   return (
-    <svg viewBox="0 0 80 92" className="absolute inset-0 w-full h-full" aria-hidden>
+    <svg viewBox="0 0 80 92" className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden>
       <polygon
         points="40,2 78,22 78,70 40,90 2,70 2,22"
         className={cn(
@@ -74,12 +74,13 @@ export function LessonBubble({
         <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-125 animate-pulse" />
       )}
 
-      {/* Hexagon bubble */}
+      {/* Hexagon bubble with 3D-like clickable effect (lift on hover, press on click) */}
       <div
         className={cn(
-          "relative w-16 h-[74px] flex items-center justify-center",
+          "relative w-16 h-[74px] flex items-center justify-center transition-all duration-200 ease-out",
           status === "current" && "drop-shadow-[0_0_12px_hsl(var(--primary)/0.7)]",
-          status === "locked" && "opacity-50"
+          status === "locked" && "opacity-50",
+          isClickable && "cursor-pointer hover:scale-110 hover:-translate-y-1 hover:drop-shadow-[0_8px_20px_rgba(0,0,0,0.25)] active:scale-[0.97] active:translate-y-0.5 active:drop-shadow-[0_2px_6px_rgba(0,0,0,0.2)]"
         )}
       >
         <HexagonBubble status={status} />

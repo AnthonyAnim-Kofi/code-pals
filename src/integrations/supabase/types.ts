@@ -554,6 +554,48 @@ export type Database = {
           },
         ]
       }
+      study_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          language_id: string
+          study_date: string
+          minutes: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          language_id: string
+          study_date: string
+          minutes?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          language_id?: string
+          study_date?: string
+          minutes?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "study_sessions_language_id_fkey"
+            columns: ["language_id"]
+            isOneToOne: false
+            referencedRelation: "languages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unit_notes: {
         Row: {
           content: string

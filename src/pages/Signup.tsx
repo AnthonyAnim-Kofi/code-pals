@@ -1,19 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import authBg from "@/assets/auth-bg.png";
-import { Code2, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Code2, Mail, Lock, ArrowRight, Loader2, Gift } from "lucide-react";
 import mascot from "@/assets/mascot.png";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Signup() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState(searchParams.get("ref") ?? "");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +34,17 @@ export default function Signup() {
       return;
     }
 
+    const codeToUse = referralCode.trim().toUpperCase();
+    if (codeToUse) {
+      const { data: valid, error: rpcError } = await supabase.rpc("validate_referral_code", {
+        code: codeToUse,
+      });
+      if (rpcError || !valid) {
+        setError("Invalid referral code. Please check and try again or leave it blank.");
+        return;
+      }
+    }
+
     setLoading(true);
 
     const { error } = await signUp(email, password);
@@ -39,7 +53,8 @@ export default function Signup() {
       setError(error.message);
       setLoading(false);
     } else {
-      navigate("/onboarding");
+      const target = codeToUse ? `/onboarding?ref=${encodeURIComponent(codeToUse)}` : "/onboarding";
+      navigate(target);
     }
   };
 
@@ -125,6 +140,27 @@ export default function Signup() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referralCode" className="text-muted-foreground font-normal">
+                  Referral code <span className="text-xs">(optional)</span>
+                </Label>
+                <div className="relative">
+                  <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <Input
+                    id="referralCode"
+                    type="text"
+                    placeholder="e.g. ABC12DEF"
+                    value={referralCode}
+                    onChange={(e) => setReferralCode(e.target.value)}
+                    className="pl-10 h-12 font-mono uppercase"
+                    maxLength={12}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter a friend&apos;s code to earn 50 gems when you finish onboarding.
+                </p>
               </div>
 
               {error && (

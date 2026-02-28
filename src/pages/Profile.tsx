@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
 import { StreakCalendar } from "@/components/StreakCalendar";
+import { StudyStatsSection } from "@/components/StudyStatsSection";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import mascot from "@/assets/mascot.png";
@@ -157,6 +158,9 @@ export default function Profile() {
         lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}
       />
 
+      {/* Study stats: heatmap + time per language */}
+      <StudyStatsSection />
+
       {/* Current Course Progress */}
       <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
         <div className="flex items-center justify-between mb-3">
@@ -203,9 +207,14 @@ export default function Profile() {
       {/* Referral Section */}
       {referralCode && (
         <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
-          <div className="flex items-center gap-2 mb-3">
-            <Gift className="w-5 h-5 text-primary" />
-            <h3 className="font-bold text-foreground">Invite Friends</h3>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <Gift className="w-5 h-5 text-primary" />
+              <h3 className="font-bold text-foreground">Invite Friends</h3>
+            </div>
+            <Button size="sm" variant="ghost" asChild>
+              <Link to="/referral" className="text-primary font-medium">Referral page</Link>
+            </Button>
           </div>
           <p className="text-sm text-muted-foreground mb-3">
             Share your referral code and earn <span className="font-bold text-golden">50 gems</span> for each friend who joins!

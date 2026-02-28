@@ -7,7 +7,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   BookOpen, Trophy, Target, ShoppingBag, User,
   Home, Code2, LogOut,
-  Users, RotateCcw, Award, Settings, Globe, History
+  Users, RotateCcw, Award, Settings, Globe, History, Gift
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import mascot from "@/assets/mascot.png";
@@ -28,6 +28,7 @@ const navItems = [
 const moreItems = [
   { icon: Globe, label: "Languages", path: "/languages" },
   { icon: Users, label: "Social", path: "/social" },
+  { icon: Gift, label: "Referrals", path: "/referral" },
   { icon: Award, label: "Achievements", path: "/achievements" },
   { icon: RotateCcw, label: "Practice", path: "/practice" },
   { icon: History, label: "League History", path: "/league-history" },

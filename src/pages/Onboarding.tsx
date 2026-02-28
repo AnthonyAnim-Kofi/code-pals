@@ -53,28 +53,42 @@ export default function Onboarding() {
         onboarding_completed: true,
       } as any);
 
-      // Process referral if code provided
-      if (referralCode && user) {
-        const { data: referrerProfile } = await supabase
+      // Process referral if valid code provided (from URL or signup form)
+      const codeToUse = referralCode?.trim().toUpperCase();
+      if (codeToUse && user) {
+        const { data: referrerProfile, error: refLookupError } = await supabase
           .from("profiles")
           .select("user_id")
-          .eq("referral_code", referralCode)
+          .eq("referral_code", codeToUse)
           .maybeSingle();
 
-        if (referrerProfile && referrerProfile.user_id !== user.id) {
-          // Award gems to referrer
-          await supabase.rpc("process_weekly_leagues" as any); // placeholder — just recording
-          await supabase.from("referrals" as any).insert({
+        if (!refLookupError && referrerProfile && referrerProfile.user_id !== user.id) {
+          const gemsPerSide = 50;
+          await supabase.from("referrals").insert({
             referrer_id: referrerProfile.user_id,
             referred_user_id: user.id,
-            referral_code: referralCode,
-            gems_awarded: 50,
+            referral_code: codeToUse,
+            gems_awarded: gemsPerSide,
           });
-          // Give referrer 50 gems
+          // Fetch referrer's current gems so we add to it
+          const { data: referrerRow } = await supabase
+            .from("profiles")
+            .select("gems")
+            .eq("user_id", referrerProfile.user_id)
+            .single();
+          const referrerGems = (referrerRow as { gems?: number } | null)?.gems ?? 0;
           await supabase
             .from("profiles")
-            .update({ gems: (profile?.gems || 0) + 50 } as any)
+            .update({ gems: referrerGems + gemsPerSide })
             .eq("user_id", referrerProfile.user_id);
+          // Credit new user and set referred_by (profile is current user's profile)
+          await supabase
+            .from("profiles")
+            .update({
+              gems: (profile?.gems ?? 0) + gemsPerSide,
+              referred_by: referrerProfile.user_id,
+            })
+            .eq("user_id", user.id);
         }
       }
 

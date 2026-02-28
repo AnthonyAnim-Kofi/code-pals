@@ -17,6 +17,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Quests from "./pages/Quests";
 import Shop from "./pages/Shop";
 import Profile from "./pages/Profile";
+import Referral from "./pages/Referral";
 import Settings from "./pages/Settings";
 import Social from "./pages/Social";
 import Achievements from "./pages/Achievements";
@@ -78,6 +79,7 @@ const App = () => {
                 <Route path="/quests" element={<Quests />} />
                 <Route path="/shop" element={<Shop />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/referral" element={<Referral />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/social" element={<Social />} />
                 <Route path="/achievements" element={<Achievements />} />

@@ -284,6 +284,7 @@ export function useSaveLessonProgress() {
       queryClient.invalidateQueries({ queryKey: ["lesson-progress", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["quest-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["study-stats", user?.id] });
     },
   });
 }
@@ -301,5 +302,65 @@ export function useLeaderboard() {
       if (error) throw error;
       return data;
     },
+  });
+}
+
+/** Study stats: calendar heatmap (minutes per day) and time per language */
+export interface StudyStats {
+  byDate: Record<string, number>;
+  byLanguage: { languageId: string; languageName: string; minutes: number }[];
+}
+
+export function useStudyStats() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ["study-stats", user?.id],
+    queryFn: async (): Promise<StudyStats> => {
+      if (!user) return { byDate: {}, byLanguage: [] };
+
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - 84); // ~12 weeks
+      const startStr = startDate.toISOString().split("T")[0];
+
+      const { data: sessions, error: sessError } = await supabase
+        .from("study_sessions")
+        .select("language_id, study_date, minutes")
+        .eq("user_id", user.id)
+        .gte("study_date", startStr);
+
+      if (sessError) throw sessError;
+
+      const byDate: Record<string, number> = {};
+      const byLang: Record<string, number> = {};
+      const langIds = new Set<string>();
+
+      for (const row of sessions || []) {
+        byDate[row.study_date] = (byDate[row.study_date] || 0) + row.minutes;
+        byLang[row.language_id] = (byLang[row.language_id] || 0) + row.minutes;
+        langIds.add(row.language_id);
+      }
+
+      const byLanguage: { languageId: string; languageName: string; minutes: number }[] = [];
+      if (langIds.size > 0) {
+        const { data: langs, error: langError } = await supabase
+          .from("languages")
+          .select("id, name")
+          .in("id", Array.from(langIds));
+        if (!langError && langs) {
+          for (const lang of langs) {
+            byLanguage.push({
+              languageId: lang.id,
+              languageName: lang.name,
+              minutes: byLang[lang.id] || 0,
+            });
+          }
+          byLanguage.sort((a, b) => b.minutes - a.minutes);
+        }
+      }
+
+      return { byDate, byLanguage };
+    },
+    enabled: !!user,
   });
 }

@@ -19,6 +19,8 @@ import {
   Settings,
   Globe,
   LogOut,
+  Gift,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,8 +32,10 @@ import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 const moreItems = [
   { icon: Globe, label: "Languages", path: "/languages" },
   { icon: Users, label: "Social", path: "/social" },
+  { icon: Gift, label: "Referrals", path: "/referral" },
   { icon: Award, label: "Achievements", path: "/achievements" },
   { icon: RotateCcw, label: "Practice", path: "/practice" },
+  { icon: History, label: "League History", path: "/league-history" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
