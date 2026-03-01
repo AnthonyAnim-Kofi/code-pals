@@ -56,43 +56,16 @@ export default function Onboarding() {
       // Process referral if valid code provided (from URL or signup form)
       const codeToUse = referralCode?.trim().toUpperCase();
       if (codeToUse && user) {
-        const { data: referrerProfile, error: refLookupError } = await supabase
-          .from("profiles")
-          .select("user_id")
-          .eq("referral_code", codeToUse)
-          .maybeSingle();
-
-        if (!refLookupError && referrerProfile && referrerProfile.user_id !== user.id) {
-          const gemsPerSide = 50;
-          await supabase.from("referrals").insert({
-            referrer_id: referrerProfile.user_id,
-            referred_user_id: user.id,
-            referral_code: codeToUse,
-            gems_awarded: gemsPerSide,
-          });
-          // Fetch referrer's current gems so we add to it
-          const { data: referrerRow } = await supabase
-            .from("profiles")
-            .select("gems")
-            .eq("user_id", referrerProfile.user_id)
-            .single();
-          const referrerGems = (referrerRow as { gems?: number } | null)?.gems ?? 0;
-          await supabase
-            .from("profiles")
-            .update({ gems: referrerGems + gemsPerSide })
-            .eq("user_id", referrerProfile.user_id);
-          // Credit new user and set referred_by (profile is current user's profile)
-          await supabase
-            .from("profiles")
-            .update({
-              gems: (profile?.gems ?? 0) + gemsPerSide,
-              referred_by: referrerProfile.user_id,
-            })
-            .eq("user_id", user.id);
-        }
+        await supabase.rpc("apply_referral_reward", {
+          p_referral_code: codeToUse,
+          p_new_user_id: user.id,
+        });
       }
 
-      navigate("/learn");
+      const target = selectedLanguage
+        ? `/learn?language=${encodeURIComponent(selectedLanguage)}`
+        : "/learn";
+      navigate(target);
     } catch (err) {
       toast({ title: "Something went wrong", variant: "destructive" });
       setSaving(false);

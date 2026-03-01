@@ -83,3 +83,62 @@ CREATE TRIGGER trigger_record_study_session
   FOR EACH ROW
   WHEN (NEW.completed IS TRUE AND NEW.completed_at IS NOT NULL)
   EXECUTE FUNCTION public.record_study_session_on_lesson_complete();
+
+-- Securely apply referral rewards (referrer + new user) in a single transaction
+CREATE OR REPLACE FUNCTION public.apply_referral_reward(
+  p_referral_code text,
+  p_new_user_id uuid
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_referrer_id uuid;
+  v_gems integer := 50;
+  v_existing_referral_id uuid;
+BEGIN
+  IF p_referral_code IS NULL OR TRIM(p_referral_code) = '' THEN
+    RETURN false;
+  END IF;
+
+  -- Look up referrer by referral code
+  SELECT user_id INTO v_referrer_id
+  FROM public.profiles
+  WHERE referral_code = UPPER(TRIM(p_referral_code));
+
+  -- Invalid code or self-referral
+  IF v_referrer_id IS NULL OR v_referrer_id = p_new_user_id THEN
+    RETURN false;
+  END IF;
+
+  -- Avoid double credit if this pair already has a referral record
+  SELECT id INTO v_existing_referral_id
+  FROM public.referrals
+  WHERE referrer_id = v_referrer_id
+    AND referred_user_id = p_new_user_id;
+
+  IF v_existing_referral_id IS NOT NULL THEN
+    RETURN false;
+  END IF;
+
+  -- Record referral
+  INSERT INTO public.referrals (referrer_id, referred_user_id, referral_code, gems_awarded)
+  VALUES (v_referrer_id, p_new_user_id, UPPER(TRIM(p_referral_code)), v_gems);
+
+  -- Credit referrer
+  UPDATE public.profiles
+  SET gems = COALESCE(gems, 0) + v_gems
+  WHERE user_id = v_referrer_id;
+
+  -- Credit new user and mark who referred them
+  UPDATE public.profiles
+  SET gems = COALESCE(gems, 0) + v_gems,
+      referred_by = v_referrer_id
+  WHERE user_id = p_new_user_id;
+
+  RETURN true;
+END;
+$$;
+

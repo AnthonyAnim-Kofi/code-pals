@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble, LessonPath } from "@/components/LessonBubble";
-import { useLessonProgress } from "@/hooks/useUserProgress";
+import { useLessonProgress, useUserProfile } from "@/hooks/useUserProgress";
 import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/useLanguages";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,18 +20,20 @@ export default function Learn() {
   const [searchParams, setSearchParams] = useSearchParams();
   const languageParam = searchParams.get("language");
   const { data: languages = [], isLoading: languagesLoading } = useLanguages();
+  const { data: profile } = useUserProfile();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const profileLanguageId = profile?.active_language_id || null;
   
-  // Sync URL ?language= parameter with selected language state
-  useEffect(() => {
-    if (languageParam && languages.some((l) => l.id === languageParam)) {
-      setSelectedLanguage(languageParam);
-    }
-  }, [languageParam, languages]);
-  
-  // Auto-select first language when none is selected
-  const activeLanguage = selectedLanguage || languageParam || languages[0]?.id || null;
+  // Derive active language: state > URL > profile > first language
+  const activeLanguage = selectedLanguage || languageParam || profileLanguageId || languages[0]?.id || null;
   const currentLanguage = languages.find(l => l.id === activeLanguage);
+
+  // Keep URL ?language in sync with active language
+  useEffect(() => {
+    if (activeLanguage && languageParam !== activeLanguage) {
+      setSearchParams({ language: activeLanguage });
+    }
+  }, [activeLanguage, languageParam, setSearchParams]);
 
   const handleLanguageChange = (value: string) => {
     setSelectedLanguage(value);
