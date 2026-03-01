@@ -36,7 +36,7 @@ export default function Signup() {
 
     const codeToUse = referralCode.trim().toUpperCase();
     if (codeToUse) {
-      const { data: valid, error: rpcError } = await supabase.rpc("validate_referral_code", {
+      const { data: valid, error: rpcError } = await (supabase.rpc as any)("validate_referral_code", {
         code: codeToUse,
       });
       if (rpcError || !valid) {

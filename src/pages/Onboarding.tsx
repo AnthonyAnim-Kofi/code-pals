@@ -56,7 +56,7 @@ export default function Onboarding() {
       // Process referral if valid code provided (from URL or signup form)
       const codeToUse = referralCode?.trim().toUpperCase();
       if (codeToUse && user) {
-        await supabase.rpc("apply_referral_reward", {
+        await (supabase.rpc as any)("apply_referral_reward", {
           p_referral_code: codeToUse,
           p_new_user_id: user.id,
         });
