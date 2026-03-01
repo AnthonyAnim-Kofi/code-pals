@@ -556,43 +556,43 @@ export type Database = {
       }
       study_sessions: {
         Row: {
-          id: string
-          user_id: string
-          language_id: string
-          study_date: string
-          minutes: number
           created_at: string
+          id: string
+          language_id: string
+          minutes: number
+          study_date: string
+          user_id: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          language_id: string
-          study_date: string
-          minutes?: number
           created_at?: string
+          id?: string
+          language_id: string
+          minutes?: number
+          study_date: string
+          user_id: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          language_id?: string
-          study_date?: string
-          minutes?: number
           created_at?: string
+          id?: string
+          language_id?: string
+          minutes?: number
+          study_date?: string
+          user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "study_sessions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["user_id"]
-          },
           {
             foreignKeyName: "study_sessions_language_id_fkey"
             columns: ["language_id"]
             isOneToOne: false
             referencedRelation: "languages"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -823,6 +823,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_referral_reward: {
+        Args: { p_new_user_id: string; p_referral_code: string }
+        Returns: boolean
+      }
       check_and_reset_streaks: { Args: never; Returns: undefined }
       has_role: {
         Args: {
@@ -832,6 +836,7 @@ export type Database = {
         Returns: boolean
       }
       process_weekly_leagues: { Args: never; Returns: undefined }
+      validate_referral_code: { Args: { code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
