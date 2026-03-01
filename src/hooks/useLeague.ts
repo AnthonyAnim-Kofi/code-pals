@@ -39,7 +39,9 @@ export const LEAGUES = [
   { name: "Diamond", key: "diamond", color: "text-cyan-500", bgColor: "bg-cyan-100", minXp: 3000 },
 ];
 
-export function useLeagueLeaderboard(league?: string) {
+export type LeagueLeaderboardMode = "weekly" | "allTime";
+
+export function useLeagueLeaderboard(league?: string, mode: LeagueLeaderboardMode = "weekly") {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   
@@ -58,7 +60,7 @@ export function useLeagueLeaderboard(league?: string) {
         },
         () => {
           // Invalidate query to refetch leaderboard data
-          queryClient.invalidateQueries({ queryKey: ["league-leaderboard", league] });
+          queryClient.invalidateQueries({ queryKey: ["league-leaderboard", league, mode] });
         }
       )
       .subscribe();
@@ -66,15 +68,15 @@ export function useLeagueLeaderboard(league?: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user, league, queryClient]);
+  }, [user, league, mode, queryClient]);
   
   return useQuery({
-    queryKey: ["league-leaderboard", league],
+    queryKey: ["league-leaderboard", league, mode],
     queryFn: async () => {
       let query = supabase
         .from("profiles")
         .select("id, user_id, display_name, username, avatar_url, xp, weekly_xp, streak_count, league")
-        .order("weekly_xp", { ascending: false })
+        .order(mode === "weekly" ? "weekly_xp" : "xp", { ascending: false })
         .limit(50);
       
       if (league) {

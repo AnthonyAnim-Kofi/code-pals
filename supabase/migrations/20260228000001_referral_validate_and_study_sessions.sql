@@ -32,6 +32,8 @@ CREATE INDEX IF NOT EXISTS idx_study_sessions_user_language ON public.study_sess
 
 ALTER TABLE public.study_sessions ENABLE ROW LEVEL SECURITY;
 
+-- Make policy creation idempotent so this migration can be re-run safely
+DROP POLICY IF EXISTS "Users can manage own study_sessions" ON public.study_sessions;
 CREATE POLICY "Users can manage own study_sessions"
 ON public.study_sessions
 FOR ALL
