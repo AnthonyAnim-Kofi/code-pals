@@ -20,7 +20,7 @@ export default function Learn() {
   const [searchParams, setSearchParams] = useSearchParams();
   const languageParam = searchParams.get("language");
   const { data: languages = [], isLoading: languagesLoading } = useLanguages();
-  const { data: profile } = useUserProfile();
+  const { data: profile, isLoading: profileLoading } = useUserProfile();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const profileLanguageId = profile?.active_language_id || null;
   
@@ -48,7 +48,8 @@ export default function Learn() {
     .filter((p) => p.completed)
     .map((p) => String(p.lesson_id));
 
-  if (languagesLoading) {
+  // Avoid flashing the first language (often Python) before the user's active language loads
+  if (languagesLoading || profileLoading) {
     return (
       <div className="space-y-8">
         <Skeleton className="h-10 w-48" />
@@ -69,10 +70,10 @@ export default function Learn() {
             )}
             <div>
               <h1 className="text-xl sm:text-2xl font-extrabold text-foreground mb-1 sm:mb-2 truncate">
-                Learn {currentLanguage?.name || "Python"}
+                {currentLanguage?.name ? `Learn ${currentLanguage.name}` : "Learn"}
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground line-clamp-2 sm:line-clamp-none">
-                {currentLanguage?.description || "Master the world's most popular programming language"}
+                {currentLanguage?.description || "Pick a language and start your learning path"}
               </p>
             </div>
           </div>

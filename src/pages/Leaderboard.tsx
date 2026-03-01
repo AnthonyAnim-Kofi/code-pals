@@ -239,8 +239,8 @@ export default function Leaderboard() {
         </div>
       </div>
 
-      {/* League tier tabs */}
-      <div className="hidden sm:block">
+      {/* League tier tabs (available on mobile + desktop) */}
+      <div className="w-full">
         <Tabs value={selectedLeague} onValueChange={setSelectedLeague}>
           <TabsList className="w-full">
             {LEAGUES.map((league) => (
