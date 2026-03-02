@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, BookOpen, ChevronRight, ArrowLeft } from "lucide-react";
+import { BookOpen, ChevronRight, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useUnitNotes, type UnitNote } from "@/hooks/useAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -36,92 +37,29 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
     );
   }
 
-  // Full-screen mobile notes view
-  if (isMobile && isOpen) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          size="icon"
-          className="bg-white/20 border-white/30 hover:bg-white/30 text-white"
-          onClick={() => setIsOpen(true)}
-          title="View unit notes"
-        >
-          <BookOpen className="w-5 h-5" />
-        </Button>
+  const handleOpen = () => {
+    setSelectedNote(null);
+    setIsOpen(true);
+  };
 
-        <div className="fixed inset-0 z-50 bg-background flex flex-col">
-          {/* Header */}
-          <div className="flex items-center gap-3 p-4 border-b border-border">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (selectedNote) {
-                  setSelectedNote(null);
-                } else {
-                  setIsOpen(false);
-                }
-              }}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-lg font-bold">
-              {selectedNote ? selectedNote.title : "Study Notes"}
-            </h1>
-          </div>
-
-          {/* Content */}
-          {selectedNote ? (
-            <ScrollArea className="flex-1">
-              <div className="p-5">
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {selectedNote.content.split("\n").map((line, i) => {
-                    if (line.startsWith("## ")) {
-                      return <h2 key={i} className="text-lg font-bold mt-4 mb-2">{line.replace("## ", "")}</h2>;
-                    }
-                    if (line.startsWith("### ")) {
-                      return <h3 key={i} className="text-base font-semibold mt-3 mb-1">{line.replace("### ", "")}</h3>;
-                    }
-                    if (line.startsWith("- ")) {
-                      return <li key={i} className="ml-4">{line.replace("- ", "")}</li>;
-                    }
-                    if (line.startsWith("```")) return null;
-                    if (line.trim() === "") return <br key={i} />;
-                    return <p key={i} className="mb-2">{line}</p>;
-                  })}
-                </div>
-              </div>
-            </ScrollArea>
-          ) : (
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-2">
-                {isLoading ? (
-                  <p className="text-sm text-muted-foreground p-2">Loading...</p>
-                ) : notes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground p-2">No notes available yet</p>
-                ) : (
-                  notes.map((note) => (
-                    <button
-                      key={note.id}
-                      onClick={() => setSelectedNote(note)}
-                      className="w-full text-left p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-3">
-                        <BookOpen className="w-5 h-5 text-primary shrink-0" />
-                        <p className="font-medium">{note.title}</p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          )}
-        </div>
-      </>
-    );
-  }
+  const renderNoteContent = (note: UnitNote) => (
+    <div className="prose prose-sm dark:prose-invert max-w-none">
+      {note.content.split("\n").map((line, i) => {
+        if (line.startsWith("## ")) {
+          return <h2 key={i} className="text-lg font-bold mt-4 mb-2">{line.replace("## ", "")}</h2>;
+        }
+        if (line.startsWith("### ")) {
+          return <h3 key={i} className="text-base font-semibold mt-3 mb-1">{line.replace("### ", "")}</h3>;
+        }
+        if (line.startsWith("- ")) {
+          return <li key={i} className="ml-4">{line.replace("- ", "")}</li>;
+        }
+        if (line.startsWith("```")) return null;
+        if (line.trim() === "") return <br key={i} />;
+        return <p key={i} className="mb-2">{line}</p>;
+      })}
+    </div>
+  );
 
   return (
     <>
@@ -129,26 +67,40 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
         variant="outline"
         size="icon"
         className="bg-white/20 border-white/30 hover:bg-white/30 text-white"
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         title="View unit notes"
       >
         <BookOpen className="w-5 h-5" />
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="w-[95vw] max-w-2xl max-h-[85dvh] p-0 overflow-hidden">
-          <DialogHeader className="p-6 pb-0">
+        <DialogContent className={isMobile
+          ? "w-[95vw] max-w-lg max-h-[90dvh] p-0 overflow-hidden"
+          : "w-[95vw] max-w-2xl max-h-[85dvh] p-0 overflow-hidden"
+        }>
+          <DialogHeader className="p-4 sm:p-6 pb-0">
             <DialogTitle className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Study Notes
+              {selectedNote && isMobile ? (
+                <Button variant="ghost" size="icon" className="shrink-0 -ml-2" onClick={() => setSelectedNote(null)}>
+                  <ArrowLeft className="w-5 h-5" />
+                </Button>
+              ) : (
+                <BookOpen className="w-5 h-5 text-primary" />
+              )}
+              {selectedNote ? selectedNote.title : "Study Notes"}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Browse and read study notes for this unit
+            </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-row h-[60vh]">
-            {/* Notes List */}
-            <div className="w-1/3 border-r border-border bg-muted/30">
-              <ScrollArea className="h-full">
-                <div className="p-3 space-y-2">
+          {isMobile ? (
+            /* Mobile: single column, list or detail */
+            <ScrollArea className="h-[60vh]">
+              {selectedNote ? (
+                <div className="p-5">{renderNoteContent(selectedNote)}</div>
+              ) : (
+                <div className="p-4 space-y-2">
                   {isLoading ? (
                     <p className="text-sm text-muted-foreground p-2">Loading...</p>
                   ) : notes.length === 0 ? (
@@ -158,54 +110,67 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
                       <button
                         key={note.id}
                         onClick={() => setSelectedNote(note)}
-                        className={`w-full text-left p-3 rounded-lg transition-colors ${
-                          selectedNote?.id === note.id
-                            ? "bg-primary text-primary-foreground"
-                            : "hover:bg-muted"
-                        }`}
+                        className="w-full text-left p-4 rounded-xl border border-border hover:bg-muted/50 transition-colors flex items-center justify-between"
                       >
-                        <p className="font-medium text-sm truncate">{note.title}</p>
+                        <div className="flex items-center gap-3">
+                          <BookOpen className="w-5 h-5 text-primary shrink-0" />
+                          <p className="font-medium">{note.title}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </button>
                     ))
                   )}
                 </div>
-              </ScrollArea>
-            </div>
+              )}
+            </ScrollArea>
+          ) : (
+            /* Desktop: two-column split */
+            <div className="flex flex-row h-[60vh]">
+              <div className="w-1/3 border-r border-border bg-muted/30">
+                <ScrollArea className="h-full">
+                  <div className="p-3 space-y-2">
+                    {isLoading ? (
+                      <p className="text-sm text-muted-foreground p-2">Loading...</p>
+                    ) : notes.length === 0 ? (
+                      <p className="text-sm text-muted-foreground p-2">No notes available yet</p>
+                    ) : (
+                      notes.map((note) => (
+                        <button
+                          key={note.id}
+                          onClick={() => setSelectedNote(note)}
+                          className={`w-full text-left p-3 rounded-lg transition-colors ${
+                            selectedNote?.id === note.id
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-muted"
+                          }`}
+                        >
+                          <p className="font-medium text-sm truncate">{note.title}</p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
 
-            {/* Note Content */}
-            <div className="flex-1 min-w-0">
-              <ScrollArea className="h-full">
-                {selectedNote ? (
-                  <div className="p-6">
-                    <h2 className="text-xl font-bold mb-4">{selectedNote.title}</h2>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      {selectedNote.content.split("\n").map((line, i) => {
-                        if (line.startsWith("## ")) {
-                          return <h2 key={i} className="text-lg font-bold mt-4 mb-2">{line.replace("## ", "")}</h2>;
-                        }
-                        if (line.startsWith("### ")) {
-                          return <h3 key={i} className="text-base font-semibold mt-3 mb-1">{line.replace("### ", "")}</h3>;
-                        }
-                        if (line.startsWith("- ")) {
-                          return <li key={i} className="ml-4">{line.replace("- ", "")}</li>;
-                        }
-                        if (line.startsWith("```")) return null;
-                        if (line.trim() === "") return <br key={i} />;
-                        return <p key={i} className="mb-2">{line}</p>;
-                      })}
+              <div className="flex-1 min-w-0">
+                <ScrollArea className="h-full">
+                  {selectedNote ? (
+                    <div className="p-6">
+                      <h2 className="text-xl font-bold mb-4">{selectedNote.title}</h2>
+                      {renderNoteContent(selectedNote)}
                     </div>
-                  </div>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Select a note to read</p>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                      <div className="text-center">
+                        <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Select a note to read</p>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </ScrollArea>
+                  )}
+                </ScrollArea>
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </>
