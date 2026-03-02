@@ -20,7 +20,10 @@ export function useStreakHistory() {
         .eq("user_id", user.id)
         .order("activity_date", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        if (error.code === "42P01") return []; // relation does not exist (migration not run yet)
+        throw error;
+      }
       return (data || []) as StreakHistoryEntry[];
     },
     enabled: !!user,

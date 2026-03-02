@@ -74,11 +74,11 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className={isMobile
-          ? "w-[95vw] max-w-lg max-h-[90dvh] p-0 overflow-hidden"
-          : "w-[95vw] max-w-2xl max-h-[85dvh] p-0 overflow-hidden"
-        }>
-          <DialogHeader className="p-4 sm:p-6 pb-0">
+        <DialogContent
+          className="fixed inset-0 z-50 w-screen h-screen max-w-none max-h-none rounded-none translate-x-0 translate-y-0 flex flex-col p-0 gap-0 border-0"
+          aria-describedby={undefined}
+        >
+          <DialogHeader className="p-4 sm:p-6 pb-2 border-b border-border shrink-0">
             <DialogTitle className="flex items-center gap-2">
               {selectedNote && isMobile ? (
                 <Button variant="ghost" size="icon" className="shrink-0 -ml-2" onClick={() => setSelectedNote(null)}>
@@ -95,12 +95,12 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
           </DialogHeader>
 
           {isMobile ? (
-            /* Mobile: single column, list or detail */
-            <ScrollArea className="h-[60vh]">
+            /* Mobile: single column, list or detail – full height */
+            <ScrollArea className="flex-1 min-h-0">
               {selectedNote ? (
-                <div className="p-5">{renderNoteContent(selectedNote)}</div>
+                <div className="p-5 pb-8">{renderNoteContent(selectedNote)}</div>
               ) : (
-                <div className="p-4 space-y-2">
+                <div className="p-4 space-y-2 pb-8">
                   {isLoading ? (
                     <p className="text-sm text-muted-foreground p-2">Loading...</p>
                   ) : notes.length === 0 ? (
@@ -124,9 +124,9 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
               )}
             </ScrollArea>
           ) : (
-            /* Desktop: two-column split */
-            <div className="flex flex-row h-[60vh]">
-              <div className="w-1/3 border-r border-border bg-muted/30">
+            /* Desktop: two-column split – full height */
+            <div className="flex flex-row flex-1 min-h-0">
+              <div className="w-72 sm:w-80 border-r border-border bg-muted/30 shrink-0">
                 <ScrollArea className="h-full">
                   <div className="p-3 space-y-2">
                     {isLoading ? (
@@ -152,15 +152,15 @@ export function UnitNotes({ unitId, isAccessible }: UnitNotesProps) {
                 </ScrollArea>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <ScrollArea className="h-full">
+              <div className="flex-1 min-w-0 flex flex-col">
+                <ScrollArea className="flex-1">
                   {selectedNote ? (
-                    <div className="p-6">
+                    <div className="p-6 max-w-3xl">
                       <h2 className="text-xl font-bold mb-4">{selectedNote.title}</h2>
                       {renderNoteContent(selectedNote)}
                     </div>
                   ) : (
-                    <div className="h-full flex items-center justify-center text-muted-foreground">
+                    <div className="h-full flex items-center justify-center text-muted-foreground min-h-[50vh]">
                       <div className="text-center">
                         <BookOpen className="w-12 h-12 mx-auto mb-2 opacity-50" />
                         <p>Select a note to read</p>
