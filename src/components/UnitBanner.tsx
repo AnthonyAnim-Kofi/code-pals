@@ -42,7 +42,7 @@ export function UnitBanner({
         </div>
         {/* Note icon and Continue on same line on all screen sizes to keep banner compact */}
         <div className="flex flex-nowrap items-center gap-2 shrink-0">
-          {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || false} />}
+          {unitId && <UnitNotes unitId={unitId} isAccessible={isActive || (completedLessons > 0)} />}
           {isActive && currentLessonId && (
             <Button variant="golden" size="sm" className="shadow-none shrink-0" asChild>
               <Link to={`/lesson/${String(currentLessonId)}`}>
