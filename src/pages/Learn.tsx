@@ -7,7 +7,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { UnitBanner } from "@/components/UnitBanner";
 import { LessonBubble, LessonPath } from "@/components/LessonBubble";
-import { useLessonProgress, useUserProfile } from "@/hooks/useUserProgress";
+import { useLessonProgress, useUserProfile, useUpdateProfile } from "@/hooks/useUserProgress";
 import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/useLanguages";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,10 +21,11 @@ export default function Learn() {
   const languageParam = searchParams.get("language");
   const { data: languages = [], isLoading: languagesLoading } = useLanguages();
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const updateProfile = useUpdateProfile();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const profileLanguageId = profile?.active_language_id || null;
   
-  // Derive active language: state > URL > profile > first language
+  // Derive active language: state > URL > profile's active language > first language
   const activeLanguage = selectedLanguage || languageParam || profileLanguageId || languages[0]?.id || null;
   const currentLanguage = languages.find(l => l.id === activeLanguage);
 
@@ -38,6 +39,8 @@ export default function Learn() {
   const handleLanguageChange = (value: string) => {
     setSelectedLanguage(value);
     setSearchParams(value ? { language: value } : {});
+    // Persist the language choice to the user's profile
+    updateProfile.mutate({ active_language_id: value } as any);
   };
   
   const { data: units = [], isLoading: unitsLoading } = useUnitsForLanguage(activeLanguage);
