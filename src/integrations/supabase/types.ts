@@ -554,6 +554,38 @@ export type Database = {
           },
         ]
       }
+      streak_history: {
+        Row: {
+          activity_date: string
+          activity_type: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          activity_type: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          activity_type?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streak_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       study_sessions: {
         Row: {
           created_at: string
