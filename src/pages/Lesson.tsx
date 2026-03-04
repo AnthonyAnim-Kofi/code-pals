@@ -83,7 +83,7 @@ export default function Lesson() {
   const { lessonId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { playCorrect, playIncorrect, playComplete } = useSoundEffects();
+  const { playCorrect, playIncorrect, playComplete, playBackgroundMusic } = useSoundEffects();
   
   // Check if we're in practice mode
   const isPracticeMode = searchParams.get('mode') === 'practice';

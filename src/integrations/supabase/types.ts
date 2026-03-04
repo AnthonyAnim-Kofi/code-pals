@@ -554,6 +554,81 @@ export type Database = {
           },
         ]
       }
+      shop_items: {
+        Row: {
+          action_type: string
+          color: string
+          created_at: string
+          currency: string
+          description: string
+          icon: string
+          id: string
+          is_active: boolean
+          order_index: number
+          price: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type?: string
+          color?: string
+          created_at?: string
+          currency?: string
+          description: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          price?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          color?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          price?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sound_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          sound_key: string
+          sound_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          sound_key: string
+          sound_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          sound_key?: string
+          sound_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       streak_history: {
         Row: {
           activity_date: string

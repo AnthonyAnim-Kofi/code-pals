@@ -1,7 +1,7 @@
 /**
  * Admin – Administrative dashboard for managing users, languages, units, lessons,
- * questions, notes, quests, leagues, and bulk imports. Requires admin role.
- * Includes edit functionality for all content items via AdminEditDialog.
+ * questions, notes, quests, leagues, shop items, sounds, and bulk imports.
+ * Requires admin role. Includes edit functionality for all content items.
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +18,8 @@ import {
   Trash2,
   Upload,
   Trophy,
+  ShoppingBag,
+  Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,6 +57,8 @@ import { BulkImport } from "@/components/admin/BulkImport";
 import { BulkImportNotes } from "@/components/admin/BulkImportNotes";
 import { QuestManager } from "@/components/admin/QuestManager";
 import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
+import { ShopManager } from "@/components/admin/ShopManager";
+import { SoundManager } from "@/components/admin/SoundManager";
 import { AdminEditDialog, EditField } from "@/components/admin/AdminEditDialog";
 import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { LanguageIcon } from "@/components/LanguageIcon";
@@ -333,18 +337,59 @@ export default function Admin() {
     });
   };
 
-  /** Opens edit dialog for a question */
+  /** Opens edit dialog for a question – includes all editable fields */
   const editQuestionItem = (q: any) => {
+    const opts = Array.isArray(q.options) ? q.options : [];
+    const fields: EditField[] = [
+      { key: "type", label: "Type", type: "select", options: [
+        { value: "fill-blank", label: "Fill in the Blank" },
+        { value: "multiple-choice", label: "Multiple Choice" },
+        { value: "drag-order", label: "Drag & Order" },
+        { value: "code-runner", label: "Code Runner" },
+      ]},
+      { key: "instruction", label: "Instruction", type: "textarea" },
+      { key: "code", label: "Code Template", type: "textarea" },
+      { key: "answer", label: "Answer", type: "text" },
+      { key: "option0", label: "Option 1", type: "text" },
+      { key: "option1", label: "Option 2", type: "text" },
+      { key: "option2", label: "Option 3", type: "text" },
+      { key: "option3", label: "Option 4", type: "text" },
+      { key: "hint", label: "Hint", type: "text" },
+      { key: "initial_code", label: "Initial Code (code-runner)", type: "textarea" },
+      { key: "expected_output", label: "Expected Output (code-runner)", type: "text" },
+      { key: "xp_reward", label: "XP Reward", type: "text" },
+    ];
     setEditDialog({
-      open: true, title: "Edit Question",
-      fields: [
-        { key: "instruction", label: "Instruction", type: "textarea" },
-        { key: "answer", label: "Answer", type: "text" },
-        { key: "hint", label: "Hint", type: "text" },
-      ],
-      initialValues: { instruction: q.instruction, answer: q.answer || "", hint: q.hint || "" },
+      open: true, title: "Edit Question", fields,
+      initialValues: {
+        type: q.type || "fill-blank",
+        instruction: q.instruction || "",
+        code: q.code || "",
+        answer: q.answer || "",
+        option0: opts[0] || "",
+        option1: opts[1] || "",
+        option2: opts[2] || "",
+        option3: opts[3] || "",
+        hint: q.hint || "",
+        initial_code: q.initial_code || "",
+        expected_output: q.expected_output || "",
+        xp_reward: String(q.xp_reward || 10),
+      },
       onSave: async (values) => {
-        await updateQuestion.mutateAsync({ id: q.id, lessonId: selectedLesson, ...values } as any);
+        const options = [values.option0, values.option1, values.option2, values.option3].filter(Boolean);
+        await updateQuestion.mutateAsync({
+          id: q.id,
+          lessonId: selectedLesson,
+          type: values.type as any,
+          instruction: values.instruction,
+          code: values.code || null,
+          answer: values.answer || null,
+          options: options.length > 0 ? options : null,
+          hint: values.hint || null,
+          initial_code: values.initial_code || null,
+          expected_output: values.expected_output || null,
+          xp_reward: parseInt(values.xp_reward) || 10,
+        } as any);
         toast({ title: "Question updated!" });
       },
     });
@@ -415,6 +460,14 @@ export default function Admin() {
             <TabsTrigger value="import" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Upload className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Import</span>
+            </TabsTrigger>
+            <TabsTrigger value="shop" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              <ShoppingBag className="w-4 h-4 mr-2" />
+              <span className="whitespace-nowrap">Shop</span>
+            </TabsTrigger>
+            <TabsTrigger value="sounds" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              <Volume2 className="w-4 h-4 mr-2" />
+              <span className="whitespace-nowrap">Sounds</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1035,6 +1088,20 @@ export default function Admin() {
             <div className="space-y-6">
               <BulkImport />
               <BulkImportNotes />
+            </div>
+          </TabsContent>
+
+          {/* Shop Tab */}
+          <TabsContent value="shop">
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+              <ShopManager />
+            </div>
+          </TabsContent>
+
+          {/* Sounds Tab */}
+          <TabsContent value="sounds">
+            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+              <SoundManager />
             </div>
           </TabsContent>
         </Tabs>

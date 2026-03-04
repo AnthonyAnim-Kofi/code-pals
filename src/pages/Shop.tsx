@@ -1,16 +1,15 @@
 /**
  * Shop – In-app store where users spend gems on power-ups and view premium features.
- * Items include Heart Refill, Streak Freeze, and Double XP.
- * The "Try 7 Days Free" button displays a subscription-required message.
+ * Items are now loaded from the database (admin-managed).
  */
 import { ShoppingBag, Heart, Zap, Gem, Infinity, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { usePurchaseHeartRefill, usePurchaseStreakFreeze, usePurchaseDoubleXP } from "@/hooks/useShop";
+import { useShopItems } from "@/hooks/useShopItems";
 import { toast } from "sonner";
 
-/** Premium feature list displayed in the Pro section */
 const premiumFeatures = [
   "Unlimited hearts",
   "No ads",
@@ -21,6 +20,7 @@ const premiumFeatures = [
 
 export default function Shop() {
   const { data: profile, isLoading: profileLoading } = useUserProfile();
+  const { data: dbItems = [], isLoading: itemsLoading } = useShopItems();
   const purchaseHeartRefill = usePurchaseHeartRefill();
   const purchaseStreakFreeze = usePurchaseStreakFreeze();
   const purchaseDoubleXP = usePurchaseDoubleXP();
@@ -28,47 +28,26 @@ export default function Shop() {
   const gems = profile?.gems ?? 0;
   const streakFreezes = profile?.streak_freeze_count ?? 0;
 
-  /** Shop items with pricing, icons, and purchase handlers */
-  const shopItems = [
-    {
-      id: 1,
-      title: "Heart Refill",
-      description: "Get all your hearts back",
-      icon: Heart,
-      price: 450,
-      currency: "gems",
-      color: "bg-destructive",
-      onPurchase: () => purchaseHeartRefill.mutate(),
-      isLoading: purchaseHeartRefill.isPending,
-      disabled: gems < 450,
-    },
-    {
-      id: 2,
-      title: "Streak Freeze",
-      description: `Protect your streak if you miss a day (You have ${streakFreezes})`,
-      icon: Zap,
-      price: 200,
-      currency: "gems",
-      color: "bg-secondary",
-      onPurchase: () => purchaseStreakFreeze.mutate(),
-      isLoading: purchaseStreakFreeze.isPending,
-      disabled: gems < 200,
-    },
-    {
-      id: 3,
-      title: "Double XP",
-      description: "Earn 2x XP for 15 minutes",
-      icon: Zap,
-      price: 100,
-      currency: "gems",
-      color: "bg-golden",
-      onPurchase: () => purchaseDoubleXP.mutate(),
-      isLoading: purchaseDoubleXP.isPending,
-      disabled: gems < 100,
-    },
-  ];
+  const getPurchaseHandler = (actionType: string) => {
+    switch (actionType) {
+      case "heart_refill": return () => purchaseHeartRefill.mutate();
+      case "streak_freeze": return () => purchaseStreakFreeze.mutate();
+      case "double_xp": return () => purchaseDoubleXP.mutate();
+      default: return () => toast.info("This item is not yet available for purchase.");
+    }
+  };
 
-  /** Shows a toast message that subscription is required for premium features */
+  const getIsLoading = (actionType: string) => {
+    switch (actionType) {
+      case "heart_refill": return purchaseHeartRefill.isPending;
+      case "streak_freeze": return purchaseStreakFreeze.isPending;
+      case "double_xp": return purchaseDoubleXP.isPending;
+      default: return false;
+    }
+  };
+
+  const activeItems = dbItems.filter((i) => i.is_active);
+
   const handleTryFree = () => {
     toast.info("Subscription Required", {
       description: "You need to be on a subscription before you can enjoy this feature. Subscriptions are coming soon!",
@@ -106,32 +85,44 @@ export default function Shop() {
       {/* Power-up Shop Items */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-4">Power-ups</h2>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {shopItems.map((item) => (
-            <div key={item.id} className="p-4 bg-card rounded-2xl border border-border card-elevated">
-              <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto", item.color)}>
-                <item.icon className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-bold text-center text-foreground mb-1">{item.title}</h3>
-              <p className="text-sm text-center text-muted-foreground mb-4">{item.description}</p>
-              <Button 
-                className="w-full" 
-                variant={item.disabled ? "outline" : "default"}
-                onClick={item.onPurchase}
-                disabled={item.disabled || item.isLoading}
-              >
-                {item.isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Gem className="w-4 h-4 text-secondary" />
-                    {item.price}
-                  </>
-                )}
-              </Button>
-            </div>
-          ))}
-        </div>
+        {itemsLoading ? (
+          <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {activeItems.map((item) => {
+              const disabled = gems < item.price;
+              const loading = getIsLoading(item.action_type);
+              return (
+                <div key={item.id} className="p-4 bg-card rounded-2xl border border-border card-elevated">
+                  <div className={cn("w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto", item.color)}>
+                    <span className="text-3xl">{item.icon}</span>
+                  </div>
+                  <h3 className="font-bold text-center text-foreground mb-1">{item.title}</h3>
+                  <p className="text-sm text-center text-muted-foreground mb-4">
+                    {item.action_type === "streak_freeze"
+                      ? `${item.description} (You have ${streakFreezes})`
+                      : item.description}
+                  </p>
+                  <Button
+                    className="w-full"
+                    variant={disabled ? "outline" : "default"}
+                    onClick={getPurchaseHandler(item.action_type)}
+                    disabled={disabled || loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Gem className="w-4 h-4 text-secondary" />
+                        {item.price}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Premium / Pro Section */}
@@ -157,7 +148,6 @@ export default function Shop() {
           ))}
         </div>
 
-        {/* Subscription-required button */}
         <Button variant="golden" size="lg" className="w-full" onClick={handleTryFree}>
           Try 7 Days Free
         </Button>

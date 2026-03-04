@@ -121,7 +121,8 @@ export function ProductTour() {
       continuous
       showSkipButton
       showProgress
-      scrollToFirstStep
+      scrollToFirstStep={false}
+      disableScrolling
       disableOverlayClose
       callback={handleCallback}
       locale={{

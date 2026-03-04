@@ -21,7 +21,6 @@ export function useAdminQuests() {
         .select("*")
         .order("is_weekly", { ascending: false })
         .order("created_at", { ascending: false });
-      
       if (error) throw error;
       return data as AdminQuest[];
     },
@@ -30,20 +29,29 @@ export function useAdminQuests() {
 
 export function useCreateQuest() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (quest: {
-      title: string;
-      description: string;
-      quest_type: string;
-      target_value: number;
-      gem_reward: number;
-      is_weekly: boolean;
+      title: string; description: string; quest_type: string;
+      target_value: number; gem_reward: number; is_weekly: boolean;
     }) => {
+      const { error } = await supabase.from("daily_quests").insert(quest);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-quests"] });
+      queryClient.invalidateQueries({ queryKey: ["quests"] });
+    },
+  });
+}
+
+export function useUpdateQuest() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<AdminQuest>) => {
       const { error } = await supabase
         .from("daily_quests")
-        .insert(quest);
-      
+        .update(updates)
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -55,14 +63,9 @@ export function useCreateQuest() {
 
 export function useDeleteQuest() {
   const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (questId: string) => {
-      const { error } = await supabase
-        .from("daily_quests")
-        .delete()
-        .eq("id", questId);
-      
+      const { error } = await supabase.from("daily_quests").delete().eq("id", questId);
       if (error) throw error;
     },
     onSuccess: () => {
