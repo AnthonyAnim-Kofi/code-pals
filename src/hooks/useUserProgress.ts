@@ -29,6 +29,9 @@ export interface UserProfile {
   heart_regeneration_started_at: string | null;
   active_language_id: string | null;
   last_streak_freeze_used: string | null;
+  onboarding_completed?: boolean;
+  daily_goal_minutes?: number;
+  referral_code?: string | null;
 }
 
 export function useUserProfile() {
