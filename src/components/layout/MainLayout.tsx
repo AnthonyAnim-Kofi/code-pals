@@ -4,6 +4,7 @@ import { MobileHeader } from "./MobileHeader";
 import { UserProgress } from "@/components/UserProgress";
 import { NotificationManager } from "@/components/NotificationManager";
 import { UsernamePrompt } from "@/components/UsernamePrompt";
+import { ProductTour } from "@/components/ProductTour";
 import { useLeagueNotifications } from "@/hooks/useLeagueNotifications";
 
 export function MainLayout() {
@@ -14,6 +15,7 @@ export function MainLayout() {
     <div className="min-h-screen bg-background">
       <NotificationManager />
       <UsernamePrompt />
+      <ProductTour />
       <Sidebar />
       <MobileHeader />
       
@@ -26,7 +28,7 @@ export function MainLayout() {
           
           {/* Right Sidebar - Desktop Only */}
           <div className="hidden xl:block w-[300px] shrink-0">
-            <div className="sticky top-6 space-y-6">
+            <div className="sticky top-6 space-y-6" data-tour="user-progress">
               <UserProgress />
             </div>
           </div>

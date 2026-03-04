@@ -45,7 +45,7 @@ export function MobileHeader() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4" data-tour="mobile-stats">
             <StreakPopover streak={streak} />
             <div className="flex items-center gap-1 text-golden font-bold text-sm">
               <Zap className="w-5 h-5" />
@@ -71,6 +71,7 @@ export function MobileHeader() {
                   <Link
                     key={item.path}
                     to={item.path}
+                    data-tour={`mobile-${item.label.toLowerCase()}`}
                     className={cn(
                       "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors",
                       isActive
@@ -83,7 +84,9 @@ export function MobileHeader() {
                   </Link>
                 );
               })}
-              <MobileMoreMenu />
+              <div data-tour="mobile-more">
+                <MobileMoreMenu />
+              </div>
             </div>
           </nav>,
           document.body
