@@ -50,11 +50,11 @@ export function AdminEditDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-slate-800 border-slate-700 text-white">
-        <DialogHeader>
+      <DialogContent className="bg-slate-800 border-slate-700 text-white max-h-[85vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <div className="space-y-4 py-4 overflow-y-auto flex-1 min-h-0 pr-2">
           {fields.map((field) => (
             <div key={field.key}>
               <Label>{field.label}</Label>
