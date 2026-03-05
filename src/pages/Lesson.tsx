@@ -431,46 +431,61 @@ export default function Lesson() {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-4 h-16">
+          <div className="flex items-center gap-3 h-14">
             <button 
               onClick={handleExit}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-1.5 rounded-lg hover:bg-muted transition-colors"
             >
-              <X className="w-6 h-6 text-muted-foreground" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
 
-            <div className="flex-1">
-              <Progress value={progress} size="default" indicatorColor="gradient" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">
+                {languageInfo?.name || "Lesson"}
+              </p>
+              <p className="text-sm font-bold text-foreground truncate">
+                {lessonData.title}
+              </p>
             </div>
             
             {/* Practice Mode Indicator */}
             {isPracticeMode && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-secondary/20 rounded-lg text-secondary text-sm font-semibold">
-                <RotateCcw className="w-4 h-4" />
+              <div className="flex items-center gap-1 px-2 py-1 bg-secondary/20 rounded-lg text-secondary text-xs font-bold">
+                <RotateCcw className="w-3 h-3" />
                 Practice
               </div>
             )}
 
             <div className="flex items-center gap-1 text-destructive">
-              <Heart className="w-5 h-5 fill-current" />
-              <span className="font-bold">{isPracticeMode ? "∞" : hearts}</span>
+              <Heart className="w-4 h-4 fill-current" />
+              <span className="font-extrabold text-sm">{isPracticeMode ? "∞" : hearts}</span>
+            </div>
+
+            <div className="flex items-center gap-1 text-primary">
+              <span className="text-sm">💎</span>
+              <span className="font-extrabold text-sm">{profile?.gems ?? 0}</span>
             </div>
           </div>
         </div>
       </header>
 
+      {/* Progress bar */}
+      <div className="px-4 pt-3">
+        <Progress value={progress} size="default" indicatorColor="gradient" />
+      </div>
+
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-8 max-w-2xl">
+      <main className="flex-1 container mx-auto px-4 py-6 max-w-2xl">
         {/* Mascot Reaction */}
         {mascotReaction !== "idle" && (
-          <div className="mb-6 animate-fade-in">
+          <div className="mb-4 animate-fade-in">
             <MascotReaction reaction={mascotReaction} />
           </div>
         )}
 
         {/* Question */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-foreground mb-6">
+          <h2 className="text-lg font-extrabold text-foreground mb-5">
             {question.instruction}
           </h2>
 
@@ -490,6 +505,7 @@ export default function Lesson() {
               initialCode={question.initial_code}
               expectedOutput={question.expected_output}
               hint={question.hint}
+              instruction={question.instruction}
               onAnswer={handleCodeRunnerAnswer}
               disabled={codeRunnerChecked}
             />
