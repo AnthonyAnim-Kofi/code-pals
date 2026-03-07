@@ -74,7 +74,7 @@ import {
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signOut } = useAuth();
+  const { signOut, loading: authLoading } = useAuth();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsAdmin();
 
   const [activeTab, setActiveTab] = useState("users");
@@ -137,12 +137,12 @@ export default function Admin() {
   const [newNote, setNewNote] = useState({ title: "", content: "" });
 
   useEffect(() => {
-    if (!checkingAdmin && !isAdmin) {
-      navigate("/admin-login");
+    if (!authLoading && !checkingAdmin && !isAdmin) {
+      navigate("/admin/login");
     }
-  }, [checkingAdmin, isAdmin, navigate]);
+  }, [authLoading, checkingAdmin, isAdmin, navigate]);
 
-  if (checkingAdmin) {
+  if (authLoading || checkingAdmin) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-500" />
@@ -433,39 +433,39 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto p-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-slate-800 border border-slate-700 p-1 mb-6 w-full overflow-x-auto flex flex-nowrap justify-start gap-1">
-            <TabsTrigger value="users" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="users" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Users className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Users</span>
             </TabsTrigger>
-            <TabsTrigger value="languages" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="languages" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Languages className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Languages</span>
             </TabsTrigger>
-            <TabsTrigger value="content" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="content" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <BookOpen className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Content</span>
             </TabsTrigger>
-            <TabsTrigger value="notes" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="notes" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <FileText className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Notes</span>
             </TabsTrigger>
-            <TabsTrigger value="quests" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="quests" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Target className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Quests</span>
             </TabsTrigger>
-            <TabsTrigger value="leagues" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="leagues" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Trophy className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Leagues</span>
             </TabsTrigger>
-            <TabsTrigger value="import" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="import" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Upload className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Import</span>
             </TabsTrigger>
-            <TabsTrigger value="shop" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="shop" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <ShoppingBag className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Shop</span>
             </TabsTrigger>
-            <TabsTrigger value="sounds" className="data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="sounds" className="text-slate-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white">
               <Volume2 className="w-4 h-4 mr-2" />
               <span className="whitespace-nowrap">Sounds</span>
             </TabsTrigger>
