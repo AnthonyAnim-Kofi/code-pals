@@ -51,24 +51,14 @@ export default function Practice() {
     enabled: !!user,
   });
   
-  const completedLessons = lessonProgress?.filter(p => p.completed) || [];
-  const completedIds = new Set(completedLessons.map(p => String(p.lesson_id)));
-
   const handlePractice = (lessonId: string) => {
     // Navigate to lesson in practice mode (no heart deduction)
     navigate(`/lesson/${lessonId}?mode=practice`);
   };
 
-  const isLoading = progressLoading || lessonsLoading;
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
+  const completedLessons = lessonProgress?.filter(p => p.completed) || [];
+  const completedIds = new Set(completedLessons.map(p => String(p.lesson_id)));
+  
   // Filter to only show completed lessons (compare UUIDs only)
   const practiceableLessons = useMemo(
     () => (dbLessons?.filter((lesson) => completedIds.has(lesson.id)) || []),
@@ -102,6 +92,16 @@ export default function Practice() {
       a.languageName.localeCompare(b.languageName)
     );
   }, [practiceableLessons, languages]);
+
+  const isLoading = progressLoading || lessonsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
