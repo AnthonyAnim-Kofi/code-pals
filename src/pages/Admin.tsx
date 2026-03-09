@@ -618,6 +618,31 @@ export default function Admin() {
           {/* Content Tab */}
           <TabsContent value="content">
             <div className="space-y-6">
+              {/* Guided step header */}
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-3">
+                  <p className="text-xs font-semibold text-slate-400 mb-1">Step 1</p>
+                  <p className="text-sm font-bold text-white">Choose language</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    All units and lessons belong to a language.
+                  </p>
+                </div>
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-3">
+                  <p className="text-xs font-semibold text-slate-400 mb-1">Step 2</p>
+                  <p className="text-sm font-bold text-white">Choose unit</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Units group related lessons together.
+                  </p>
+                </div>
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-3">
+                  <p className="text-xs font-semibold text-slate-400 mb-1">Step 3</p>
+                  <p className="text-sm font-bold text-white">Choose lesson</p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Then add or edit questions for that lesson.
+                  </p>
+                </div>
+              </div>
+
               {/* Selectors */}
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
@@ -666,6 +691,14 @@ export default function Admin() {
                   </Select>
                 </div>
               </div>
+
+              {/* If nothing is selected yet, show a simple helper message */}
+              {!selectedLanguage && (
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-sm text-slate-300">
+                  Start by selecting a <span className="font-semibold">language</span>. Then you can create units,
+                  lessons, and questions for that language.
+                </div>
+              )}
 
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Create Unit */}
@@ -765,7 +798,11 @@ export default function Admin() {
                             <Button
                               size="sm"
                               variant="ghost"
-                              onClick={() => deleteLesson.mutate({ lessonId: lesson.id, unitId: selectedUnit })}
+                              onClick={() => {
+                                if (confirm(`Delete lesson "${lesson.title}" and all its questions?`)) {
+                                  deleteLesson.mutate({ lessonId: lesson.id, unitId: selectedUnit });
+                                }
+                              }}
                               className="text-red-400 hover:text-red-300"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -801,7 +838,10 @@ export default function Admin() {
               {/* Create Question */}
               {selectedLesson && (
                 <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-                  <h3 className="text-lg font-bold mb-4">Create Question</h3>
+                  <h3 className="text-lg font-bold mb-2">Create Question</h3>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Choose a question type, write the instruction, then optionally add code, options, and hints.
+                  </p>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div>
                       <Label>Type</Label>
@@ -940,7 +980,11 @@ export default function Admin() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => deleteQuestion.mutate({ questionId: q.id, lessonId: selectedLesson })}
+                            onClick={() => {
+                              if (confirm("Delete this question?")) {
+                                deleteQuestion.mutate({ questionId: q.id, lessonId: selectedLesson });
+                              }
+                            }}
                             className="text-red-400 hover:text-red-300"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -957,6 +1001,13 @@ export default function Admin() {
           {/* Notes Tab */}
           <TabsContent value="notes">
             <div className="space-y-6">
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-4">
+                <h3 className="text-sm font-semibold text-white mb-1">Study notes</h3>
+                <p className="text-xs text-slate-400">
+                  Attach short, helpful explanations to each unit. Learners will see these in the in-lesson notes viewer.
+                </p>
+              </div>
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>Language</Label>
@@ -989,6 +1040,13 @@ export default function Admin() {
                   </Select>
                 </div>
               </div>
+
+              {!selectedLanguage && (
+                <div className="bg-slate-800 rounded-xl border border-slate-700 p-6 text-sm text-slate-300">
+                  Select a <span className="font-semibold">language</span> and then a{" "}
+                  <span className="font-semibold">unit</span> to create or edit notes.
+                </div>
+              )}
 
               {selectedUnit && (
                 <div className="grid gap-6 lg:grid-cols-2">
@@ -1049,7 +1107,11 @@ export default function Admin() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                onClick={() => deleteNote.mutate({ noteId: note.id, unitId: selectedUnit })}
+                                onClick={() => {
+                                  if (confirm(`Delete note "${note.title}"?`)) {
+                                    deleteNote.mutate({ noteId: note.id, unitId: selectedUnit });
+                                  }
+                                }}
                                 className="text-red-400 hover:text-red-300"
                               >
                                 <Trash2 className="w-4 h-4" />

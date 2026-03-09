@@ -104,6 +104,32 @@ export default function Achievements() {
   const earnedCount = userAchievements?.length || 0;
   const totalCount = achievements?.length || 0;
 
+  if (!totalCount) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-extrabold text-foreground mb-2 flex items-center gap-2">
+            <Trophy className="w-7 h-7 text-golden" />
+            Achievements
+          </h1>
+          <p className="text-muted-foreground">
+            Achievement badges will appear here once they’re configured in the admin panel.
+          </p>
+        </div>
+        <div className="p-6 rounded-2xl border border-dashed border-border bg-card/60 text-sm text-muted-foreground">
+          <p className="mb-2 font-semibold text-foreground">No achievements defined yet</p>
+          <p>
+            Use the admin tools to add goals like{" "}
+            <span className="font-medium">“Complete 5 lessons”</span>,{" "}
+            <span className="font-medium">“Reach a 7‑day streak”</span>, or{" "}
+            <span className="font-medium">“Earn 1,000 XP”</span>. Once created, they’ll show up here with
+            progress bars and unlock effects for learners.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}

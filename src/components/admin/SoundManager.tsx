@@ -191,8 +191,21 @@ function SoundRow({
             if (file) onFileUpload(file);
           }}
         />
-        <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={isUploading} className="border-slate-500">
-          {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => fileRef.current?.click()}
+          disabled={isUploading}
+          className="border-slate-500 text-slate-100 bg-transparent hover:bg-slate-700/40"
+        >
+          {isUploading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <>
+              <Upload className="w-4 h-4 mr-1" />
+              <span>Choose file</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

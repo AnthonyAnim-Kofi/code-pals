@@ -324,10 +324,13 @@ export function BulkImport() {
   return (
     <div className="space-y-6">
       <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-bold mb-1 flex items-center gap-2">
           <Upload className="w-5 h-5" />
           Bulk Import
         </h3>
+        <p className="text-xs text-slate-400 mb-4">
+          1) Choose what to import, 2) Select where it goes, 3) Paste JSON/CSV or upload a file, 4) Click Import.
+        </p>
 
         <div className="space-y-4">
           {/* Import Type Selection */}
@@ -430,12 +433,14 @@ export function BulkImport() {
                 className="bg-slate-700 border-slate-600 min-h-[200px] font-mono text-sm"
                 placeholder="Paste your JSON array here..."
               />
-              <div className="p-3 bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-slate-400 mb-2">Example format:</p>
-                <pre className="text-xs text-slate-300 overflow-x-auto">
+              <details className="p-3 bg-slate-700/50 rounded-lg">
+                <summary className="text-xs text-slate-300 cursor-pointer select-none">
+                  Show example format
+                </summary>
+                <pre className="mt-2 text-xs text-slate-300 overflow-x-auto">
                   {importType === "lessons" ? sampleLessonsJSON : sampleQuestionsJSON}
                 </pre>
-              </div>
+              </details>
             </TabsContent>
 
             <TabsContent value="csv" className="space-y-3">
@@ -445,12 +450,14 @@ export function BulkImport() {
                 className="bg-slate-700 border-slate-600 min-h-[200px] font-mono text-sm"
                 placeholder="Paste your CSV content here..."
               />
-              <div className="p-3 bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-slate-400 mb-2">Example format:</p>
-                <pre className="text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap">
+              <details className="p-3 bg-slate-700/50 rounded-lg">
+                <summary className="text-xs text-slate-300 cursor-pointer select-none">
+                  Show example format
+                </summary>
+                <pre className="mt-2 text-xs text-slate-300 overflow-x-auto whitespace-pre-wrap">
                   {importType === "lessons" ? sampleLessonsCSV : sampleQuestionsCSV}
                 </pre>
-              </div>
+              </details>
             </TabsContent>
 
             <TabsContent value="upload" className="space-y-3">

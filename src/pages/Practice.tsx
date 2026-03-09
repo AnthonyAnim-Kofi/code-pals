@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { BookOpen, RotateCcw, CheckCircle, Loader2, Lock, Play } from "lucide-react";
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { BookOpen, RotateCcw, CheckCircle, Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLessonProgress } from "@/hooks/useUserProgress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguages } from "@/hooks/useLanguages";
 
 interface DatabaseLesson {
   id: string;
@@ -15,6 +16,7 @@ interface DatabaseLesson {
   order_index: number;
   units: {
     title: string;
+    language_id: string;
   };
 }
 
@@ -22,6 +24,7 @@ export default function Practice() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: lessonProgress, isLoading: progressLoading } = useLessonProgress();
+  const { data: languages = [] } = useLanguages();
   
   // Fetch completed lessons from database with unit info
   const { data: dbLessons, isLoading: lessonsLoading } = useQuery({
@@ -35,7 +38,8 @@ export default function Practice() {
           unit_id,
           order_index,
           units!inner (
-            title
+            title,
+            language_id
           )
         `)
         .eq("is_active", true)
@@ -66,9 +70,38 @@ export default function Practice() {
   }
 
   // Filter to only show completed lessons (compare UUIDs only)
-  const practiceableLessons = dbLessons?.filter(lesson => 
-    completedIds.has(lesson.id)
-  ) || [];
+  const practiceableLessons = useMemo(
+    () => (dbLessons?.filter((lesson) => completedIds.has(lesson.id)) || []),
+    [dbLessons, completedIds]
+  );
+
+  // Group practiceable lessons by language
+  const lessonsByLanguage = useMemo(() => {
+    const map = new Map<
+      string,
+      { languageId: string; languageName: string; icon?: string; lessons: DatabaseLesson[] }
+    >();
+
+    practiceableLessons.forEach((lesson) => {
+      const langId = lesson.units.language_id;
+      const lang = languages.find((l) => l.id === langId);
+      const key = lang?.id || langId || "other";
+      if (!map.has(key)) {
+        map.set(key, {
+          languageId: key,
+          languageName: lang?.name || "Other",
+          icon: lang?.icon,
+          lessons: [],
+        });
+      }
+      map.get(key)!.lessons.push(lesson);
+    });
+
+    // Sort groups by language name for stable ordering
+    return Array.from(map.values()).sort((a, b) =>
+      a.languageName.localeCompare(b.languageName)
+    );
+  }, [practiceableLessons, languages]);
 
   return (
     <div className="space-y-8">
@@ -106,52 +139,65 @@ export default function Practice() {
         </div>
       </div>
 
-      {/* Lesson Grid */}
-      <div className="space-y-4">
+      {/* Lesson Grid grouped by language */}
+      <div className="space-y-6">
         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
           <BookOpen className="w-5 h-5" />
           Select a Lesson to Practice
         </h2>
-        
-        <div className="grid gap-4 sm:grid-cols-2">
-          {practiceableLessons.map((lesson) => {
-            const progress = completedLessons.find(p => 
-              String(p.lesson_id) === lesson.id
-            );
-            
-            return (
-              <div
-                key={lesson.id}
-                className="p-4 rounded-2xl border transition-all bg-card border-border hover:border-primary/50 cursor-pointer"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
-                    {lesson.order_index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-foreground">
-                      {lesson.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{lesson.units.title}</p>
-                    {progress && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Best: {progress.accuracy}% accuracy • {progress.xp_earned} XP
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handlePractice(lesson.id)}
-                    className="rounded-lg shrink-0"
+
+        {lessonsByLanguage.map((group) => (
+          <div key={group.languageId} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{group.icon}</span>
+              <h3 className="text-base font-semibold text-foreground">
+                {group.languageName}
+              </h3>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {group.lessons.map((lesson) => {
+                const progress = completedLessons.find(
+                  (p) => String(p.lesson_id) === lesson.id
+                );
+
+                return (
+                  <div
+                    key={lesson.id}
+                    className="p-4 rounded-2xl border transition-all bg-card border-border hover:border-primary/50 cursor-pointer"
                   >
-                    <Play className="w-4 h-4 mr-1" />
-                    Practice
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
+                        {lesson.order_index + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-foreground">
+                          {lesson.title}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {lesson.units.title}
+                        </p>
+                        {progress && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Best: {progress.accuracy}% accuracy •{" "}
+                            {progress.xp_earned} XP
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handlePractice(lesson.id)}
+                        className="rounded-lg shrink-0"
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Practice
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Empty State */}
