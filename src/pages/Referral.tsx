@@ -110,7 +110,7 @@ export default function Referral() {
           <Gem className="w-5 h-5 text-blue-600" />
           <span className="font-bold text-foreground">Total gems from referrals</span>
         </div>
-        <p className="text-3xl font-extrabold text-blue-600">{totalGemsEarned}</p>
+        <p className="text-3xl font-extrabold text-secondary">{totalGemsEarned}</p>
 
         {referralCode ?
         <>
