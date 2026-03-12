@@ -48,8 +48,8 @@ export function MobileHeader() {
           <div className="flex items-center gap-4" data-tour="mobile-stats">
             <StreakPopover streak={streak} />
             <div className="flex items-center gap-1 text-golden font-bold text-sm">
-              <Gem className="w-5 h-5 border-inherit" />
-              <span>{gems.toLocaleString()}</span>
+              <Gem className="w-5 h-5 border-inherit text-sky-500" />
+              <span className="text-secondary">{gems.toLocaleString()}</span>
             </div>
             <HeartTimerPopover hearts={hearts} compact />
           </div>
