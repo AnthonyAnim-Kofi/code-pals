@@ -121,7 +121,7 @@ export default function Referral() {
               </code>
             </div>
             <p className="text-sm text-muted-foreground">
-              You and your friend each get <span className="font-semibold text-blue-600">50 gems</span> when they sign up with your link and finish onboarding.
+              You and your friend each get <span className="font-semibold text-secondary">50 gems</span> when they sign up with your link and finish onboarding.
             </p>
             <div className="flex flex-wrap gap-2 pt-2">
               <Button onClick={handleShareNative} className="gap-2">
