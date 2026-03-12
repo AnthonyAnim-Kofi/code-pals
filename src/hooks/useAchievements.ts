@@ -1,13 +1,11 @@
-/**
- * useAchievements – Hooks for fetching achievements and checking/awarding new ones.
- * Achievement types: lessons_completed, streak, xp, following, challenges, perfect_lesson, league.
- * Sends browser notifications AND in-app toast notifications when achievements are earned.
- */
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/hooks/useNotifications";
 import { toast } from "sonner";
+import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
+import { useFollowing, useChallenges } from "@/hooks/useSocial";
 
 export interface Achievement {
   id: string;
@@ -36,7 +34,7 @@ export function useAchievements() {
         .from("achievements")
         .select("*")
         .order("requirement_value", { ascending: true });
-      
+
       if (error) throw error;
       return data as Achievement[];
     },
@@ -46,7 +44,7 @@ export function useAchievements() {
 /** Fetches the current user's earned achievements */
 export function useUserAchievements() {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ["user-achievements", user?.id],
     queryFn: async () => {
@@ -55,7 +53,7 @@ export function useUserAchievements() {
         .from("user_achievements")
         .select("*, achievement:achievements(*)")
         .eq("user_id", user.id);
-      
+
       if (error) throw error;
       return data || [];
     },
@@ -71,7 +69,7 @@ export function useCheckAndAwardAchievements() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { notifyAchievementUnlock } = useNotifications();
-  
+
   return useMutation({
     mutationFn: async (stats: {
       lessonsCompleted: number;
@@ -83,23 +81,23 @@ export function useCheckAndAwardAchievements() {
       league: string;
     }) => {
       if (!user) throw new Error("Not authenticated");
-      
+
       const { data: achievements } = await supabase
         .from("achievements")
         .select("*");
-      
+
       const { data: userAchievements } = await supabase
         .from("user_achievements")
         .select("achievement_id")
         .eq("user_id", user.id);
-      
+
       const earnedIds = new Set(userAchievements?.map(ua => ua.achievement_id) || []);
       const newAchievements: Array<{ id: string; name: string; icon: string }> = [];
-      
+
       // Check each achievement against user's current stats
       for (const achievement of achievements || []) {
         if (earnedIds.has(achievement.id)) continue;
-        
+
         let earned = false;
         switch (achievement.requirement_type) {
           case "lessons_completed":
@@ -125,12 +123,12 @@ export function useCheckAndAwardAchievements() {
             earned = leagueLevel >= achievement.requirement_value;
             break;
         }
-        
+
         if (earned) {
           newAchievements.push({ id: achievement.id, name: achievement.name, icon: achievement.icon });
         }
       }
-      
+
       // Insert newly earned achievements and send notifications
       if (newAchievements.length > 0) {
         await supabase
@@ -139,24 +137,57 @@ export function useCheckAndAwardAchievements() {
             user_id: user.id,
             achievement_id: a.id,
           })));
-        
+
         // Send both browser notification AND in-app toast for each achievement
         for (const achievement of newAchievements) {
           // Browser push notification
           notifyAchievementUnlock(achievement.name);
-          
+
           // In-app toast notification with achievement icon
           toast.success(`🏆 Achievement Unlocked!`, {
-            description: `${achievement.icon} ${achievement.name}`,
+            description: `${achievement.name} - Head over to the Achievements page to see your rewards!`,
             duration: 6000,
           });
         }
       }
-      
+
       return newAchievements.length;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-achievements"] });
     },
   });
+}
+
+/**
+ * A global monitor that constantly checks if stats have crossed new milestones.
+ * Should be placed in a top level authenticated component like MainLayout.
+ */
+export function useGlobalAchievementMonitor() {
+  const { data: profile } = useUserProfile();
+  const { data: lessonProgress } = useLessonProgress();
+  const { data: following } = useFollowing();
+  const { data: challenges } = useChallenges();
+  const checkAndAward = useCheckAndAwardAchievements();
+
+  // Memoize user stats to prevent recalculation on every render
+  const stats = useMemo(() => ({
+    lessonsCompleted: lessonProgress?.filter(p => p.completed).length || 0,
+    streak: profile?.streak_count || 0,
+    xp: profile?.xp || 0,
+    following: following?.length || 0,
+    challenges: challenges?.filter(c => c.status === "completed").length || 0,
+    perfectLessons: lessonProgress?.filter(p => p.accuracy === 100).length || 0,
+    league: profile?.league || "bronze",
+  }), [lessonProgress, profile, following, challenges]);
+
+  useEffect(() => {
+    // Only check if we have data initialized
+    if (!profile || lessonProgress === undefined || checkAndAward.isPending) return;
+
+    // Check and trigger notifications if they just earned anything
+    checkAndAward.mutate(stats);
+  }, [profile?.id, lessonProgress, checkAndAward, stats]);
+
+  return stats;
 }

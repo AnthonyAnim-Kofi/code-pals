@@ -1,5 +1,5 @@
 /**
- * Profile – User profile page displaying stats, achievements, streak info, and course progress.
+ * Profile – User profile page displaying stats, and streak info, 
  * Contains a logout button with confirmation dialog and a referral code section.
  */
 import { useState } from "react";
@@ -8,7 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
 import { Settings, LogOut, Flame, Zap, Trophy, Calendar, ChevronRight, Loader2, Gift, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
 import { StreakCalendar } from "@/components/StreakCalendar";
 import { StudyStatsSection } from "@/components/StudyStatsSection";
@@ -16,15 +15,7 @@ import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
 import mascot from "@/assets/mascot.png";
 
-/** Quick profile achievements shown as emoji badges */
-const achievements = [
-  { emoji: "🔥", title: "7 Day Streak", condition: (streak: number) => streak >= 7 },
-  { emoji: "⚡", title: "100 XP in a Day", condition: (xp: number) => xp >= 100 },
-  { emoji: "🏆", title: "First Place", condition: () => false },
-  { emoji: "📚", title: "Complete Unit", condition: (lessons: number) => lessons >= 5 },
-  { emoji: "💎", title: "1000 Gems", condition: (gems: number) => gems >= 1000 },
-  { emoji: "🎯", title: "Perfect Lesson", condition: () => true },
-];
+
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -70,9 +61,9 @@ export default function Profile() {
   const courseProgress = Math.round((completedLessons / totalLessons) * 100);
 
   const getLeague = (xp: number) => {
-    if (xp >= 5000) return "Diamond";
-    if (xp >= 2500) return "Gold";
-    if (xp >= 1000) return "Silver";
+    if (xp >= 1000) return "Diamond";
+    if (xp >= 800) return "Gold";
+    if (xp >= 200) return "Silver";
     return "Bronze";
   };
 
@@ -83,23 +74,11 @@ export default function Profile() {
 
   const stats = [
     { icon: Flame, label: "Day Streak", value: profile?.streak_count?.toString() || "0", color: "text-accent" },
+    { icon: Zap, label: "Weekly XP", value: profile?.weekly_xp?.toLocaleString() || "0", color: "text-amber-500" },
     { icon: Zap, label: "Total XP", value: profile?.xp?.toLocaleString() || "0", color: "text-golden" },
     { icon: Trophy, label: "League", value: getLeague(profile?.xp || 0), color: "text-secondary" },
     { icon: Calendar, label: "Joined", value: formatDate(profile?.created_at || null), color: "text-muted-foreground" },
   ];
-
-  const unlockedAchievements = achievements.map((achievement, i) => {
-    let unlocked = false;
-    switch (i) {
-      case 0: unlocked = (profile?.streak_count || 0) >= 7; break;
-      case 1: unlocked = (profile?.xp || 0) >= 100; break;
-      case 2: unlocked = false; break;
-      case 3: unlocked = completedLessons >= 5; break;
-      case 4: unlocked = (profile?.gems || 0) >= 1000; break;
-      case 5: unlocked = lessonProgress?.some((l) => l.accuracy === 100) || false; break;
-    }
-    return { ...achievement, unlocked };
-  });
 
   return (
     <div className="space-y-8">
@@ -128,7 +107,7 @@ export default function Profile() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {stats.map((stat, i) => (
           <div key={i} className="p-4 bg-card rounded-2xl border border-border card-elevated">
             <div className="flex items-center gap-3">
@@ -136,7 +115,7 @@ export default function Profile() {
                 <stat.icon className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-2xl font-extrabold text-foreground">{stat.value}</p>
+                <p className="text-xl sm:text-2xl font-extrabold text-foreground">{stat.value}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </div>
             </div>
@@ -160,49 +139,6 @@ export default function Profile() {
 
       {/* Study stats: heatmap + time per language */}
       <StudyStatsSection />
-
-      {/* Current Course Progress */}
-      <div className="p-4 bg-card rounded-2xl border border-border card-elevated">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">🐍</span>
-            <div>
-              <h3 className="font-bold text-foreground">Python</h3>
-              <p className="text-sm text-muted-foreground">
-                {completedLessons} of {totalLessons} lessons completed
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Progress</span>
-            <span className="font-bold text-foreground">{courseProgress}%</span>
-          </div>
-          <Progress value={courseProgress} indicatorColor="gradient" />
-        </div>
-      </div>
-
-      {/* Achievements */}
-      <div>
-        <h2 className="text-lg font-bold text-foreground mb-4">Achievements</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {unlockedAchievements.map((achievement, i) => (
-            <div
-              key={i}
-              className={`p-4 rounded-2xl border text-center transition-all ${
-                achievement.unlocked
-                  ? "bg-card border-border card-elevated"
-                  : "bg-muted/50 border-transparent opacity-50"
-              }`}
-            >
-              <span className="text-3xl mb-2 block">{achievement.emoji}</span>
-              <p className="text-xs font-semibold text-foreground truncate">{achievement.title}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Referral Section */}
       {referralCode && (
@@ -238,9 +174,9 @@ export default function Profile() {
             Settings
           </Link>
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start text-destructive hover:text-destructive" 
+        <Button
+          variant="outline"
+          className="w-full justify-start text-destructive hover:text-destructive"
           size="lg"
           onClick={() => setShowLogoutDialog(true)}
         >

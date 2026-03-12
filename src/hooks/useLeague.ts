@@ -3,7 +3,7 @@
  * Provides real-time leaderboard subscriptions, league history, and helper functions
  * for league info, progression, and week-end countdowns.
  */
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -44,11 +44,11 @@ export type LeagueLeaderboardMode = "weekly" | "allTime";
 export function useLeagueLeaderboard(league?: string, mode: LeagueLeaderboardMode = "weekly") {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  
+
   // Set up realtime subscription
   useEffect(() => {
     if (!user) return;
-    
+
     const channel = supabase
       .channel('leaderboard-changes')
       .on(
@@ -64,12 +64,12 @@ export function useLeagueLeaderboard(league?: string, mode: LeagueLeaderboardMod
         }
       )
       .subscribe();
-    
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, [user, league, mode, queryClient]);
-  
+
   return useQuery({
     queryKey: ["league-leaderboard", league, mode],
     queryFn: async () => {
@@ -78,13 +78,13 @@ export function useLeagueLeaderboard(league?: string, mode: LeagueLeaderboardMod
         .select("id, user_id, display_name, username, avatar_url, xp, weekly_xp, streak_count, league")
         .order(mode === "weekly" ? "weekly_xp" : "xp", { ascending: false })
         .limit(50);
-      
-      if (league) {
+
+      if (league && mode === "weekly") {
         query = query.eq("league", league);
       }
-      
+
       const { data, error } = await query;
-      
+
       if (error) throw error;
       return data as LeagueUser[];
     },
@@ -94,7 +94,7 @@ export function useLeagueLeaderboard(league?: string, mode: LeagueLeaderboardMod
 
 export function useLeagueHistory() {
   const { user } = useAuth();
-  
+
   return useQuery({
     queryKey: ["league-history", user?.id],
     queryFn: async () => {
@@ -104,7 +104,7 @@ export function useLeagueHistory() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      
+
       if (error) throw error;
       return data as LeagueHistory[];
     },
@@ -129,4 +129,21 @@ export function getDaysUntilWeekEnd() {
   const dayOfWeek = now.getDay();
   const daysUntilSunday = (7 - dayOfWeek) % 7 || 7;
   return daysUntilSunday;
+}
+
+export function useTriggerWeeklyReset() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("process_weekly_leagues");
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["league-leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: ["league-history"] });
+    },
+  });
 }

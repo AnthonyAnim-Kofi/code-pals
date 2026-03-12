@@ -159,7 +159,9 @@ export default function Leaderboard() {
           <Trophy className="w-5 h-5 text-golden" />
         </div>
         <div>
-          <h1 className="text-xl font-extrabold text-foreground">Weekly League</h1>
+          <h1 className="text-xl font-extrabold text-foreground">
+            {isWeekly ? "Weekly League" : "Global Rankings"}
+          </h1>
           <p className="text-xs text-muted-foreground">
             Compete with learners in your league {isWeekly ? "this week" : "all time"}.
           </p>
@@ -222,15 +224,25 @@ export default function Leaderboard() {
           {currentUserRank > 0 && (
             <div className="text-right">
               <p className="text-2xl font-black text-foreground">#{currentUserRank}</p>
-              <div className="flex items-center gap-1">
-                {isWeekly && userWeeklyXp >= promotionXp && selectedLeague !== "diamond" && (
-                  <span className="text-xs text-green-500 flex items-center gap-0.5 font-semibold">
-                    <ArrowUp className="w-3 h-3" /> Promotion
+              <div className="flex flex-col items-end mt-1 gap-1">
+                {isWeekly && selectedLeague !== "diamond" && (
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1",
+                    userWeeklyXp >= promotionXp
+                      ? "bg-green-500/10 text-green-500"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <ArrowUp className="w-3 h-3" /> {userWeeklyXp >= promotionXp ? "Promoting" : `Promotion: ${promotionXp} XP`}
                   </span>
                 )}
-                {isWeekly && userWeeklyXp < demotionXp && selectedLeague !== "bronze" && (
-                  <span className="text-xs text-destructive flex items-center gap-0.5 font-semibold">
-                    <ArrowDown className="w-3 h-3" /> Demotion
+                {isWeekly && selectedLeague !== "bronze" && (
+                  <span className={cn(
+                    "text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full flex items-center gap-1",
+                    userWeeklyXp < demotionXp
+                      ? "bg-destructive/10 text-destructive"
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    <ArrowDown className="w-3 h-3" /> {userWeeklyXp < demotionXp ? "Demoting" : `Demotion: < ${demotionXp} XP`}
                   </span>
                 )}
               </div>
@@ -240,17 +252,19 @@ export default function Leaderboard() {
       </div>
 
       {/* League tier tabs (available on mobile + desktop) */}
-      <div className="w-full">
-        <Tabs value={selectedLeague} onValueChange={setSelectedLeague}>
-          <TabsList className="w-full">
-            {LEAGUES.map((league) => (
-              <TabsTrigger key={league.key} value={league.key} className="flex-1 capitalize">
-                {league.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      {isWeekly && (
+        <div className="w-full">
+          <Tabs value={selectedLeague} onValueChange={setSelectedLeague}>
+            <TabsList className="w-full">
+              {LEAGUES.map((league) => (
+                <TabsTrigger key={league.key} value={league.key} className="flex-1 capitalize">
+                  {league.name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        </div>
+      )}
 
       {/* Content */}
       {users.length === 0 ? (
@@ -280,10 +294,24 @@ export default function Leaderboard() {
 
           {/* ── Full Rankings list ── */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-border">
+            <div className="px-4 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                 {topThree.length >= 3 ? "Full Rankings" : "Rankings"}
               </p>
+              {isWeekly && (
+                <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider">
+                  {selectedLeague !== "diamond" && (
+                    <span className="flex items-center gap-1 text-green-500/80">
+                      <ArrowUp className="w-3 h-3" /> Advance: {promotionXp} XP
+                    </span>
+                  )}
+                  {selectedLeague !== "bronze" && (
+                    <span className="flex items-center gap-1 text-destructive/80">
+                      <ArrowDown className="w-3 h-3" /> Drop: &lt; {demotionXp} XP
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             {users.map((leaderUser, index) => {
               const rank = index + 1;

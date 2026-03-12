@@ -70,12 +70,14 @@ import {
   useUpdateLesson,
   useUpdateQuestion,
 } from "@/hooks/useAdmin";
+import { useTriggerWeeklyReset } from "@/hooks/useLeague";
 
 export default function Admin() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signOut, loading: authLoading } = useAuth();
   const { data: isAdmin, isLoading: checkingAdmin } = useIsAdmin();
+  const triggerWeeklyReset = useTriggerWeeklyReset();
 
   const [activeTab, setActiveTab] = useState("users");
   const [selectedLanguage, setSelectedLanguage] = useState<string>("");
@@ -93,7 +95,7 @@ export default function Admin() {
     open: boolean; title: string; fields: EditField[];
     initialValues: Record<string, string>;
     onSave: (values: Record<string, string>) => Promise<void>;
-  }>({ open: false, title: "", fields: [], initialValues: {}, onSave: async () => {} });
+  }>({ open: false, title: "", fields: [], initialValues: {}, onSave: async () => { } });
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -311,10 +313,12 @@ export default function Admin() {
       fields: [
         { key: "title", label: "Title", type: "text" },
         { key: "description", label: "Description", type: "textarea" },
-        { key: "color", label: "Color", type: "select", options: [
-          { value: "green", label: "Green" }, { value: "blue", label: "Blue" },
-          { value: "orange", label: "Orange" }, { value: "purple", label: "Purple" },
-        ]},
+        {
+          key: "color", label: "Color", type: "select", options: [
+            { value: "green", label: "Green" }, { value: "blue", label: "Blue" },
+            { value: "orange", label: "Orange" }, { value: "purple", label: "Purple" },
+          ]
+        },
       ],
       initialValues: { title: unit.title, description: unit.description || "", color: unit.color },
       onSave: async (values) => {
@@ -341,12 +345,14 @@ export default function Admin() {
   const editQuestionItem = (q: any) => {
     const opts = Array.isArray(q.options) ? q.options : [];
     const fields: EditField[] = [
-      { key: "type", label: "Type", type: "select", options: [
-        { value: "fill-blank", label: "Fill in the Blank" },
-        { value: "multiple-choice", label: "Multiple Choice" },
-        { value: "drag-order", label: "Drag & Order" },
-        { value: "code-runner", label: "Code Runner" },
-      ]},
+      {
+        key: "type", label: "Type", type: "select", options: [
+          { value: "fill-blank", label: "Fill in the Blank" },
+          { value: "multiple-choice", label: "Multiple Choice" },
+          { value: "drag-order", label: "Drag & Order" },
+          { value: "code-runner", label: "Code Runner" },
+        ]
+      },
       { key: "instruction", label: "Instruction", type: "textarea" },
       { key: "code", label: "Code Template", type: "textarea" },
       { key: "answer", label: "Answer", type: "text" },
@@ -1140,8 +1146,35 @@ export default function Admin() {
 
           {/* Leagues Tab */}
           <TabsContent value="leagues">
-            <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
-              <LeagueThresholdsManager />
+            <div className="space-y-6">
+              <div className="bg-slate-800 rounded-xl border border-slate-700 p-6">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-700 mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1">Weekly League Reset</h3>
+                    <p className="text-sm text-slate-400">
+                      Manually trigger the weekly script to process promotions/demotions and reset all users' Weekly XP to 0. (Developer Tool)
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to FORCE the weekly league reset immediately? This will promote/demote users based on their current standings and reset everyone's weekly XP!")) {
+                        try {
+                          await triggerWeeklyReset.mutateAsync();
+                          toast({ title: "Weekly Leagues Successfully Processed & Reset!" });
+                        } catch (e: any) {
+                          toast({ title: "Error triggering reset", description: e.message, variant: "destructive" });
+                        }
+                      }
+                    }}
+                    disabled={triggerWeeklyReset.isPending}
+                  >
+                    {triggerWeeklyReset.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trophy className="w-4 h-4 mr-2" />}
+                    Force Weekly Reset
+                  </Button>
+                </div>
+                <LeagueThresholdsManager />
+              </div>
             </div>
           </TabsContent>
 
