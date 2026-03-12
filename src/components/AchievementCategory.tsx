@@ -54,7 +54,7 @@ export function AchievementCategory({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {achievements.map((achievement, index) =>
         <div key={achievement.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-slide-in-up flex">
-            <div className="w-full bg-white">
+            <div className="w-full bg-inherit">
               <AchievementCard
               achievement={achievement}
               isEarned={earnedIds.has(achievement.id)}
