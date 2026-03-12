@@ -61,7 +61,7 @@ export function AchievementCard({
       !isEarned && "opacity-60 bg-muted/5 border-dashed"
       )}>
       
-      <div className="flex items-start gap-4 bg-white">
+      <div className="flex items-start gap-4 bg-inherit">
         <div
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
@@ -76,7 +76,7 @@ export function AchievementCard({
         </div>
 
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-black bg-white">
+          <h3 className="font-bold text-black bg-inherit">
             {achievement.name}
           </h3>
           <p className="text-sm mb-1.5 line-clamp-2 text-[#121212]">
