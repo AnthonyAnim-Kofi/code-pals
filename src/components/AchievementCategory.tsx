@@ -13,7 +13,7 @@ interface Achievement {
 
 interface AchievementCategoryProps {
   title: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{className?: string;}>;
   achievements: Achievement[];
   earnedIds: Set<string>;
   getProgress: (achievement: Achievement) => {
@@ -38,7 +38,7 @@ export function AchievementCategory({
   achievements,
   earnedIds,
   getProgress,
-  categoryClassNames,
+  categoryClassNames
 }: AchievementCategoryProps) {
   if (achievements.length === 0) {
     return null;
@@ -52,19 +52,19 @@ export function AchievementCategory({
         {title}
       </h2>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {achievements.map((achievement, index) => (
-          <div key={achievement.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-slide-in-up flex">
-            <div className="w-full">
+        {achievements.map((achievement, index) =>
+        <div key={achievement.id} style={{ animationDelay: `${index * 50}ms` }} className="animate-slide-in-up flex">
+            <div className="w-full bg-white">
               <AchievementCard
-                achievement={achievement}
-                isEarned={earnedIds.has(achievement.id)}
-                progress={getProgress(achievement)}
-                earnedClassNames={categoryClassNames.earned}
-              />
+              achievement={achievement}
+              isEarned={earnedIds.has(achievement.id)}
+              progress={getProgress(achievement)}
+              earnedClassNames={categoryClassNames.earned} />
+            
             </div>
           </div>
-        ))}
+        )}
       </div>
-    </div>
-  );
+    </div>);
+
 }
