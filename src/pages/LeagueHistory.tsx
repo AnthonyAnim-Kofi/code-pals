@@ -107,7 +107,7 @@ export default function LeagueHistory() {
                       <span className="text-lg">
                         {leagueIcons[entry.from_league]}
                       </span>
-                      <span className="text-muted-foreground">→</span>
+                      <span className="text-black">→</span>
                       <span className="text-lg">
                         {leagueIcons[entry.to_league]}
                       </span>
