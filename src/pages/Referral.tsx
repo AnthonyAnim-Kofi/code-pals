@@ -169,7 +169,7 @@ export default function Referral() {
                 day: "numeric",
                 year: "numeric"
               })}{" "}
-                  · <span className="font-semibold text-sky-600">+{r.gems_awarded} gems</span>
+                  · <span className="font-semibold text-secondary">+{r.gems_awarded} gems</span>
                 </span>
               </li>
           )}
