@@ -107,7 +107,7 @@ export default function Referral() {
       {/* Share + code + total gems */}
       <div className="p-6 bg-card rounded-2xl border border-border card-elevated space-y-4">
         <div className="flex items-center gap-2">
-          <Gem className="w-5 h-5 text-blue-600" />
+          <Gem className="w-5 h-5 text-sky-500" />
           <span className="font-bold text-foreground">Total gems from referrals</span>
         </div>
         <p className="text-3xl font-extrabold text-secondary">{totalGemsEarned}</p>
