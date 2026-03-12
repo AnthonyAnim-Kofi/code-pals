@@ -56,7 +56,7 @@ export function AchievementCard({
 
   return (
     <div
-      className={cn("p-4 bg-card rounded-2xl border border-border card-elevated text-[#050505]",
+      className={cn("p-4 rounded-2xl border border-border card-elevated text-[#050505] bg-white",
 
       !isEarned && "opacity-60 bg-muted/5 border-dashed"
       )}>
@@ -79,7 +79,7 @@ export function AchievementCard({
           <h3 className="font-bold text-black bg-white">
             {achievement.name}
           </h3>
-          <p className="text-sm text-muted-foreground mb-1.5 line-clamp-2">
+          <p className="text-sm mb-1.5 line-clamp-2 text-[#121212]">
             {achievement.description}
           </p>
           {!isEarned &&
