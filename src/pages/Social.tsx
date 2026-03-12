@@ -91,10 +91,6 @@ export default function Social() {
           </h1>
           <p className="text-muted-foreground">Connect with other learners</p>
         </div>
-        <Button onClick={handleShare} variant="outline" className="rounded-xl">
-          <Share2 className="w-4 h-4 mr-2" />
-          Share Progress
-        </Button>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

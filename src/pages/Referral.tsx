@@ -176,10 +176,6 @@ export default function Referral() {
           </ul>
         }
       </div>
-
-      <Button variant="outline" asChild>
-        <Link to="/profile">Back to Profile</Link>
-      </Button>
     </div>);
 
 }
