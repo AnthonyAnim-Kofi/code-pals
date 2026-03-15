@@ -47,6 +47,7 @@ export interface QuestProgress {
   completed: boolean;
   claimed: boolean;
   quest_date: string;
+  target_value?: number; // Added to store dynamic quest targets for UI overriding
   quest?: Quest;
 }
 
@@ -115,17 +116,32 @@ export function useInitializeQuestProgress() {
       
       const existingQuestIds = new Set(existing?.map((p) => p.quest_id) || []);
       
+      // Fetch user profile data to sync streak-based quests and determine dynamic XP target.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("streak_count, daily_goal_minutes")
+        .eq("user_id", user.id)
+        .single();
+
       // Create progress entries for quests that don't have one yet
       const newEntries = quests
         .filter((q) => !existingQuestIds.has(q.id))
-        .map((quest) => ({
-          user_id: user.id,
-          quest_id: quest.id,
-          current_value: 0,
-          completed: false,
-          claimed: false,
-          quest_date: quest.is_weekly ? weekStart : today,
-        }));
+        .map((quest) => {
+          // If this is the daily earn_xp quest, use the user's set daily goal, fallback to the default global target.
+          const dynamicTarget = (quest.quest_type === "earn_xp" && !quest.is_weekly) 
+            ? (profile?.daily_goal_minutes || quest.target_value) 
+            : quest.target_value;
+
+          return {
+            user_id: user.id,
+            quest_id: quest.id,
+            current_value: 0,
+            completed: false,
+            claimed: false,
+            quest_date: quest.is_weekly ? weekStart : today,
+            target_value: dynamicTarget,
+          };
+        });
       
       if (newEntries.length > 0) {
         const { error } = await supabase
@@ -133,13 +149,6 @@ export function useInitializeQuestProgress() {
           .insert(newEntries);
         if (error) throw error;
       }
-
-      // Sync streak-based quests with the user's actual streak count
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("streak_count")
-        .eq("user_id", user.id)
-        .single();
 
       if (profile) {
         const streakQuests = quests.filter(q => q.quest_type === "maintain_streak");
@@ -197,11 +206,17 @@ export function useUpdateQuestProgress() {
       // Find all quests of this type (both daily and weekly)
       const { data: quests } = await supabase
         .from("daily_quests")
-        .select("id, target_value, is_weekly")
+        .select("id, target_value, is_weekly, quest_type")
         .eq("quest_type", questType);
       
       if (!quests || quests.length === 0) return;
       
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("daily_goal_minutes")
+        .eq("user_id", user.id)
+        .single();
+
       for (const quest of quests) {
         const questDate = quest.is_weekly ? weekStart : today;
         const { data: progress } = await supabase
@@ -212,9 +227,13 @@ export function useUpdateQuestProgress() {
           .eq("quest_date", questDate)
           .maybeSingle();
 
+        // Calculate dynamic ceiling
+        const targetValue = (quest.quest_type === "earn_xp" && !quest.is_weekly) 
+          ? (profile?.daily_goal_minutes || quest.target_value) : quest.target_value;
+
         const currentValue = progress?.current_value ?? 0;
-        const newValue = Math.min(currentValue + incrementBy, quest.target_value);
-        const isCompleted = newValue >= quest.target_value;
+        const newValue = Math.min(currentValue + incrementBy, targetValue);
+        const isCompleted = newValue >= targetValue;
 
         if (progress && !progress.claimed) {
           await supabase
@@ -234,6 +253,7 @@ export function useUpdateQuestProgress() {
             completed: isCompleted,
             completed_at: isCompleted ? new Date().toISOString() : null,
             claimed: false,
+            target_value: targetValue,
           });
         }
       }

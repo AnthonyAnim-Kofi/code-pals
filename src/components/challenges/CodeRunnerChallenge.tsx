@@ -94,32 +94,9 @@ export function CodeRunnerChallenge({
         return;
       }
 
-      // JavaScript: run locally
-      if (language === "javascript") {
-        try {
-          const logs: string[] = [];
-          const mockConsole = { log: (...args: any[]) => logs.push(args.map(String).join(" ")) };
-          const fn = new Function("console", code);
-          fn(mockConsole);
-          const result = logs.join("\n").trim();
-          setOutput(result || "No output");
-          const correct = result === expectedOutput.trim();
-          setIsCorrect(correct);
-          setHasChecked(true);
-          onAnswer(correct);
-        } catch (err) {
-          setOutput(`Error: ${err instanceof Error ? err.message : "Unknown error"}`);
-          setIsCorrect(false);
-          setHasChecked(true);
-          onAnswer(false);
-        }
-        setIsRunning(false);
-        return;
-      }
-
-      // Python: use edge function
-      const { data, error } = await supabase.functions.invoke("run-python", {
-        body: { code },
+      // Server-side evaluation (JavaScript, Python, etc.)
+      const { data, error } = await supabase.functions.invoke("run-code", {
+        body: { code, language },
       });
 
       if (error) {

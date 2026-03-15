@@ -12,7 +12,7 @@ const achievementCategories = [
     icon: BookOpen,
     types: ["lessons_completed", "perfect_lesson"],
     classNames: {
-      icon: "text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]",
+      icon: "text-primary",
       earned: {
         bg: "bg-card shadow-sm hover:card-elevated",
         border: "border-border",
@@ -26,7 +26,7 @@ const achievementCategories = [
     icon: Flame,
     types: ["streak"],
     classNames: {
-      icon: "text-accent drop-shadow-[0_0_8px_rgba(var(--accent),0.5)]",
+      icon: "text-accent",
       earned: {
         bg: "bg-card shadow-sm hover:card-elevated",
         border: "border-border",
@@ -40,7 +40,7 @@ const achievementCategories = [
     icon: Star,
     types: ["xp", "league"],
     classNames: {
-      icon: "text-golden drop-shadow-[0_0_8px_rgba(var(--golden),0.5)]",
+      icon: "text-golden",
       earned: {
         bg: "bg-card shadow-sm hover:card-elevated",
         border: "border-border",
@@ -54,7 +54,7 @@ const achievementCategories = [
     icon: Users,
     types: ["following", "challenges"],
     classNames: {
-      icon: "text-secondary drop-shadow-[0_0_8px_rgba(var(--secondary),0.5)]",
+      icon: "text-secondary",
       earned: {
         bg: "bg-card shadow-sm hover:card-elevated",
         border: "border-border",
@@ -150,13 +150,10 @@ export default function Achievements() {
 
   return (
     <div className="space-y-10 relative">
-      {/* Background glowing orb */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl h-64 bg-golden/10 blur-[100px] rounded-full pointer-events-none" />
-
       {/* Header */}
       <div className="relative">
         <h1 className="text-3xl font-extrabold text-foreground mb-2 flex items-center gap-3">
-          <Trophy className="w-8 h-8 text-golden drop-shadow-[0_0_12px_rgba(var(--golden),0.5)]" />
+          <Trophy className="w-8 h-8 text-golden" />
           Achievements
         </h1>
         <p className="text-muted-foreground max-w-2xl">
@@ -167,8 +164,8 @@ export default function Achievements() {
       {/* Main Stats and Next Achievement */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Progress Overview */}
-        <div className="lg:col-span-1 p-6 bg-gradient-to-br from-golden/20 via-golden/5 to-transparent rounded-2xl border border-golden/30 shadow-[0_0_20px_rgba(var(--golden),0.1)] flex flex-col justify-center backdrop-blur-md relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <div className="lg:col-span-1 p-6 bg-card rounded-2xl border border-border flex flex-col justify-center relative overflow-hidden group">
+          <div className="absolute inset-0 bg-muted/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           <div className="flex items-center justify-between mb-4 relative z-10">
             <div>
               <p className="text-3xl font-extrabold text-foreground">
@@ -176,8 +173,8 @@ export default function Achievements() {
               </p>
               <p className="text-muted-foreground font-medium">Unlocked</p>
             </div>
-            <div className="w-16 h-16 rounded-2xl bg-golden/20 flex items-center justify-center shadow-inner relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
-              <Trophy className="w-9 h-9 text-golden drop-shadow-md relative z-10 group-hover:rotate-12 transition-transform duration-500" />
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center relative overflow-hidden group-hover:scale-105 transition-transform duration-300">
+              <Trophy className="w-9 h-9 text-golden relative z-10 group-hover:rotate-12 transition-transform duration-500" />
             </div>
           </div>
           <Progress
@@ -187,10 +184,10 @@ export default function Achievements() {
         </div>
 
         {/* Next Achievement to Unlock */}
-        <div className="lg:col-span-2 p-6 bg-card/60 backdrop-blur-md rounded-2xl border border-border/50 shadow-sm relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+        <div className="lg:col-span-2 p-6 bg-card rounded-2xl border border-border relative overflow-hidden group">
+          <div className="absolute inset-0 bg-muted/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
           <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2 relative z-10">
-            <Target className="w-5 h-5 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+            <Target className="w-5 h-5 text-primary" />
             Next Achievement
           </h2>
           {nextAchievement ? (

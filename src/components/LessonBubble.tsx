@@ -3,6 +3,7 @@
  * Rendered as a hexagonal shape inspired by coding journey apps.
  * Status: complete (filled + star), current (glowing + bear mascot), locked (dimmed).
  */
+
 import { Link } from "react-router-dom";
 import { Check, Lock, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -139,73 +140,10 @@ interface LessonPathProps {
 
 export function LessonPath({ children, lessons }: LessonPathProps) {
   const BUBBLE_HEIGHT = 110; // px per row including gap
-  const BUBBLE_CENTER_Y = 37; // center of hex bubble from top
 
   return (
-    <div className="relative flex flex-col items-center py-4">
-      {/* SVG curved organic connector lines */}
-      <svg
-        className="absolute inset-0 w-full pointer-events-none"
-        style={{ zIndex: 0, height: `${lessons.length * BUBBLE_HEIGHT + 40}px` }}
-        overflow="visible"
-      >
-        <defs>
-          <linearGradient id="pathGradientComplete" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="1" />
-            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.6" />
-          </linearGradient>
-          <linearGradient id="pathGradientLocked" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="hsl(var(--border))" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="hsl(var(--border))" stopOpacity="0.3" />
-          </linearGradient>
-        </defs>
-
-        {lessons.map((lesson, i) => {
-          if (i === 0) return null;
-          const prev = lessons[i - 1];
-
-          const x1 = getOffsetX(prev.position);
-          const x2 = getOffsetX(lesson.position);
-
-          // Y positions (center of each bubble)
-          const y1 = (i - 1) * BUBBLE_HEIGHT + BUBBLE_CENTER_Y + 16;
-          const y2 = i * BUBBLE_HEIGHT + BUBBLE_CENTER_Y + 16;
-
-          // Control points for smooth S-curve
-          const cp1y = y1 + (y2 - y1) * 0.4;
-          const cp2y = y1 + (y2 - y1) * 0.6;
-
-          const isCompleted = prev.status === "complete";
-          const isCurrent = lesson.status === "current";
-          const showFilled = isCompleted || isCurrent;
-
-          return (
-            <g key={`connector-${i}`}>
-              {/* Background dashed line (always shown) */}
-              <path
-                d={`M calc(50% + ${x1}px) ${y1} C calc(50% + ${x1}px) ${cp1y}, calc(50% + ${x2}px) ${cp2y}, calc(50% + ${x2}px) ${y2}`}
-                fill="none"
-                stroke="url(#pathGradientLocked)"
-                strokeWidth="5"
-                strokeLinecap="round"
-                strokeDasharray="6 8"
-              />
-              {/* Filled colored line for completed/current path */}
-              {showFilled && (
-                <path
-                  d={`M calc(50% + ${x1}px) ${y1} C calc(50% + ${x1}px) ${cp1y}, calc(50% + ${x2}px) ${cp2y}, calc(50% + ${x2}px) ${y2}`}
-                  fill="none"
-                  stroke="url(#pathGradientComplete)"
-                  strokeWidth="5"
-                  strokeLinecap="round"
-                />
-              )}
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Lesson bubbles above connectors */}
+    <div className="relative flex flex-col items-center py-4 w-full">
+      {/* Lesson bubbles */}
       <div
         className="relative z-10 flex flex-col items-center"
         style={{ gap: `${BUBBLE_HEIGHT - 74}px` }}

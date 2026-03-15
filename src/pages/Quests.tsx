@@ -27,6 +27,7 @@ interface QuestCardProps {
   progress: {
     id: string;
     current_value: number;
+    target_value?: number;
     completed: boolean;
     claimed: boolean;
   } | null;
@@ -35,8 +36,9 @@ interface QuestCardProps {
 }
 
 function QuestCard({ quest, progress, onClaim, claimingId }: QuestCardProps) {
+  const targetValue = progress?.target_value || quest.target_value;
   const currentValue = progress?.current_value || 0;
-  const progressPercent = Math.min((currentValue / quest.target_value) * 100, 100);
+  const progressPercent = Math.min((currentValue / targetValue) * 100, 100);
   const isCompleted = progress?.completed || false;
   const isClaimed = progress?.claimed || false;
   const isThisOneClaiming = claimingId === progress?.id;
@@ -83,7 +85,7 @@ function QuestCard({ quest, progress, onClaim, claimingId }: QuestCardProps) {
             />
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                {currentValue} / {quest.target_value}
+                {currentValue} / {targetValue}
               </span>
               {isCompleted && !isClaimed && (
                 <Button 
