@@ -382,6 +382,7 @@ export type Database = {
           username: string | null
           weekly_xp: number
           xp: number
+          tour_completed: boolean
         }
         Insert: {
           active_language_id?: string | null
@@ -409,6 +410,7 @@ export type Database = {
           username?: string | null
           weekly_xp?: number
           xp?: number
+          tour_completed?: boolean
         }
         Update: {
           active_language_id?: string | null
@@ -436,6 +438,7 @@ export type Database = {
           username?: string | null
           weekly_xp?: number
           xp?: number
+          tour_completed?: boolean
         }
         Relationships: [
           {

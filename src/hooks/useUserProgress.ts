@@ -32,6 +32,7 @@ export interface UserProfile {
   onboarding_completed?: boolean;
   daily_goal_minutes?: number;
   referral_code?: string | null;
+  tour_completed?: boolean;
 }
 
 export function useUserProfile() {

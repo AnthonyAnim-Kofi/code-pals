@@ -93,8 +93,7 @@ export function ProductTour() {
   useEffect(() => {
     if (isLoading || !profile) return;
 
-    const tourDone = localStorage.getItem(`tour_done_${profile.user_id}`);
-    if (!tourDone) {
+    if (!profile.tour_completed) {
       const timer = setTimeout(() => setRun(true), 800);
       return () => clearTimeout(timer);
     }
@@ -104,8 +103,8 @@ export function ProductTour() {
     const { status, action } = data;
     const finished = [STATUS.FINISHED, STATUS.SKIPPED].includes(status as any);
 
-    if (finished && profile) {
-      localStorage.setItem(`tour_done_${profile.user_id}`, "true");
+    if (finished && profile && !profile.tour_completed) {
+      updateProfile.mutateAsync({ tour_completed: true }).catch(console.error);
       setRun(false);
     }
   };

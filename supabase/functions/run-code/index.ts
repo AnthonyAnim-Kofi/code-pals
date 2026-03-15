@@ -26,18 +26,57 @@ serve(async (req: Request) => {
     }
 
     try {
-      // Forward the user's Python code to the free Piston Code Execution API
+      // Map language to correct file extension for Piston API
+      const fileExtensions: Record<string, string> = {
+        python: "main.py",
+        javascript: "main.js",
+        html: "index.html",
+        css: "style.css",
+        typescript: "main.ts",
+        java: "Main.java",
+        c: "main.c",
+        cpp: "main.cpp",
+        csharp: "Main.cs",
+        ruby: "main.rb",
+        go: "main.go",
+        rust: "main.rs",
+        php: "main.php",
+        swift: "main.swift",
+        kotlin: "main.kt",
+      };
+
+      // Map frontend language names to Piston API language identifiers
+      const pistonLanguageMap: Record<string, string> = {
+        python: "python",
+        javascript: "javascript",
+        typescript: "typescript",
+        java: "java",
+        c: "c",
+        cpp: "c++",
+        csharp: "csharp",
+        ruby: "ruby",
+        go: "go",
+        rust: "rust",
+        php: "php",
+        swift: "swift",
+        kotlin: "kotlin",
+      };
+
+      const fileName = fileExtensions[language] || `main.${language}`;
+      const pistonLang = pistonLanguageMap[language] || language;
+
+      // Forward the user's code to the free Piston Code Execution API
       const pistonResponse = await fetch("https://emkc.org/api/v2/piston/execute", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          language: language,
-          version: version, // Let Piston auto-select the main version if "*" is passed
+          language: pistonLang,
+          version: version,
           files: [
             {
-              name: "main.py",
+              name: fileName,
               content: code,
             },
           ],
@@ -49,7 +88,7 @@ serve(async (req: Request) => {
       }
 
       const pistonResult = await pistonResponse.json();
-      
+
       // Extract stdout and stderr from Piston's run object
       const output = pistonResult.run.stdout || "";
       const error = pistonResult.run.stderr || "";
@@ -61,10 +100,10 @@ serve(async (req: Request) => {
       }
 
       return new Response(
-        JSON.stringify({ 
-          output: output.trim(), 
-          error: null, 
-          exitCode 
+        JSON.stringify({
+          output: output.trim(),
+          error: null,
+          exitCode
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
