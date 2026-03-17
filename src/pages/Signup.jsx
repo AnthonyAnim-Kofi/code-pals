@@ -1,0 +1,155 @@
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import authBg from "@/assets/auth-bg.png";
+import { Code2, Mail, Lock, ArrowRight, Loader2, Gift } from "lucide-react";
+import mascot from "@/assets/mascot.png";
+import { supabase } from "@/integrations/supabase/client";
+export default function Signup() {
+    const { signUp } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [referralCode, setReferralCode] = useState(searchParams.get("ref") ?? "");
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        if (password !== confirmPassword) {
+            setError("Passwords don't match");
+            return;
+        }
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters");
+            return;
+        }
+        const codeToUse = referralCode.trim().toUpperCase();
+        if (codeToUse) {
+            const { data: valid, error: rpcError } = await supabase.rpc("validate_referral_code", {
+                code: codeToUse,
+            });
+            if (rpcError || !valid) {
+                setError("Invalid referral code. Please check and try again or leave it blank.");
+                return;
+            }
+        }
+        setLoading(true);
+        const { error } = await signUp(email, password);
+        if (error) {
+            setError(error.message);
+            setLoading(false);
+        }
+        else {
+            const target = codeToUse ? `/onboarding?ref=${encodeURIComponent(codeToUse)}` : "/onboarding";
+            navigate(target);
+        }
+    };
+    return (<div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <img src={authBg} alt="" className="w-full h-full object-cover"/>
+        <div className="absolute inset-0 bg-background/75 backdrop-blur-[2px]"/>
+      </div>
+
+      {/* Header */}
+      <header className="p-4 relative z-10">
+        <Link to="/" className="flex items-center gap-2 w-fit">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/30">
+            <Code2 className="w-6 h-6 text-primary-foreground"/>
+          </div>
+          <span className="text-xl font-extrabold text-foreground">CodeBear</span>
+        </Link>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+        <div className="w-full max-w-md">
+          {/* Mascot */}
+          <div className="flex justify-center mb-6">
+            <img src={mascot} alt="CodeBear" className="w-24 h-24 animate-bounce-gentle"/>
+          </div>
+          
+
+          <div className="bg-card rounded-2xl border border-border p-8 card-elevated">
+            <h1 className="text-2xl font-extrabold text-center text-foreground mb-2">
+              Create your account
+            </h1>
+            <p className="text-center text-muted-foreground mb-6">
+              Start your coding adventure today!
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
+                  <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10 h-12" required/>
+                </div>
+              </div>
+
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
+                  <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pl-10 h-12" required/>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
+                  <Input id="confirmPassword" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pl-10 h-12" required/>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="referralCode" className="text-muted-foreground font-normal">
+                  Referral code <span className="text-xs">(optional)</span>
+                </Label>
+                <div className="relative">
+                  <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"/>
+                  <Input id="referralCode" type="text" placeholder="e.g. ABC12DEF" value={referralCode} onChange={(e) => setReferralCode(e.target.value)} className="pl-10 h-12 font-mono uppercase" maxLength={12}/>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Enter a friend&apos;s code to earn 50 gems when you finish onboarding.
+                </p>
+              </div>
+
+              {error && (<p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-lg">
+                  {error}
+                </p>)}
+
+              <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                {loading ? (<Loader2 className="w-5 h-5 animate-spin"/>) : (<>
+                    Create Account
+                    <ArrowRight className="w-5 h-5"/>
+                  </>)}
+              </Button>
+            </form>
+
+            <div className="mt-6 space-y-2 text-center">
+              <p className="text-muted-foreground">
+                Already have an account?{" "}
+                <Link to="/login" className="text-primary font-semibold hover:underline">
+                  Log in
+                </Link>
+              </p>
+              <p className="text-muted-foreground text-sm">
+                Admin?{" "}
+                <Link to="/admin/login" className="text-primary font-semibold hover:underline">
+                  Admin Login
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>);
+}

@@ -1,0 +1,298 @@
+/**
+ * useUserProgress – Hooks for managing user profile data, XP, hearts, gems, and lesson progress.
+ * Provides mutations for updating XP (with daily/weekly tracking), deducting hearts,
+ * adding gems, and saving/fetching lesson completion records.
+ */
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+export function useUserProfile() {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: ["profile", user?.id],
+        queryFn: async () => {
+            if (!user)
+                return null;
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("*")
+                .eq("user_id", user.id)
+                .maybeSingle();
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!user,
+    });
+}
+export function useUpdateProfile() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (updates) => {
+            if (!user)
+                throw new Error("Not authenticated");
+            const { data, error } = await supabase
+                .from("profiles")
+                .update(updates)
+                .eq("user_id", user.id)
+                .select()
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+        },
+    });
+}
+function todayISO() {
+    return new Date().toISOString().split("T")[0];
+}
+export function useAddXP() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (xpAmount) => {
+            if (!user)
+                throw new Error("Not authenticated");
+            const today = todayISO();
+            const { data: profile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("xp, weekly_xp, daily_xp, last_daily_reset_at")
+                .eq("user_id", user.id)
+                .single();
+            if (fetchError)
+                throw fetchError;
+            // Reset daily XP when it's a new day
+            const lastReset = profile?.last_daily_reset_at;
+            const dailyXp = lastReset === today
+                ? (profile?.daily_xp ?? 0) + xpAmount
+                : xpAmount;
+            const { data, error } = await supabase
+                .from("profiles")
+                .update({
+                xp: (profile?.xp || 0) + xpAmount,
+                weekly_xp: (profile?.weekly_xp || 0) + xpAmount,
+                daily_xp: dailyXp,
+                last_daily_reset_at: today,
+            })
+                .eq("user_id", user.id)
+                .select()
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+            queryClient.invalidateQueries({ queryKey: ["quest-progress"] });
+            queryClient.invalidateQueries({ queryKey: ["league-leaderboard"] });
+        },
+    });
+}
+export function useDeductHeart() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => {
+            if (!user)
+                throw new Error("Not authenticated");
+            const { data: profile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("hearts, heart_regeneration_started_at")
+                .eq("user_id", user.id)
+                .single();
+            if (fetchError)
+                throw fetchError;
+            const newHearts = Math.max(0, (profile?.hearts || 0) - 1);
+            // Start heart regeneration timer if hearts are now less than 5 and timer isn't running
+            const updateData = {
+                hearts: newHearts,
+            };
+            if (newHearts < 5 && !profile?.heart_regeneration_started_at) {
+                updateData.heart_regeneration_started_at = new Date().toISOString();
+            }
+            const { data, error } = await supabase
+                .from("profiles")
+                .update(updateData)
+                .eq("user_id", user.id)
+                .select()
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+        },
+    });
+}
+export function useAddGems() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (gemAmount) => {
+            if (!user)
+                throw new Error("Not authenticated");
+            const { data: profile, error: fetchError } = await supabase
+                .from("profiles")
+                .select("gems")
+                .eq("user_id", user.id)
+                .single();
+            if (fetchError)
+                throw fetchError;
+            const { data, error } = await supabase
+                .from("profiles")
+                .update({ gems: (profile?.gems || 0) + gemAmount })
+                .eq("user_id", user.id)
+                .select()
+                .single();
+            if (error)
+                throw error;
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+        },
+    });
+}
+export function useLessonProgress() {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: ["lesson-progress", user?.id],
+        queryFn: async () => {
+            if (!user)
+                return [];
+            const { data, error } = await supabase
+                .from("lesson_progress")
+                .select("*")
+                .eq("user_id", user.id);
+            if (error)
+                throw error;
+            return data;
+        },
+        enabled: !!user,
+    });
+}
+export function useSaveLessonProgress() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ lessonId, xpEarned, accuracy, }) => {
+            if (!user)
+                throw new Error("Not authenticated");
+            // Check if progress exists
+            const { data: existing } = await supabase
+                .from("lesson_progress")
+                .select("id")
+                .eq("user_id", user.id)
+                .eq("lesson_id", lessonId)
+                .maybeSingle();
+            if (existing) {
+                // Update existing progress
+                const { data, error } = await supabase
+                    .from("lesson_progress")
+                    .update({
+                    completed: true,
+                    xp_earned: xpEarned,
+                    accuracy,
+                    completed_at: new Date().toISOString(),
+                })
+                    .eq("id", existing.id)
+                    .select()
+                    .single();
+                if (error)
+                    throw error;
+                return data;
+            }
+            else {
+                // Insert new progress
+                const { data, error } = await supabase
+                    .from("lesson_progress")
+                    .insert({
+                    user_id: user.id,
+                    lesson_id: lessonId,
+                    completed: true,
+                    xp_earned: xpEarned,
+                    accuracy,
+                    completed_at: new Date().toISOString(),
+                })
+                    .select()
+                    .single();
+                if (error)
+                    throw error;
+                return data;
+            }
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["lesson-progress", user?.id] });
+            queryClient.invalidateQueries({ queryKey: ["profile", user?.id] });
+            queryClient.invalidateQueries({ queryKey: ["quest-progress"] });
+            queryClient.invalidateQueries({ queryKey: ["study-stats", user?.id] });
+        },
+    });
+}
+export function useLeaderboard() {
+    return useQuery({
+        queryKey: ["leaderboard"],
+        queryFn: async () => {
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("id, display_name, username, avatar_url, xp, streak_count")
+                .order("xp", { ascending: false })
+                .limit(50);
+            if (error)
+                throw error;
+            return data;
+        },
+    });
+}
+export function useStudyStats() {
+    const { user } = useAuth();
+    return useQuery({
+        queryKey: ["study-stats", user?.id],
+        queryFn: async () => {
+            if (!user)
+                return { byDate: {}, byLanguage: [] };
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 84); // ~12 weeks
+            const startStr = startDate.toISOString().split("T")[0];
+            const { data: sessions, error: sessError } = await supabase
+                .from("study_sessions")
+                .select("language_id, study_date, minutes")
+                .eq("user_id", user.id)
+                .gte("study_date", startStr);
+            if (sessError)
+                throw sessError;
+            const byDate = {};
+            const byLang = {};
+            const langIds = new Set();
+            for (const row of sessions || []) {
+                byDate[row.study_date] = (byDate[row.study_date] || 0) + row.minutes;
+                byLang[row.language_id] = (byLang[row.language_id] || 0) + row.minutes;
+                langIds.add(row.language_id);
+            }
+            const byLanguage = [];
+            if (langIds.size > 0) {
+                const { data: langs, error: langError } = await supabase
+                    .from("languages")
+                    .select("id, name")
+                    .in("id", Array.from(langIds));
+                if (!langError && langs) {
+                    for (const lang of langs) {
+                        byLanguage.push({
+                            languageId: lang.id,
+                            languageName: lang.name,
+                            minutes: byLang[lang.id] || 0,
+                        });
+                    }
+                    byLanguage.sort((a, b) => b.minutes - a.minutes);
+                }
+            }
+            return { byDate, byLanguage };
+        },
+        enabled: !!user,
+    });
+}
