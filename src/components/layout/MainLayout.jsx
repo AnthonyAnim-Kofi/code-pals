@@ -29,7 +29,7 @@ export function MainLayout() {
           </div>
 
           {/* Right Sidebar - Desktop Only */}
-          <div className="hidden xl:block w-[300px] shrink-0">
+          <div className="hidden lg:block w-[280px] shrink-0">
             <div className="sticky top-6 space-y-6" data-tour="user-progress">
               <UserProgress />
             </div>
