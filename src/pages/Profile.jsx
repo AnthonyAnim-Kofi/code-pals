@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile, useLessonProgress } from "@/hooks/useUserProgress";
+import { getLeagueInfo } from "@/hooks/useLeague";
 import { Settings, LogOut, Flame, Zap, Trophy, Calendar, Loader2, Gift, Copy, Check, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { StreakFreezeIndicator } from "@/components/StreakFreezeIndicator";
@@ -48,25 +49,17 @@ export default function Profile() {
     const completedLessons = lessonProgress?.filter((l) => l.completed).length || 0;
     const totalLessons = 17;
     const courseProgress = Math.round(completedLessons / totalLessons * 100);
-    const getLeague = (xp) => {
-        if (xp >= 1000)
-            return "Diamond";
-        if (xp >= 800)
-            return "Gold";
-        if (xp >= 200)
-            return "Silver";
-        return "Bronze";
-    };
     const formatDate = (date) => {
         if (!date)
             return "Just started";
         return new Date(date).toLocaleDateString("en-US", { month: "short", year: "numeric" });
     };
+    const currentLeagueInfo = getLeagueInfo(profile?.league || "bronze");
     const stats = [
         { icon: Flame, label: "Day Streak", value: profile?.streak_count?.toString() || "0", color: "text-accent" },
         { icon: Zap, label: "Weekly XP", value: profile?.weekly_xp?.toLocaleString() || "0", color: "text-amber-500" },
         { icon: Zap, label: "Total XP", value: profile?.xp?.toLocaleString() || "0", color: "text-golden" },
-        { icon: Trophy, label: "League", value: getLeague(profile?.xp || 0), color: "text-secondary" },
+        { icon: Trophy, label: "League", value: currentLeagueInfo.name, color: currentLeagueInfo.color },
         { icon: Calendar, label: "Joined", value: formatDate(profile?.created_at || null), color: "text-muted-foreground" }
     ];
     return (<div className="space-y-8">
