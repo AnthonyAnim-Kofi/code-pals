@@ -98,6 +98,120 @@
 
     --gradient-hero: linear-gradient(180deg, hsl(220, 20%, 14%) 0%, hsl(220, 20%, 10%) 100%);
   }
+
+  /* --- SEASONAL THEMES --- */
+  
+  /* Christmas / Winter (Red & Green) */
+  .theme-christmas {
+    --primary: 348 83% 47%;
+    --secondary: 142 71% 45%;
+    --gradient-primary: linear-gradient(135deg, hsl(348, 83%, 47%), hsl(340, 80%, 40%));
+  }
+
+  /* --- Enhanced Snowflake Effect --- */
+  .snow-flake {
+    position: absolute;
+    border-radius: 50%;
+    background: white;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  @keyframes snow-fall {
+    0% {
+      transform: translateY(-10vh) translateX(0) scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: translateY(50vh) translateX(15px) scale(0.9);
+      opacity: 0.5;
+    }
+    100% {
+      transform: translateY(110vh) translateX(-15px) scale(1);
+      opacity: 0;
+    }
+  }
+
+  .particle-snow-fall {
+    animation-name: snow-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  
+  /* Valentine's (Pink & Red) */
+  .theme-valentine {
+    --primary: 330 80% 60%;
+    --secondary: 350 80% 55%;
+    --gradient-primary: linear-gradient(135deg, hsl(330, 80%, 60%), hsl(340, 80%, 50%));
+  }
+
+  /* St. Patrick's (Green & Gold) */
+  .theme-stpatricks {
+    --primary: 142 71% 45%;
+    --secondary: 45 100% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(142, 71%, 45%), hsl(130, 70%, 35%));
+  }
+
+  /* Easter / Spring (Pastels) */
+  .theme-easter {
+    --primary: 290 60% 70%;
+    --secondary: 180 50% 60%;
+    --gradient-primary: linear-gradient(135deg, hsl(290, 60%, 70%), hsl(320, 60%, 70%));
+  }
+
+  /* Earth Day (Earthy Greens & Blues) */
+  .theme-earth {
+    --primary: 120 40% 40%;
+    --secondary: 200 50% 40%;
+    --gradient-primary: linear-gradient(135deg, hsl(120, 40%, 40%), hsl(140, 40%, 35%));
+  }
+
+  /* Summer (Vibrant Sun & Sky) */
+  .theme-summer {
+    --primary: 35 100% 50%;
+    --secondary: 195 90% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(35, 100%, 50%), hsl(20, 100%, 55%));
+  }
+
+  /* Halloween (Orange & Purple) */
+  .theme-halloween {
+    --primary: 28 100% 50%;
+    --secondary: 270 70% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(28, 100%, 50%), hsl(270, 70%, 40%));
+  }
+  .dark .theme-halloween {
+    --background: 270 20% 5%;
+    --card: 270 20% 10%;
+  }
+
+  /* Autumn / Thanksgiving (Orange & Brown) */
+  .theme-autumn {
+    --primary: 25 90% 50%;
+    --secondary: 15 80% 40%;
+    --gradient-primary: linear-gradient(135deg, hsl(25, 90%, 50%), hsl(15, 80%, 40%));
+  }
+
+  /* Diwali (Light Orbs / Warmth) */
+  .theme-diwali {
+    --primary: 50 100% 50%;
+    --secondary: 20 100% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(50, 100%, 50%), hsl(30, 90%, 50%));
+  }
+
+  /* Lunar New Year (Red & Gold) */
+  .theme-lunar {
+    --primary: 0 85% 55%;
+    --secondary: 45 100% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(0, 85%, 55%), hsl(350, 80%, 45%));
+  }
+
+  /* New Year (Gold & Black) */
+  .theme-newyear {
+    --primary: 45 100% 60%;
+    --secondary: 220 20% 80%;
+    --gradient-primary: linear-gradient(135deg, hsl(45, 100%, 60%), hsl(35, 100%, 45%));
+  }
 }
 
 @layer base {
@@ -288,4 +402,44 @@
     0%, 100% { transform: rotate(-3deg); }
     50% { transform: rotate(3deg); }
   }
+
+  /* --- PARTICLE ANIMATIONS --- */
+  
+  @keyframes fall {
+    0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(120vh) translateX(30px) rotate(360deg); opacity: 0; }
+  }
+  .particle-fall { animation: fall linear infinite; }
+
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0) scale(0.5); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateY(-120vh) translateX(-30px) scale(1.2) rotate(45deg); opacity: 0; }
+  }
+  .particle-float-up { animation: float-up linear infinite; }
+
+  @keyframes float-wind {
+    0% { transform: translate(0, 0) rotate(0deg) scale(0.8); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translate(120vw, 120vh) rotate(360deg) scale(1.2); opacity: 0; }
+  }
+  .particle-float-wind { animation: float-wind linear infinite; }
+
+  @keyframes fly-across {
+    0% { transform: translate(0, 50px) scale(0.5); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.8; }
+    100% { transform: translate(120vw, -50px) scale(1.5) rotate(15deg); opacity: 0; }
+  }
+  .particle-fly-across { animation: fly-across linear infinite; }
+
+  @keyframes twinkle {
+    0%, 100% { transform: scale(0.8); opacity: 0.2; }
+    50% { transform: scale(1.5); opacity: 1; }
+  }
+  .particle-twinkle { animation: twinkle ease-in-out infinite; }
 }

@@ -12,6 +12,16 @@ import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/us
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LanguageIcon } from "@/components/LanguageIcon";
+import { useTheme } from "@/components/ThemeContext";
+import christmasBanner from "@/assets/christmas_banner.png";
+import halloweenBanner from "@/assets/halloween_banner.png";
+import valentineBanner from "@/assets/valentine_banner.png";
+import easterBanner from "@/assets/easter_banner.png";
+import newyearBanner from "@/assets/newyear_banner.png";
+import lunarBanner from "@/assets/lunar_banner.png";
+import stpatricksBanner from "@/assets/stpatricks_banner.png";
+import earthBanner from "@/assets/earth_banner.png";
+import summerBanner from "@/assets/summer_banner.png";
 /** Repeating position pattern for zig-zag lesson layout */
 const positionPattern = ["center", "left", "right", "center", "right", "left"];
 export default function Learn() {
@@ -20,6 +30,7 @@ export default function Learn() {
     const { data: languages = [], isLoading: languagesLoading } = useLanguages();
     const { data: profile, isLoading: profileLoading } = useUserProfile();
     const updateProfile = useUpdateProfile();
+    const { currentTheme } = useTheme();
     const [selectedLanguage, setSelectedLanguage] = useState(null);
     const profileLanguageId = profile?.active_language_id || null;
     // Derive active language: state > URL > profile's active language > first language
@@ -81,6 +92,48 @@ export default function Learn() {
             </Select>)}
         </div>
       </div>
+
+      {/* Holiday Banners */}
+      {(currentTheme === 'theme-christmas' || 
+        currentTheme === 'theme-halloween' || 
+        currentTheme === 'theme-valentine' || 
+        currentTheme === 'theme-easter' ||
+        currentTheme === 'theme-newyear' ||
+        currentTheme === 'theme-lunar' ||
+        currentTheme === 'theme-stpatricks' ||
+        currentTheme === 'theme-earth' ||
+        currentTheme === 'theme-summer') && (
+        <div className="w-full h-32 sm:h-48 md:h-64 rounded-2xl overflow-hidden relative shadow-lg border border-border mt-2 animate-in fade-in zoom-in duration-500">
+          <img 
+            src={
+              currentTheme === 'theme-christmas' ? christmasBanner :
+              currentTheme === 'theme-halloween' ? halloweenBanner :
+              currentTheme === 'theme-valentine' ? valentineBanner :
+              currentTheme === 'theme-easter' ? easterBanner :
+              currentTheme === 'theme-newyear' ? newyearBanner :
+              currentTheme === 'theme-lunar' ? lunarBanner :
+              currentTheme === 'theme-stpatricks' ? stpatricksBanner :
+              currentTheme === 'theme-earth' ? earthBanner :
+              summerBanner
+            } 
+            alt="Happy Holidays!" 
+            className="w-full h-full object-cover" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-4 sm:p-6">
+            <h2 className="text-xl sm:text-3xl font-black text-white drop-shadow-md">
+              {currentTheme === 'theme-christmas' ? "Happy Holidays! 🎄" :
+               currentTheme === 'theme-halloween' ? "Happy Halloween! 🎃" :
+               currentTheme === 'theme-valentine' ? "Happy Valentine's Day! 💖" :
+               currentTheme === 'theme-easter' ? "Happy Easter! 🌸" :
+               currentTheme === 'theme-newyear' ? "Welcome 2026! 🎆" :
+               currentTheme === 'theme-lunar' ? "Happy Lunar New Year! 🏮" :
+               currentTheme === 'theme-stpatricks' ? "Happy St. Patrick's Day! 🍀" :
+               currentTheme === 'theme-earth' ? "Happy Earth Day! 🌍" :
+               "Enjoy Your Summer! ☀️"}
+            </h2>
+          </div>
+        </div>
+      )}
 
       {/* Units and Lessons */}
       {unitsLoading ? (<div className="space-y-8">

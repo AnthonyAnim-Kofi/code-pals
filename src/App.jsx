@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeContext";
+import { ThemeParticles } from "@/components/ThemeParticles";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MobileChrome } from "@/components/layout/MobileChrome";
@@ -42,55 +44,58 @@ const App = () => {
         return () => window.removeEventListener("unhandledrejection", handleRejection);
     }, []);
     return (<QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <MobileChrome>
-            <Routes>
-              {/* Marketing */}
-              <Route path="/" element={<Landing />}/>
+    <ThemeProvider>
+      <ThemeParticles />
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <MobileChrome>
+              <Routes>
+                {/* Marketing */}
+                <Route path="/" element={<Landing />}/>
 
-              {/* Auth */}
-              <Route path="/onboarding" element={<Onboarding />}/>
-              <Route path="/login" element={<Login />}/>
-              <Route path="/signup" element={<Signup />}/>
+                {/* Auth */}
+                <Route path="/onboarding" element={<Onboarding />}/>
+                <Route path="/login" element={<Login />}/>
+                <Route path="/signup" element={<Signup />}/>
 
-              {/* Admin */}
-              <Route path="/admin/login" element={<AdminLogin />}/>
-              <Route path="/admin" element={<Admin />}/>
+                {/* Admin */}
+                <Route path="/admin/login" element={<AdminLogin />}/>
+                <Route path="/admin" element={<Admin />}/>
 
-              {/* Main App with Sidebar - Protected */}
-              <Route element={<ProtectedRoute>
-                    <MainLayout />
-                  </ProtectedRoute>}>
-                <Route path="/learn" element={<Learn />}/>
-                <Route path="/leaderboard" element={<Leaderboard />}/>
-                <Route path="/quests" element={<Quests />}/>
-                <Route path="/shop" element={<Shop />}/>
-                <Route path="/profile" element={<Profile />}/>
-                <Route path="/referral" element={<Referral />}/>
-                <Route path="/settings" element={<Settings />}/>
-                <Route path="/social" element={<Social />}/>
-                <Route path="/achievements" element={<Achievements />}/>
-                <Route path="/practice" element={<Practice />}/>
-                <Route path="/languages" element={<Languages />}/>
-                <Route path="/league-history" element={<LeagueHistory />}/>
-              </Route>
+                {/* Main App with Sidebar - Protected */}
+                <Route element={<ProtectedRoute>
+                      <MainLayout />
+                    </ProtectedRoute>}>
+                  <Route path="/learn" element={<Learn />}/>
+                  <Route path="/leaderboard" element={<Leaderboard />}/>
+                  <Route path="/quests" element={<Quests />}/>
+                  <Route path="/shop" element={<Shop />}/>
+                  <Route path="/profile" element={<Profile />}/>
+                  <Route path="/referral" element={<Referral />}/>
+                  <Route path="/settings" element={<Settings />}/>
+                  <Route path="/social" element={<Social />}/>
+                  <Route path="/achievements" element={<Achievements />}/>
+                  <Route path="/practice" element={<Practice />}/>
+                  <Route path="/languages" element={<Languages />}/>
+                  <Route path="/league-history" element={<LeagueHistory />}/>
+                </Route>
 
-              {/* Lesson (Full screen, no sidebar) - Protected */}
-              <Route path="/lesson/:lessonId" element={<ProtectedRoute>
-                    <Lesson />
-                  </ProtectedRoute>}/>
+                {/* Lesson (Full screen, no sidebar) - Protected */}
+                <Route path="/lesson/:lessonId" element={<ProtectedRoute>
+                      <Lesson />
+                    </ProtectedRoute>}/>
 
-              {/* Catch-all */}
-              <Route path="*" element={<NotFound />}/>
-            </Routes>
-          </MobileChrome>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
+                {/* Catch-all */}
+                <Route path="*" element={<NotFound />}/>
+              </Routes>
+            </MobileChrome>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </QueryClientProvider>);
 };
 export default App;

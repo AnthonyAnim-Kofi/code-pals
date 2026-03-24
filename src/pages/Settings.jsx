@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProgress";
+import { useTheme } from "@/components/ThemeContext";
 import { AVATARS, AVATAR_CATEGORIES } from "@/data/avatars";
 import { useToast } from "@/hooks/use-toast";
 export default function Settings() {
@@ -15,6 +16,7 @@ export default function Settings() {
     const { toast } = useToast();
     const { data: profile, isLoading } = useUserProfile();
     const updateProfile = useUpdateProfile();
+    const { overrideTheme, setOverrideTheme, HOLIDAYS } = useTheme();
     const [displayName, setDisplayName] = useState("");
     const [selectedAvatar, setSelectedAvatar] = useState(null);
     const [avatarCategory, setAvatarCategory] = useState("all");
@@ -97,6 +99,23 @@ export default function Settings() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" value={profile?.username || ""} disabled className="rounded-xl bg-muted"/>
               <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+
+            <div className="pt-4 border-t border-border mt-4">
+              <Label htmlFor="themeOverride" className="text-primary font-bold">Seasonal Theme Override</Label>
+              <p className="text-xs text-muted-foreground mb-3">Force a specific holiday theme to view the seasonal animations.</p>
+              <select 
+                id="themeOverride" 
+                className="w-full p-3 bg-background rounded-xl border border-border text-sm font-bold text-foreground focus:ring-2 focus:ring-primary outline-none transition-all"
+                value={overrideTheme || "auto"}
+                onChange={(e) => setOverrideTheme(e.target.value === "auto" ? null : e.target.value)}
+              >
+                <option value="auto">Auto (Calendar Date)</option>
+                <option value="theme-default">Default Theme</option>
+                {HOLIDAYS.map(h => (
+                  <option key={h.name} value={h.name}>{h.name.replace('theme-', '').toUpperCase()}</option>
+                ))}
+              </select>
             </div>
           </div>
         </TabsContent>
