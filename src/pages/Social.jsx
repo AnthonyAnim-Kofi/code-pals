@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { Users, UserPlus, Swords, Loader2, Trophy, Flame, Search, CheckCircle } from "lucide-react";
+import { Users, UserPlus, Swords, Loader2, Trophy, Flame, Search, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label as UiLabel } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useFollowing, useAllUsers, useFollowUser, useUnfollowUser, useChallenges, useCreateChallenge, useDeclineChallenge } from "@/hooks/useSocial";
+import { useFollowers, useFollowing, useAllUsers, useFollowUser, useUnfollowUser, useChallenges, useCreateChallenge, useDeclineChallenge } from "@/hooks/useSocial";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { useLanguages, useUnitsForLanguage, useLessonsForUnit } from "@/hooks/useLanguages";
 import { useToast } from "@/hooks/use-toast";
@@ -18,6 +19,7 @@ export default function Social() {
     const { toast } = useToast();
     const navigate = useNavigate();
     const { data: profile } = useUserProfile();
+    const { data: followers, isLoading: loadingFollowers } = useFollowers();
     const { data: following, isLoading: loadingFollowing } = useFollowing();
     const { data: allUsers, isLoading: loadingUsers } = useAllUsers();
     const { data: challenges, isLoading: loadingChallenges } = useChallenges();
@@ -28,7 +30,8 @@ export default function Social() {
     const [searchQuery, setSearchQuery] = useState("");
     const [challengeDialogOpen, setChallengeDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
-    const [activeTab, setActiveTab] = useState("friends");
+    const [activeTab, setActiveTab] = useState("following");
+    const [friendsSubTab, setFriendsSubTab] = useState("following");
 
     const { data: languages } = useLanguages();
     const [selectedLanguageId, setSelectedLanguageId] = useState("");
@@ -37,7 +40,12 @@ export default function Social() {
     const { data: lessons } = useLessonsForUnit(selectedUnitId);
     const [selectedLessonId, setSelectedLessonId] = useState("");
 
+    // Build sets
     const followingIds = new Set(following?.map((f) => f.following?.user_id) || []);
+    const followerIds = new Set(followers?.map((f) => f.follower?.user_id) || []);
+    // Mutual = you follow them AND they follow you
+    const mutualIds = new Set([...followingIds].filter((id) => followerIds.has(id)));
+
     const filteredUsers = allUsers?.filter(user => user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.username?.toLowerCase().includes(searchQuery.toLowerCase())) || [];
     
@@ -97,7 +105,7 @@ export default function Social() {
         toast({ title: "Link copied!", description: "Share your progress with friends." });
     };
     
-    const isLoading = loadingFollowing || loadingUsers || loadingChallenges;
+    const isLoading = loadingFollowers || loadingFollowing || loadingUsers || loadingChallenges;
     if (isLoading) {
         return (<div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-primary"/>
@@ -116,11 +124,12 @@ export default function Social() {
         </div>
       </div>
 
+      <TooltipProvider>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted rounded-xl">
-          <TabsTrigger value="friends" className="rounded-lg py-2 data-[state=active]:bg-background">
+          <TabsTrigger value="following" className="rounded-lg py-2 data-[state=active]:bg-background">
             <Users className="w-4 h-4 mr-2"/>
-            Friends ({following?.length || 0})
+            Friends
           </TabsTrigger>
           <TabsTrigger value="discover" className="rounded-lg py-2 data-[state=active]:bg-background">
             <UserPlus className="w-4 h-4 mr-2"/>
@@ -132,56 +141,119 @@ export default function Social() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Friends Tab */}
-        <TabsContent value="friends" className="space-y-4">
-          {following?.length === 0 ? (<div className="p-8 bg-card rounded-2xl border border-border text-center">
-              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
-              <h3 className="text-lg font-bold text-foreground mb-2">No friends yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Find and follow other learners to see their progress!
-              </p>
-              <Button onClick={() => setActiveTab("discover")}>
-                <UserPlus className="w-4 h-4 mr-2"/>
-                Find Friends
-              </Button>
-            </div>) : (<div className="space-y-3">
-              {following?.map((follow) => {
-                const user = follow.following;
-                if (!user)
-                    return null;
-                return (<div key={follow.id} className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border">
-                    <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
-                      {user.avatar_url ? (<img src={user.avatar_url} alt="" className="w-full h-full object-cover"/>) : (<img src={mascot} alt="" className="w-10 h-10 m-1 object-contain"/>)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-foreground truncate">
-                        {user.display_name || user.username || "Learner"}
-                      </p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Trophy className="w-4 h-4 text-golden"/>
-                          {user.xp} XP
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Flame className="w-4 h-4 text-accent"/>
-                          {user.streak_count} days
-                        </span>
+        {/* Friends Tab — Following / Followers sub-tabs */}
+        <TabsContent value="following" className="space-y-4">
+          {/* Sub-tab switcher */}
+          <div className="flex gap-2 bg-muted rounded-xl p-1">
+            <button
+              onClick={() => setFriendsSubTab("following")}
+              className={cn("flex-1 py-2 rounded-lg text-sm font-semibold transition-colors",
+                friendsSubTab === "following" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Following ({following?.length || 0})
+            </button>
+            <button
+              onClick={() => setFriendsSubTab("followers")}
+              className={cn("flex-1 py-2 rounded-lg text-sm font-semibold transition-colors",
+                friendsSubTab === "followers" ? "bg-background shadow text-foreground" : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Followers ({followers?.length || 0})
+            </button>
+          </div>
+
+          {/* Following list */}
+          {friendsSubTab === "following" && (
+            following?.length === 0
+              ? (<div className="p-8 bg-card rounded-2xl border border-border text-center">
+                  <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
+                  <h3 className="text-lg font-bold text-foreground mb-2">Not following anyone yet</h3>
+                  <p className="text-muted-foreground mb-4">Find and follow learners to see their progress!</p>
+                  <Button onClick={() => setActiveTab("discover")}><UserPlus className="w-4 h-4 mr-2"/>Find People</Button>
+                </div>)
+              : (<div className="space-y-3">
+                  {following?.map((follow) => {
+                    const user = follow.following;
+                    if (!user) return null;
+                    const isMutual = mutualIds.has(user.user_id);
+                    return (
+                      <div key={follow.id} className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border">
+                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
+                          {user.avatar_url ? (<img src={user.avatar_url} alt="" className="w-full h-full object-cover"/>) : (<img src={mascot} alt="" className="w-10 h-10 m-1 object-contain"/>)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-foreground truncate flex items-center gap-1">
+                            {user.display_name || user.username || "Learner"}
+                            {isMutual && <UserCheck className="w-4 h-4 text-primary shrink-0" />}
+                          </p>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1"><Trophy className="w-4 h-4 text-golden"/>{user.xp} XP</span>
+                            <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-accent"/>{user.streak_count} days</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {isMutual ? (
+                            <Button size="sm" variant="outline" onClick={() => { setSelectedUser(user); setChallengeDialogOpen(true); }} className="rounded-lg">
+                              <Swords className="w-4 h-4"/>
+                            </Button>
+                          ) : (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span><Button size="sm" variant="outline" disabled className="rounded-lg"><Swords className="w-4 h-4"/></Button></span>
+                              </TooltipTrigger>
+                              <TooltipContent>Follow each other to challenge</TooltipContent>
+                            </Tooltip>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => handleUnfollow(user.user_id)} className="rounded-lg text-muted-foreground hover:text-destructive">
+                            Unfollow
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => {
-                        setSelectedUser(user);
-                        setChallengeDialogOpen(true);
-                    }} className="rounded-lg">
-                        <Swords className="w-4 h-4"/>
-                      </Button>
-                      <Button size="sm" variant="ghost" onClick={() => handleUnfollow(user.user_id)} className="rounded-lg text-muted-foreground hover:text-destructive">
-                        Unfollow
-                      </Button>
-                    </div>
-                  </div>);
-            })}
-            </div>)}
+                    );
+                  })}
+                </div>)
+          )}
+
+          {/* Followers list */}
+          {friendsSubTab === "followers" && (
+            followers?.length === 0
+              ? (<div className="p-8 bg-card rounded-2xl border border-border text-center">
+                  <UserCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4"/>
+                  <h3 className="text-lg font-bold text-foreground mb-2">No followers yet</h3>
+                  <p className="text-muted-foreground">Share your profile to attract followers!</p>
+                </div>)
+              : (<div className="space-y-3">
+                  {followers?.map((follow) => {
+                    const user = follow.follower;
+                    if (!user) return null;
+                    const alreadyFollowing = followingIds.has(user.user_id);
+                    return (
+                      <div key={follow.id} className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-border">
+                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden">
+                          {user.avatar_url ? (<img src={user.avatar_url} alt="" className="w-full h-full object-cover"/>) : (<img src={mascot} alt="" className="w-10 h-10 m-1 object-contain"/>)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-foreground truncate">{user.display_name || user.username || "Learner"}</p>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1"><Trophy className="w-4 h-4 text-golden"/>{user.xp} XP</span>
+                            <span className="flex items-center gap-1"><Flame className="w-4 h-4 text-accent"/>{user.streak_count} days</span>
+                          </div>
+                        </div>
+                        {alreadyFollowing ? (
+                          <Button size="sm" variant="outline" onClick={() => handleUnfollow(user.user_id)} className="rounded-lg text-muted-foreground">
+                            Following
+                          </Button>
+                        ) : (
+                          <Button size="sm" onClick={() => handleFollow(user.user_id)} disabled={followUser.isPending} className="rounded-lg">
+                            <UserPlus className="w-4 h-4 mr-1"/>Follow back
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>)
+          )}
         </TabsContent>
 
         {/* Discover Tab */}
@@ -242,11 +314,11 @@ export default function Social() {
                   return (<div key={challenge.id} className={cn("p-4 bg-card rounded-2xl border border-border", isPending && "border-primary/50")}>
                   <div className="flex items-center justify-between mb-3">
                     <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium", isPending && "bg-primary/10 text-primary", challenge.status === "completed" && "bg-green-100 text-green-700")}>
-                      {challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1)}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      Lesson {challenge.lesson_id}
-                    </span>
+                       {challenge.status.charAt(0).toUpperCase() + challenge.status.slice(1)}
+                     </span>
+                     <span className="text-sm text-muted-foreground font-medium truncate max-w-[140px]">
+                       {challenge.lesson?.title ?? "Challenge"}
+                     </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="text-center">
@@ -400,5 +472,6 @@ export default function Social() {
           </div>
         </DialogContent>
       </Dialog>
+    </TooltipProvider>
     </div>);
 }

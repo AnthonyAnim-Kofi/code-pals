@@ -105,7 +105,7 @@ export function useChallenges() {
                 return [];
             const { data, error } = await supabase
                 .from("challenges")
-                .select("*")
+                .select("*, lesson:lessons(id, title)")
                 .or(`challenger_id.eq.${user.id},challenged_id.eq.${user.id}`)
                 .order("created_at", { ascending: false });
             if (error)
