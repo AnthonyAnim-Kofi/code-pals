@@ -159,3 +159,23 @@ export function useUpdateChallengeScore() {
         },
     });
 }
+
+export function useDeclineChallenge() {
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (challengeId) => {
+            if (!user) throw new Error("Not authenticated");
+            // Just delete the challenge to decline it
+            const { error } = await supabase
+                .from("challenges")
+                .delete()
+                .eq("id", challengeId);
+            
+            if (error) throw error;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["challenges"] });
+        },
+    });
+}

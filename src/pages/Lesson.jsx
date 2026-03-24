@@ -5,8 +5,9 @@
  * Uses useRef for progress tracking to prevent infinite re-render loops.
  */
 import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { X, Heart, Loader2, RotateCcw } from "lucide-react";
+import { X, Heart, Loader2, RotateCcw, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { LessonComplete } from "@/components/LessonComplete";
@@ -16,6 +17,7 @@ import { MascotReaction } from "@/components/MascotReaction";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress, useLessonProgress } from "@/hooks/useUserProgress";
 import { useUpdateQuestProgress } from "@/hooks/useQuests";
+import { useUpdateChallengeScore } from "@/hooks/useSocial";
 import { useLessonData, useLessonLanguageInfo, usePartialLessonProgress, useSavePartialProgress, useClearPartialProgress } from "@/hooks/useLessonData";
 import { cn } from "@/lib/utils";
 // Fallback lesson data for demo
@@ -78,6 +80,8 @@ export default function Lesson() {
     const { playCorrect, playIncorrect, playComplete, playBackgroundMusic } = useSoundEffects();
     // Check if we're in practice mode
     const isPracticeMode = searchParams.get('mode') === 'practice';
+    const isChallengeMode = searchParams.get('mode') === 'challenge';
+    const challengeId = searchParams.get('challengeId');
     const { data: profile } = useUserProfile();
     const { data: lessonFromDb, isLoading: loadingLesson } = useLessonData(lessonId);
     const { data: languageInfo } = useLessonLanguageInfo(lessonId);
@@ -87,10 +91,11 @@ export default function Lesson() {
     const clearPartialProgress = useClearPartialProgress();
     const addXP = useAddXP();
     const deductHeartMutation = useDeductHeart();
-    // In practice mode never deduct hearts (no-op wrapper)
-    const deductHeart = isPracticeMode ? { mutate: () => { }, mutateAsync: async () => { } } : deductHeartMutation;
+    // In practice or challenge mode never deduct hearts (no-op wrapper)
+    const deductHeart = (isPracticeMode || isChallengeMode) ? { mutate: () => { }, mutateAsync: async () => { } } : deductHeartMutation;
     const saveLessonProgress = useSaveLessonProgress();
     const updateQuestProgress = useUpdateQuestProgress();
+    const updateChallengeScore = useUpdateChallengeScore();
     // Use database questions when lesson exists; only use fallback when lesson is not in DB (demo)
     const lessonData = useMemo(() => {
         if (lessonFromDb) {
@@ -240,13 +245,13 @@ export default function Lesson() {
             setXpEarned((prev) => prev + xpReward);
             setCorrectAnswers((prev) => prev + 1);
             playCorrect();
-            if (!isPracticeMode) {
+            if (!isPracticeMode && !isChallengeMode) {
                 updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
             }
         }
         else {
-            // Don't deduct hearts in practice mode
-            if (!isPracticeMode) {
+            // Don't deduct hearts in practice or challenge mode
+            if (!isPracticeMode && !isChallengeMode) {
                 deductHeart.mutate();
             }
             playIncorrect();
@@ -262,18 +267,18 @@ export default function Lesson() {
             setXpEarned((prev) => prev + xpReward);
             setCorrectAnswers((prev) => prev + 1);
             playCorrect();
-            if (!isPracticeMode) {
+            if (!isPracticeMode && !isChallengeMode) {
                 updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
             }
         }
         else {
-            // Don't deduct hearts in practice mode
-            if (!isPracticeMode) {
+            // Don't deduct hearts in practice or challenge mode
+            if (!isPracticeMode && !isChallengeMode) {
                 deductHeart.mutate();
             }
             playIncorrect();
         }
-    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode]);
+    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode]);
     const handleCodeRunnerAnswer = useCallback((isCorrect) => {
         setCodeRunnerChecked(true);
         setIsChecked(true);
@@ -284,18 +289,18 @@ export default function Lesson() {
             setXpEarned((prev) => prev + xpReward);
             setCorrectAnswers((prev) => prev + 1);
             playCorrect();
-            if (!isPracticeMode) {
+            if (!isPracticeMode && !isChallengeMode) {
                 updateQuestProgress.mutate({ questType: "correct_answers", incrementBy: 1 });
             }
         }
         else {
-            // Don't deduct hearts in practice mode
-            if (!isPracticeMode) {
+            // Don't deduct hearts in practice or challenge mode
+            if (!isPracticeMode && !isChallengeMode) {
                 deductHeart.mutate();
             }
             playIncorrect();
         }
-    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode]);
+    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode]);
     const handleContinue = async () => {
         // Mark current question as answered
         const newAnswered = new Set(answeredQuestions).add(currentQuestion);
@@ -307,8 +312,9 @@ export default function Lesson() {
             // Use the database lesson ID (UUID string)
             const dbLessonId = lessonFromDb?.id || (typeof lessonId === "string" ? lessonId : String(lessonId));
             const alreadyCompleted = lessonProgressList?.some((p) => String(p.lesson_id) === dbLessonId && p.completed);
-            // In practice mode or if lesson already completed (retake), don't affect XP/hearts/quests
-            if (!isPracticeMode && !alreadyCompleted) {
+            
+            // In practice mode, challenge mode, or if lesson already completed (retake), don't affect regular XP/hearts/quests
+            if (!isPracticeMode && !isChallengeMode && !alreadyCompleted) {
                 await saveLessonProgress.mutateAsync({
                     lessonId: dbLessonId,
                     xpEarned,
@@ -318,6 +324,20 @@ export default function Lesson() {
                 updateQuestProgress.mutate({ questType: "earn_xp", incrementBy: xpEarned });
                 updateQuestProgress.mutate({ questType: "complete_lessons", incrementBy: 1 });
             }
+
+            // If in challenge mode, update the challenge score
+            if (isChallengeMode && challengeId) {
+                // Fetch the challenge first to see if current user is challenger or challenged
+                const { data: challengeData } = await supabase.from('challenges').select('challenger_id').eq('id', challengeId).single();
+                const isChallenger = challengeData?.challenger_id === profile?.user_id;
+
+                await updateChallengeScore.mutateAsync({
+                    challengeId,
+                    score: xpEarned,
+                    isChallenger
+                });
+            }
+
             // Clear partial progress since lesson is complete
             if (lessonId) {
                 clearPartialProgress.mutate(lessonId);
@@ -393,9 +413,15 @@ export default function Lesson() {
                 Practice
               </div>)}
 
+            {/* Challenge Mode Indicator */}
+            {isChallengeMode && (<div className="flex items-center gap-1 px-2 py-1 bg-primary/20 rounded-lg text-primary text-xs font-bold">
+                <Swords className="w-3 h-3"/>
+                Challenge
+              </div>)}
+
             <div className="flex items-center gap-1 text-destructive">
               <Heart className="w-4 h-4 fill-current"/>
-              <span className="font-extrabold text-sm">{isPracticeMode ? "∞" : hearts}</span>
+              <span className="font-extrabold text-sm">{(isPracticeMode || isChallengeMode) ? "∞" : hearts}</span>
             </div>
 
             <div className="flex items-center gap-1 text-primary">

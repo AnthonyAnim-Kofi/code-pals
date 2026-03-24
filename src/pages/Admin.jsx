@@ -15,8 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin, useAdminUsers, useLanguages, useCreateLanguage, useUnits, useCreateUnit, useDeleteUnit, useLessons, useCreateLesson, useDeleteLesson, useQuestions, useCreateQuestion, useDeleteQuestion, useUnitNotes, useCreateUnitNote, useDeleteUnitNote, } from "@/hooks/useAdmin";
-import { BulkImport } from "@/components/admin/BulkImport";
-import { BulkImportNotes } from "@/components/admin/BulkImportNotes";
+import { CurriculumManager } from "@/components/admin/CurriculumManager";
 import { QuestManager } from "@/components/admin/QuestManager";
 import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
 import { ShopManager } from "@/components/admin/ShopManager";
@@ -933,14 +932,6 @@ export default function Admin() {
                 </div>
                 <LeagueThresholdsManager />
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Import Tab */}
-          <TabsContent value="import">
-            <div className="space-y-6">
-              <BulkImport />
-              <BulkImportNotes />
             </div>
           </TabsContent>
 

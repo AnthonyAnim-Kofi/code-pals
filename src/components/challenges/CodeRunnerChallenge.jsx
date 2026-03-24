@@ -8,6 +8,7 @@ import { Loader2, CheckCircle, XCircle, RotateCcw, Lightbulb } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { insforge } from "@/integrations/insforge/client";
 import { CodeEditor } from "@/components/CodeEditor";
 import mascotImage from "@/assets/mascot.png";
 // Quick-insert shortcut definitions per language
@@ -70,7 +71,7 @@ export function CodeRunnerChallenge({ initialCode, expectedOutput, hint, instruc
                 return;
             }
             // Server-side evaluation (JavaScript, Python, etc.)
-            const { data, error } = await supabase.functions.invoke("run-code", {
+            const { data, error } = await insforge.functions.invoke("run-code", {
                 body: { code, language },
             });
             if (error) {
