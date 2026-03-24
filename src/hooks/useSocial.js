@@ -10,7 +10,7 @@ export function useFollowers() {
                 return [];
             const { data, error } = await supabase
                 .from("user_follows")
-                .select("*, follower:profiles!user_follows_follower_id_fkey(id, display_name, username, avatar_url, xp, streak_count, league)")
+                .select("*, follower:profiles!user_follows_follower_id_fkey(id, user_id, display_name, username, avatar_url, xp, streak_count, league)")
                 .eq("following_id", user.id);
             if (error)
                 throw error;
@@ -46,7 +46,7 @@ export function useFollowUser() {
                 throw new Error("Not authenticated");
             const { error } = await supabase
                 .from("user_follows")
-                .insert({ follower_id: user.id, following_id: followingUserId });
+                .insert([{ follower_id: user.id, following_id: followingUserId }]);
             if (error)
                 throw error;
         },
@@ -124,11 +124,11 @@ export function useCreateChallenge() {
                 throw new Error("Not authenticated");
             const { error } = await supabase
                 .from("challenges")
-                .insert({
+                .insert([{
                 challenger_id: user.id,
                 challenged_id: challengedId,
                 lesson_id: lessonId,
-            });
+            }]);
             if (error)
                 throw error;
         },
