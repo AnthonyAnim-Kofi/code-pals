@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, UserPlus, Swords, Loader2, Trophy, Flame, Search } from "lucide-react";
+import { Users, UserPlus, Swords, Loader2, Trophy, Flame, Search, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -229,6 +229,15 @@ export default function Social() {
               {challenges?.map((challenge) => {
                   const isReceived = challenge.challenged_id === profile?.user_id;
                   const isPending = challenge.status === "pending";
+                  const isCompleted = challenge.status === "completed" &&
+                    challenge.challenger_score !== null && challenge.challenger_score !== undefined &&
+                    challenge.challenged_score !== null && challenge.challenged_score !== undefined;
+                  const isChallenger = challenge.challenger_id === profile?.user_id;
+                  const myScore = isChallenger ? challenge.challenger_score : challenge.challenged_score;
+                  const oppScore = isChallenger ? challenge.challenged_score : challenge.challenger_score;
+                  const isTie = isCompleted && myScore === oppScore;
+                  const iWon = isCompleted && myScore > oppScore;
+                  const iLost = isCompleted && myScore < oppScore;
                   
                   return (<div key={challenge.id} className={cn("p-4 bg-card rounded-2xl border border-border", isPending && "border-primary/50")}>
                   <div className="flex items-center justify-between mb-3">
@@ -255,6 +264,25 @@ export default function Social() {
                     </div>
                   </div>
                   
+                  {/* Completed challenge result banner */}
+                  {isCompleted && (
+                    <div className={cn(
+                      "mt-3 rounded-xl px-4 py-3 flex items-center gap-3 font-bold text-sm",
+                      isTie && "bg-blue-50 text-blue-700 border border-blue-200",
+                      iWon && "bg-yellow-50 text-yellow-700 border border-yellow-200",
+                      iLost && "bg-muted text-muted-foreground border border-border"
+                    )}>
+                      {isTie && <span className="text-xl">🤝</span>}
+                      {iWon && <Trophy className="w-5 h-5 text-yellow-500 shrink-0" />}
+                      {iLost && <span className="text-xl">💪</span>}
+                      <span>
+                        {isTie && "It's a Tie! Great match!"}
+                        {iWon && "You Won! Congratulations!"}
+                        {iLost && "Better luck next time!"}
+                      </span>
+                    </div>
+                  )}
+
                   {isReceived && isPending && (
                     <div className="flex gap-2 mt-4">
                       <Button className="flex-1 rounded-xl" onClick={() => handleAccept(challenge)}>

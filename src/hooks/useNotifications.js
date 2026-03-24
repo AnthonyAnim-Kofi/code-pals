@@ -56,6 +56,24 @@ export function useNotifications() {
             tag: "challenge-alert",
         });
     }, [sendNotification]);
+    const notifyChallengeWin = useCallback((opponentName) => {
+        sendNotification("You Won! 🏆", {
+            body: `Congratulations! You beat ${opponentName} in the challenge!`,
+            tag: "challenge-result",
+        });
+    }, [sendNotification]);
+    const notifyChallengeLoss = useCallback((opponentName) => {
+        sendNotification("Challenge Complete 💪", {
+            body: `${opponentName} beat you this time. Better luck next time!`,
+            tag: "challenge-result",
+        });
+    }, [sendNotification]);
+    const notifyChallengeTie = useCallback((opponentName) => {
+        sendNotification("It's a Tie! 🤝", {
+            body: `You and ${opponentName} finished with the same score!`,
+            tag: "challenge-result",
+        });
+    }, [sendNotification]);
     const notifyAchievementUnlock = useCallback((achievementName) => {
         sendNotification("Achievement Unlocked! 🏆", {
             body: `Congratulations! You earned: ${achievementName}`,
@@ -91,6 +109,9 @@ export function useNotifications() {
         sendNotification,
         notifyStreakReminder,
         notifyChallengeAlert,
+        notifyChallengeWin,
+        notifyChallengeLoss,
+        notifyChallengeTie,
         notifyAchievementUnlock,
         notifyHeartRefilled,
         notifyLeaguePromotion,

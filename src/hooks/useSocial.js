@@ -144,15 +144,27 @@ export function useUpdateChallengeScore() {
         mutationFn: async ({ challengeId, score, isChallenger }) => {
             if (!user)
                 throw new Error("Not authenticated");
-            const updateData = isChallenger
-                ? { challenger_score: score }
-                : { challenged_score: score, status: "completed", completed_at: new Date().toISOString() };
+            // Fetch current challenge state first
+            const { data: current, error: fetchError } = await supabase
+                .from("challenges")
+                .select("challenger_score, challenged_score")
+                .eq("id", challengeId)
+                .single();
+            if (fetchError) throw fetchError;
+            // Determine if both sides have now submitted
+            const challengerScore = isChallenger ? score : current.challenger_score;
+            const challengedScore = isChallenger ? current.challenged_score : score;
+            const bothSubmitted = challengerScore !== null && challengerScore !== undefined
+                && challengedScore !== null && challengedScore !== undefined;
+            const updateData = {
+                ...(isChallenger ? { challenger_score: score } : { challenged_score: score }),
+                ...(bothSubmitted ? { status: "completed", completed_at: new Date().toISOString() } : {}),
+            };
             const { error } = await supabase
                 .from("challenges")
                 .update(updateData)
                 .eq("id", challengeId);
-            if (error)
-                throw error;
+            if (error) throw error;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["challenges"] });
