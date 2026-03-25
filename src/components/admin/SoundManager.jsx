@@ -139,7 +139,7 @@ function SoundRow({ sound, urlInput, onUrlChange, onSave, onPlay, onFileUpload, 
             </Button>)}
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input value={urlInput} onChange={(e) => onUrlChange(e.target.value)} className="bg-slate-600 border-slate-500 flex-1" placeholder="Sound URL..."/>
         <Button size="sm" onClick={onSave} disabled={isSaving} className="bg-amber-600 hover:bg-amber-700">
           Save

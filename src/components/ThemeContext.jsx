@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 // Define the precise holiday boundaries
 // Month is 1-indexed (1 = Jan, 12 = Dec)
-const HOLIDAYS = [
+export const HOLIDAYS = [
   { name: 'theme-newyear', start: { m: 12, d: 31 }, end: { m: 1, d: 2 } },
   { name: 'theme-lunar', start: { m: 1, d: 20 }, end: { m: 2, d: 15 } }, // Approx Lunar New Year Window
   { name: 'theme-valentine', start: { m: 2, d: 10 }, end: { m: 2, d: 15 } },
@@ -10,10 +10,13 @@ const HOLIDAYS = [
   { name: 'theme-easter', start: { m: 3, d: 22 }, end: { m: 4, d: 25 } }, // Approx Easter window
   { name: 'theme-earth', start: { m: 4, d: 20 }, end: { m: 4, d: 22 } },
   { name: 'theme-summer', start: { m: 6, d: 20 }, end: { m: 7, d: 10 } },
+  { name: 'theme-independence', start: { m: 7, d: 1 }, end: { m: 7, d: 7 } }, // July 4th week
+  { name: 'theme-anniversary', start: { m: 10, d: 10 }, end: { m: 10, d: 15 } }, // Oct 10th
   { name: 'theme-halloween', start: { m: 10, d: 25 }, end: { m: 10, d: 31 } },
   { name: 'theme-diwali', start: { m: 10, d: 20 }, end: { m: 11, d: 15 } }, // Approx Diwali window
   { name: 'theme-autumn', start: { m: 11, d: 16 }, end: { m: 11, d: 30 } }, // Thanksgiving / Late Autumn
   { name: 'theme-christmas', start: { m: 12, d: 15 }, end: { m: 12, d: 30 } },
+  { name: 'theme-ramadan', start: { m: 2, d: 17 }, end: { m: 3, d: 19 } }, // Approx Ramadan window 2026
 ];
 
 function isDateInRange(date, start, end) {

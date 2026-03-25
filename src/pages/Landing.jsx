@@ -44,7 +44,7 @@ export default function Landing() {
               <span className="text-xl font-extrabold text-foreground">CodeBear</span>
             </Link>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 pr-2 sm:pr-0">
               <Button variant="ghost" asChild>
                 <Link to="/login">Login</Link>
               </Button>

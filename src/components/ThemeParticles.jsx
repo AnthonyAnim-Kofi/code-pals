@@ -13,13 +13,16 @@ export function ThemeParticles() {
       'theme-christmas': { icon: '❄️', minSize: 12, maxSize: 32, dur: 8, anim: 'fall' },
       'theme-valentine': { icon: '💖', minSize: 12, maxSize: 24, dur: 12, anim: 'float-up' },
       'theme-stpatricks': { icon: '🍀', minSize: 12, maxSize: 24, dur: 15, anim: 'fall' },
-      'theme-easter': { icon: '🌸', minSize: 10, maxSize: 20, dur: 14, anim: 'float-wind' },
+      'theme-easter': { icon: '🌸', minSize: 10, maxSize: 20, dur: 14, anim: 'float-up' },
       'theme-autumn': { icon: '🍂', minSize: 12, maxSize: 24, dur: 12, anim: 'fall' },
-      'theme-halloween': { icon: '🦇', minSize: 16, maxSize: 30, dur: 8, anim: 'fly-across' },
-      'theme-earth': { icon: '🍃', minSize: 12, maxSize: 20, dur: 14, anim: 'float-wind' },
+      'theme-independence': { icon: '🎆', minSize: 16, maxSize: 30, dur: 6, anim: 'twinkle' },
+      'theme-anniversary': { icon: '🎉', minSize: 14, maxSize: 28, dur: 10, anim: 'fall' },
+      'theme-halloween': { icon: '蝙', minSize: 16, maxSize: 30, dur: 8, anim: 'float-up' },
+      'theme-earth': { icon: '🍃', minSize: 12, maxSize: 20, dur: 14, anim: 'fall' },
       'theme-newyear': { icon: '✨', minSize: 10, maxSize: 24, dur: 5, anim: 'twinkle' },
       'theme-diwali': { icon: '🪔', minSize: 16, maxSize: 28, dur: 8, anim: 'twinkle' },
       'theme-lunar': { icon: '🏮', minSize: 16, maxSize: 32, dur: 15, anim: 'float-up' },
+      'theme-ramadan': { icon: '🌙', minSize: 16, maxSize: 30, dur: 12, anim: 'twinkle' },
     };
 
     const config = effects[currentTheme];
@@ -50,8 +53,6 @@ export function ThemeParticles() {
         let startTop = `${p.top}%`;
         
         if (p.anim === 'float-up') startTop = '100%';
-        if (p.anim === 'float-wind') { startLeft = '-10vw'; startTop = `${p.top - 20}%`; }
-        if (p.anim === 'fly-across') { startLeft = '-10vw'; startTop = `${p.top}%`; }
         if (p.anim === 'fall') startTop = '-10vh';
 
         if (currentTheme === 'theme-christmas') {

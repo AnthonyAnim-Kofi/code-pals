@@ -31,12 +31,13 @@ export function AuthProvider({ children }) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         return { error: error };
     };
-    const signUp = async (email, password) => {
+    const signUp = async (email, password, raw_user_meta_data = {}) => {
         const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 emailRedirectTo: window.location.origin,
+                data: raw_user_meta_data,
             },
         });
         return { error: error };

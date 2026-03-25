@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { LanguageIcon } from "@/components/LanguageIcon";
 import { useTheme } from "@/components/ThemeContext";
+import { toast } from "sonner";
 import christmasBanner from "@/assets/christmas_banner.png";
 import halloweenBanner from "@/assets/halloween_banner.png";
 import valentineBanner from "@/assets/valentine_banner.png";
@@ -22,6 +23,13 @@ import lunarBanner from "@/assets/lunar_banner.png";
 import stpatricksBanner from "@/assets/stpatricks_banner.png";
 import earthBanner from "@/assets/earth_banner.png";
 import summerBanner from "@/assets/summer_banner.png";
+
+// Fallbacks for holidays without Local image files (Quota Exhausted)
+const autumnBanner = "https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&q=80&w=1200";
+const diwaliBanner = "https://images.unsplash.com/photo-1605349141071-705a666e5792?auto=format&fit=crop&q=80&w=1200";
+const ramadanBanner = "https://images.unsplash.com/photo-1564507004663-b6dfb3c824d5?auto=format&fit=crop&q=80&w=1200";
+const independenceBanner = "https://images.unsplash.com/photo-1533219057257-4bb9ed5d2cc6?auto=format&fit=crop&q=80&w=1200";
+const anniversaryBanner = "https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&q=80&w=1200";
 /** Repeating position pattern for zig-zag lesson layout */
 const positionPattern = ["center", "left", "right", "center", "right", "left"];
 export default function Learn() {
@@ -54,6 +62,16 @@ export default function Learn() {
     const completedLessonIds = lessonProgress
         .filter((p) => p.completed)
         .map((p) => String(p.lesson_id));
+
+    const handleUnitJump = async (unitId) => {
+        if (!profile) return;
+        try {
+            await updateProfile.mutateAsync({ advanced_start_unit_id: unitId });
+            toast.success("Jumped to unit! You can now start from here.");
+        } catch (err) {
+            toast.error("Failed to jump to unit.");
+        }
+    };
     // Avoid flashing the first language (often Python) before the user's active language loads
     if (languagesLoading || profileLoading) {
         return (<div className="space-y-8">
@@ -102,7 +120,12 @@ export default function Learn() {
         currentTheme === 'theme-lunar' ||
         currentTheme === 'theme-stpatricks' ||
         currentTheme === 'theme-earth' ||
-        currentTheme === 'theme-summer') && (
+        currentTheme === 'theme-summer' ||
+        currentTheme === 'theme-autumn' || 
+        currentTheme === 'theme-diwali' || 
+        currentTheme === 'theme-ramadan' || 
+        currentTheme === 'theme-independence' ||
+        currentTheme === 'theme-anniversary') && (
         <div className="w-full h-32 sm:h-48 md:h-64 rounded-2xl overflow-hidden relative shadow-lg border border-border mt-2 animate-in fade-in zoom-in duration-500">
           <img 
             src={
@@ -114,6 +137,12 @@ export default function Learn() {
               currentTheme === 'theme-lunar' ? lunarBanner :
               currentTheme === 'theme-stpatricks' ? stpatricksBanner :
               currentTheme === 'theme-earth' ? earthBanner :
+              currentTheme === 'theme-summer' ? summerBanner :
+              currentTheme === 'theme-autumn' ? autumnBanner :
+              currentTheme === 'theme-diwali' ? diwaliBanner :
+              currentTheme === 'theme-ramadan' ? ramadanBanner :
+              currentTheme === 'theme-independence' ? independenceBanner :
+              currentTheme === 'theme-anniversary' ? anniversaryBanner :
               summerBanner
             } 
             alt="Happy Holidays!" 
@@ -129,6 +158,11 @@ export default function Learn() {
                currentTheme === 'theme-lunar' ? "Happy Lunar New Year! 🏮" :
                currentTheme === 'theme-stpatricks' ? "Happy St. Patrick's Day! 🍀" :
                currentTheme === 'theme-earth' ? "Happy Earth Day! 🌍" :
+               currentTheme === 'theme-autumn' ? "Happy Thanksgiving! 🍂" :
+               currentTheme === 'theme-diwali' ? "Happy Diwali! 🪔" :
+               currentTheme === 'theme-ramadan' ? "Ramadan Kareem! 🌙" :
+               currentTheme === 'theme-independence' ? "Happy Independence Day! 🇺🇸" :
+               currentTheme === 'theme-anniversary' ? "Happy Site Anniversary! 🎉" :
                "Enjoy Your Summer! ☀️"}
             </h2>
           </div>
@@ -142,14 +176,14 @@ export default function Learn() {
         </div>) : units.length === 0 ? (<div className="text-center py-12 text-muted-foreground">
           <p className="text-lg font-medium">No units available yet</p>
           <p className="text-sm mt-2">Check back soon for new content!</p>
-        </div>) : (<DatabaseUnits units={units} completedLessonIds={completedLessonIds}/>)}
+        </div>) : (<DatabaseUnits units={units} completedLessonIds={completedLessonIds} profile={profile} onJump={handleUnitJump}/>)}
     </div>);
 }
 /**
  * DatabaseUnits – Renders all units from the database with lesson tracking.
  * Manages cross-unit lesson data for proper unit locking logic.
  */
-function DatabaseUnits({ units, completedLessonIds }) {
+function DatabaseUnits({ units, completedLessonIds, profile, onJump }) {
     const [allLessonsData, setAllLessonsData] = useState(new Map());
     const updateLessonsData = useCallback((unitId, lessonIds) => {
         setAllLessonsData(prev => {
@@ -163,7 +197,22 @@ function DatabaseUnits({ units, completedLessonIds }) {
         return unitLessons.filter(id => completedLessonIds.includes(id)).length;
     };
     return (<>
-      {units.map((unit, unitIndex) => (<DatabaseUnit key={unit.id} unit={unit} unitIndex={unitIndex} totalUnits={units.length} completedLessonIds={completedLessonIds} previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds, allLessonsData)} onLessonsLoaded={updateLessonsData} completedLessonsCount={getCompletedLessonsForUnit(unit.id)}/>))}
+      {units.map((unit, unitIndex) => (
+        <DatabaseUnit 
+            key={unit.id} 
+            unit={unit} 
+            unitIndex={unitIndex} 
+            totalUnits={units.length} 
+            completedLessonIds={completedLessonIds} 
+            previousUnitsComplete={checkPreviousUnitsComplete(units, unitIndex, completedLessonIds, allLessonsData)} 
+            onLessonsLoaded={updateLessonsData} 
+            completedLessonsCount={getCompletedLessonsForUnit(unit.id)} 
+            userExperience={profile?.coding_experience}
+            advancedStartUnitId={profile?.advanced_start_unit_id}
+            onJump={onJump}
+            allUnits={units}
+        />
+      ))}
     </>);
 }
 /**
@@ -176,6 +225,7 @@ function checkPreviousUnitsComplete(units, currentUnitIndex, completedLessonIds,
     for (let i = 0; i < currentUnitIndex; i++) {
         const unitId = units[i].id;
         const unitLessons = allLessonsData.get(unitId) || [];
+        if (unitLessons.length === 0) return false; // Not loaded yet
         for (const lessonId of unitLessons) {
             if (!completedLessonIds.includes(lessonId))
                 return false;
@@ -187,7 +237,11 @@ function checkPreviousUnitsComplete(units, currentUnitIndex, completedLessonIds,
  * DatabaseUnit – Renders a single unit with its lessons in a zig-zag LessonPath.
  * Handles lesson status logic (complete/current/locked) based on progression.
  */
-function DatabaseUnit({ unit, unitIndex, totalUnits, completedLessonIds, previousUnitsComplete, onLessonsLoaded, completedLessonsCount }) {
+function DatabaseUnit({ 
+    unit, unitIndex, totalUnits, completedLessonIds, 
+    previousUnitsComplete, onLessonsLoaded, completedLessonsCount, 
+    userExperience, advancedStartUnitId, onJump, allUnits 
+}) {
     const { data: lessons = [], isLoading } = useLessonsForUnit(unit.id);
     // Report lessons to parent for cross-unit locking checks
     useEffect(() => {
@@ -195,25 +249,41 @@ function DatabaseUnit({ unit, unitIndex, totalUnits, completedLessonIds, previou
             onLessonsLoaded(unit.id, lessons.map(l => l.id));
         }
     }, [lessons, unit.id, onLessonsLoaded]);
-    const isUnitLocked = !previousUnitsComplete;
+
+    const canSkipLocks = userExperience === 'intermediate' || userExperience === 'advanced';
+    
+    // Check if this unit or any later unit is the "advanced start" point
+    const jumpedUnitIndex = allUnits.findIndex(u => u.id === advancedStartUnitId);
+    const isUnlockedByJump = canSkipLocks && jumpedUnitIndex !== -1 && unitIndex <= jumpedUnitIndex;
+
+    const isUnitLocked = !previousUnitsComplete && !isUnlockedByJump;
+
     /** Determines lesson status based on unit lock state and completion history */
     const getLessonStatus = (lessonId, lessonIndex) => {
-        if (isUnitLocked)
-            return "locked";
         if (completedLessonIds.includes(lessonId))
             return "complete";
+            
+        if (isUnlockedByJump)
+            return "current";
+
+        if (isUnitLocked)
+            return "locked";
+        
         if (unitIndex === 0 && lessonIndex === 0)
             return "current";
+            
         if (lessonIndex > 0) {
             const prevLesson = lessons[lessonIndex - 1];
             if (prevLesson && completedLessonIds.includes(prevLesson.id))
                 return "current";
         }
+        
         if (lessonIndex === 0 && previousUnitsComplete)
             return "current";
+            
         return "locked";
     };
-    const isUnitActive = !isUnitLocked && lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current");
+    const isUnitActive = isUnlockedByJump ? true : (!isUnitLocked && lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current"));
     const currentLessonId = lessons.find((lesson, idx) => getLessonStatus(lesson.id, idx) === "current")?.id;
     const colorMap = {
         green: "green", blue: "blue", orange: "orange", purple: "purple",
@@ -226,12 +296,33 @@ function DatabaseUnit({ unit, unitIndex, totalUnits, completedLessonIds, previou
         status: getLessonStatus(lesson.id, idx),
         position: positionPattern[idx % positionPattern.length],
     }));
+
     return (<div className="space-y-4">
-      <UnitBanner title={unit.title} description={unit.description || ""} color={colorMap[unit.color] || "green"} isActive={isUnitActive} currentLessonId={currentLessonId ?? undefined} unitId={unit.id} completedLessons={completedLessonsCount} totalLessons={lessons.length}/>
+      <UnitBanner 
+        title={unit.title} 
+        description={unit.description || ""} 
+        color={colorMap[unit.color] || "green"} 
+        isActive={isUnitActive} 
+        currentLessonId={currentLessonId ?? undefined} 
+        unitId={unit.id} 
+        completedLessons={completedLessonsCount} 
+        totalLessons={lessons.length}
+        canJump={canSkipLocks}
+        isLocked={isUnitLocked}
+        onJump={onJump}
+      />
 
       {/* Lesson path with zig-zag layout and connector lines */}
       <LessonPath lessons={lessonPathData}>
-        {lessons.map((lesson, lessonIndex) => (<LessonBubble key={lesson.id} id={lesson.id} status={getLessonStatus(lesson.id, lessonIndex)} position={positionPattern[lessonIndex % positionPattern.length]} lessonNumber={lessonIndex + 1}/>))}
+        {lessons.map((lesson, lessonIndex) => (
+          <LessonBubble 
+            key={lesson.id} 
+            id={lesson.id} 
+            status={getLessonStatus(lesson.id, lessonIndex)} 
+            position={positionPattern[lessonIndex % positionPattern.length]} 
+            lessonNumber={lessonIndex + 1}
+          />
+        ))}
       </LessonPath>
 
       {/* Unit separator line */}

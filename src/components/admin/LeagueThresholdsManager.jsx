@@ -73,7 +73,7 @@ export function LeagueThresholdsManager() {
                 <span className="font-bold capitalize text-lg">{threshold.league}</span>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-slate-300">
                     Promotion XP Threshold

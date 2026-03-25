@@ -124,7 +124,7 @@ export function QuestManager() {
       </div>
 
       {/* Existing Quests */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 max-w-full overflow-hidden">
         <div className="bg-slate-700 rounded-xl p-6">
           <h4 className="font-bold mb-4 text-amber-400">Daily Quests ({dailyQuests.length})</h4>
           <div className="space-y-3">

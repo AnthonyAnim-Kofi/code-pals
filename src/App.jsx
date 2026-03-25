@@ -10,6 +10,7 @@ import { ThemeParticles } from "@/components/ThemeParticles";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { MobileChrome } from "@/components/layout/MobileChrome";
+import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { toast } from "sonner";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -33,6 +34,7 @@ import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
 const queryClient = new QueryClient();
 const App = () => {
+    useDeviceNotifications();
     // Global unhandled rejection handler to prevent blank pages from async errors
     useEffect(() => {
         const handleRejection = (event) => {
