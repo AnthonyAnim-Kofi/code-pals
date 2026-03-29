@@ -8,12 +8,18 @@ import { Target, Gift, Zap, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useQuests, useQuestProgress, useInitializeQuestProgress, useClaimQuestReward, getWeekStartSundayISO } from "@/hooks/useQuests";
+import {
+    useQuests,
+    useQuestProgress,
+    useInitializeQuestProgress,
+    useClaimQuestReward,
+    getWeekStartSundayISO,
+    localDateISO,
+    questDateKey,
+} from "@/hooks/useQuests";
 import { useUserProfile } from "@/hooks/useUserProgress";
+import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-function todayISO() {
-    return new Date().toISOString().split("T")[0];
-}
 function QuestCard({ quest, progress, onClaim, claimingId }) {
     const targetValue = progress?.target_value || quest.target_value;
     const currentValue = progress?.current_value || 0;
@@ -56,18 +62,19 @@ function QuestCard({ quest, progress, onClaim, claimingId }) {
     </div>);
 }
 export default function Quests() {
+    const { user } = useAuth();
     const { data: quests, isLoading: questsLoading } = useQuests();
     const { data: progressData, isLoading: progressLoading } = useQuestProgress();
     const { data: profile } = useUserProfile();
     const initializeProgress = useInitializeQuestProgress();
     const claimReward = useClaimQuestReward();
     const [claimingId, setClaimingId] = useState(null);
-    // Initialize quest progress for today when quests are loaded
+    // Create today's / this week's progress rows once quests are known (needs authenticated user)
     useEffect(() => {
-        if (quests && quests.length > 0) {
+        if (user && quests && quests.length > 0) {
             initializeProgress.mutate(quests);
         }
-    }, [quests]);
+    }, [user, quests]);
     const handleClaim = async (progressId, gemReward) => {
         setClaimingId(progressId);
         try {
@@ -83,14 +90,18 @@ export default function Quests() {
             setClaimingId(null);
         }
     };
-    const isLoading = questsLoading || progressLoading;
+    const isLoading = questsLoading || progressLoading || initializeProgress.isPending;
     const dailyQuests = quests?.filter((q) => !q.is_weekly) || [];
     const weeklyQuests = quests?.filter((q) => q.is_weekly) || [];
-    const today = todayISO();
+    const today = localDateISO(new Date());
     const weekStart = getWeekStartSundayISO();
     const getProgressForQuest = (quest) => {
         const questDate = quest.is_weekly ? weekStart : today;
-        return progressData?.find((p) => p.quest_id === quest.id && p.quest_date === questDate) || null;
+        return (
+            progressData?.find(
+                (p) => p.quest_id === quest.id && questDateKey(p.quest_date) === questDate,
+            ) || null
+        );
     };
     const totalClaimableGems = progressData
         ?.filter((p) => p.completed && !p.claimed)

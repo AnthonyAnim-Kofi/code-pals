@@ -28,8 +28,12 @@ function messageFromFunctionsError(error) {
  * >}
  */
 export async function executeUserCode({ code, language }) {
+  const payload = {
+    code: typeof code === "string" ? code : String(code ?? ""),
+    language: typeof language === "string" ? language : String(language ?? "python"),
+  };
   const { data, error } = await supabase.functions.invoke("run-code", {
-    body: { code, language },
+    body: payload,
   });
 
   if (error) {

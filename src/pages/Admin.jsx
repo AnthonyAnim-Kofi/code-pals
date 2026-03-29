@@ -1,6 +1,6 @@
 /**
  * Admin – Administrative dashboard for managing users, languages, units, lessons,
- * questions, notes, quests, leagues, shop items, sounds, and bulk imports.
+ * questions, notes, quests, leagues, shop items, sounds, and bulk import (Import tab).
  * Requires admin role. Includes edit functionality for all content items.
  */
 import { useState, useEffect } from "react";
@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsAdmin, useAdminUsers, useLanguages, useCreateLanguage, useUnits, useCreateUnit, useDeleteUnit, useLessons, useCreateLesson, useDeleteLesson, useQuestions, useCreateQuestion, useDeleteQuestion, useUnitNotes, useCreateUnitNote, useDeleteUnitNote, } from "@/hooks/useAdmin";
-import { CurriculumManager } from "@/components/admin/CurriculumManager";
+import { BulkImport } from "@/components/admin/BulkImport";
+import { BulkImportNotes } from "@/components/admin/BulkImportNotes";
 import { QuestManager } from "@/components/admin/QuestManager";
 import { LeagueThresholdsManager } from "@/components/admin/LeagueThresholdsManager";
 import { ShopManager } from "@/components/admin/ShopManager";
@@ -932,6 +933,14 @@ export default function Admin() {
                 </div>
                 <LeagueThresholdsManager />
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Import Tab — JSON/CSV bulk import for lessons, questions, and unit notes */}
+          <TabsContent value="import">
+            <div className="w-full space-y-8">
+              <BulkImport />
+              <BulkImportNotes />
             </div>
           </TabsContent>
 

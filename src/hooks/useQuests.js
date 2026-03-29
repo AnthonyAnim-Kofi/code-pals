@@ -11,12 +11,29 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-/** Returns today's date as ISO string (YYYY-MM-DD) */
-function isoDate(d) {
-    return d.toISOString().split("T")[0];
-}
+
 /**
- * Returns the ISO date of the most recent Sunday (week start).
+ * Calendar date in the user's local timezone (YYYY-MM-DD).
+ * Use for all `quest_date` reads/writes so daily/weekly rows match the UI and lesson updates.
+ * (UTC dates from `toISOString()` often disagree with local "today" for many timezones.)
+ */
+export function localDateISO(d = new Date()) {
+    const x = new Date(d);
+    const y = x.getFullYear();
+    const m = String(x.getMonth() + 1).padStart(2, "0");
+    const day = String(x.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+}
+
+/** Normalize DATE / timestamp strings from PostgREST for comparisons */
+export function questDateKey(v) {
+    if (v == null || v === "") return "";
+    const s = typeof v === "string" ? v : String(v);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+/**
+ * Returns the local calendar date of the most recent Sunday (week start).
  * Used as the quest_date for weekly quests.
  */
 export function getWeekStartSundayISO(now = new Date()) {
@@ -24,7 +41,7 @@ export function getWeekStartSundayISO(now = new Date()) {
     d.setHours(0, 0, 0, 0);
     const day = d.getDay(); // 0 = Sunday
     d.setDate(d.getDate() - day);
-    return isoDate(d);
+    return localDateISO(d);
 }
 /** Fetches all available quests (both daily and weekly) */
 export function useQuests() {
@@ -49,7 +66,7 @@ export function useQuestProgress() {
         queryFn: async () => {
             if (!user)
                 return [];
-            const today = isoDate(new Date());
+            const today = localDateISO(new Date());
             const weekStart = getWeekStartSundayISO();
             const { data, error } = await supabase
                 .from("user_quest_progress")
@@ -74,7 +91,7 @@ export function useInitializeQuestProgress() {
         mutationFn: async (quests) => {
             if (!user)
                 throw new Error("Not authenticated");
-            const today = isoDate(new Date());
+            const today = localDateISO(new Date());
             const weekStart = getWeekStartSundayISO();
             // Check existing progress
             const { data: existing } = await supabase
@@ -82,7 +99,9 @@ export function useInitializeQuestProgress() {
                 .select("quest_id, id, current_value, quest_date")
                 .eq("user_id", user.id)
                 .in("quest_date", [today, weekStart]);
-            const existingQuestIds = new Set(existing?.map((p) => p.quest_id) || []);
+            const existingByQuestAndDate = new Set(
+                existing?.map((p) => `${p.quest_id}:${questDateKey(p.quest_date)}`) || [],
+            );
             // Fetch user profile data to sync streak-based quests and determine dynamic XP target.
             const { data: profile } = await supabase
                 .from("profiles")
@@ -91,7 +110,10 @@ export function useInitializeQuestProgress() {
                 .single();
             // Create progress entries for quests that don't have one yet
             const newEntries = quests
-                .filter((q) => !existingQuestIds.has(q.id))
+                .filter((q) => {
+                    const d = q.is_weekly ? weekStart : today;
+                    return !existingByQuestAndDate.has(`${q.id}:${d}`);
+                })
                 .map((quest) => {
                 // If this is the daily earn_xp quest, use the user's set daily goal, fallback to the default global target.
                 const dynamicTarget = (quest.quest_type === "earn_xp" && !quest.is_weekly)
@@ -115,10 +137,14 @@ export function useInitializeQuestProgress() {
                     throw error;
             }
             if (profile) {
-                const streakQuests = quests.filter(q => q.quest_type === "maintain_streak");
+                const streakQuests = quests.filter(
+                    (q) => q.quest_type === "maintain_streak" || q.quest_type === "streak",
+                );
                 for (const quest of streakQuests) {
                     const questDate = quest.is_weekly ? weekStart : today;
-                    const existingProgress = existing?.find(p => p.quest_id === quest.id && p.quest_date === questDate);
+                    const existingProgress = existing?.find(
+                        (p) => p.quest_id === quest.id && questDateKey(p.quest_date) === questDate,
+                    );
                     if (existingProgress) {
                         // Update streak quest progress to match actual streak
                         const newValue = Math.min(profile.streak_count, quest.target_value);
@@ -153,7 +179,7 @@ export function useUpdateQuestProgress() {
         mutationFn: async ({ questType, incrementBy, }) => {
             if (!user)
                 throw new Error("Not authenticated");
-            const today = isoDate(new Date());
+            const today = localDateISO(new Date());
             const weekStart = getWeekStartSundayISO();
             // Find all quests of this type (both daily and weekly)
             const { data: quests } = await supabase

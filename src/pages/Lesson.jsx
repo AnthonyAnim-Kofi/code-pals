@@ -133,6 +133,16 @@ export default function Lesson() {
             setInitialized(true);
         }
     }, [savedProgress, initialized]);
+    // After questions change in the DB (e.g. admin removed rows), saved index / answered set can be out of range — clamp to avoid undefined `question` and bad saves.
+    useEffect(() => {
+        const n = lessonData.questions.length;
+        if (n === 0) return;
+        setCurrentQuestion((prev) => Math.min(Math.max(0, prev), n - 1));
+        setAnsweredQuestions((prev) => {
+            const kept = [...prev].filter((i) => Number.isFinite(i) && i >= 0 && i < n);
+            return kept.length === prev.size ? prev : new Set(kept);
+        });
+    }, [lessonId, lessonData.questions.length]);
     // Use refs to track current values for the unload handler (avoids re-running effect on every state change)
     const progressRef = useRef({
         currentQuestion,
@@ -182,9 +192,10 @@ export default function Lesson() {
                 // Find the first unanswered question index for resume
                 const firstUnansweredIndex = lessonData.questions.findIndex((_, idx) => !answeredQuestions.has(idx));
                 // If all answered, point to the last question
-                const resumeIndex = firstUnansweredIndex === -1
-                    ? lessonData.questions.length - 1
-                    : firstUnansweredIndex;
+                const resumeIndex =
+                    firstUnansweredIndex === -1
+                        ? Math.max(0, lessonData.questions.length - 1)
+                        : firstUnansweredIndex;
                 savePartialProgress.mutate({
                     lesson_id: lessonId,
                     current_question_index: resumeIndex,
@@ -207,9 +218,10 @@ export default function Lesson() {
         if (lessonId) {
             // Find the first unanswered question for proper resume
             const firstUnansweredIndex = lessonData.questions.findIndex((_, idx) => !answeredQuestions.has(idx));
-            const resumeIndex = firstUnansweredIndex === -1
-                ? lessonData.questions.length - 1
-                : firstUnansweredIndex;
+            const resumeIndex =
+                firstUnansweredIndex === -1
+                    ? Math.max(0, lessonData.questions.length - 1)
+                    : firstUnansweredIndex;
             savePartialProgress.mutate({
                 lesson_id: lessonId,
                 current_question_index: resumeIndex,
@@ -377,13 +389,18 @@ export default function Lesson() {
         <Loader2 className="w-8 h-8 animate-spin text-primary"/>
       </div>);
     }
-    // Handle empty questions or invalid question index
-    if (lessonData.questions.length === 0 || !question) {
+    // Handle empty lesson or stale index (e.g. questions removed server-side)
+    if (lessonData.questions.length === 0) {
         return (<div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
         <p className="text-muted-foreground text-center">No questions in this lesson yet.</p>
         <Button variant="outline" className="mt-4" onClick={handleExit}>
           Back to Learn
         </Button>
+      </div>);
+    }
+    if (!question) {
+        return (<div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary"/>
       </div>);
     }
     if (isComplete) {
