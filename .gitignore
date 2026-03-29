@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# InsForge & AI agent skills
+# Local agent tooling
 .insforge
 .agent
 .agents

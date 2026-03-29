@@ -389,9 +389,10 @@ export default function Lesson() {
     if (isComplete) {
         return (<LessonComplete xpEarned={xpEarned} totalQuestions={lessonData.questions.length} correctAnswers={correctAnswers} onContinue={handleLessonComplete}/>);
     }
+    const isCodeRunner = question?.type === "code-runner";
     return (<div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background border-b border-border">
+      {/* Header — hidden on desktop for code-runner */}
+      <header className={cn("sticky top-0 z-50 bg-background border-b border-border", isCodeRunner && "lg:hidden")}>
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-3 h-14">
             <button onClick={handleExit} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
@@ -432,21 +433,21 @@ export default function Lesson() {
         </div>
       </header>
 
-      {/* Progress bar */}
-      <div className="px-4 pt-3">
+      {/* Progress bar — hidden on desktop for code-runner */}
+      <div className={cn("px-4 pt-3", isCodeRunner && "lg:hidden")}>
         <Progress value={progress} size="default" indicatorColor="gradient"/>
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 container mx-auto px-4 py-6 max-w-2xl">
+      <main className={cn("flex-1 container mx-auto px-4 py-6 max-w-2xl", isCodeRunner && "lg:max-w-none lg:px-0 lg:py-0 lg:flex lg:flex-col")}>
         {/* Mascot Reaction */}
         {mascotReaction !== "idle" && (<div className="mb-4 animate-fade-in">
             <MascotReaction reaction={mascotReaction}/>
           </div>)}
 
         {/* Question */}
-        <div className="mb-8">
-          <h2 className="text-lg font-extrabold text-foreground mb-5">
+        <div className={cn("mb-8", isCodeRunner && "lg:mb-0")}>
+          <h2 className={cn("text-lg font-extrabold text-foreground mb-5", isCodeRunner && "lg:hidden")}>
             {question.instruction}
           </h2>
 
@@ -454,7 +455,7 @@ export default function Lesson() {
           {question.type === "drag-order" && question.blocks && question.correct_order && (<DragOrderChallenge blocks={question.blocks} correctOrder={question.correct_order} onAnswer={handleDragOrderAnswer} disabled={dragOrderChecked}/>)}
 
           {/* Code Runner Challenge */}
-          {question.type === "code-runner" && question.initial_code && question.expected_output && (<CodeRunnerChallenge initialCode={question.initial_code} expectedOutput={question.expected_output} hint={question.hint} instruction={question.instruction} onAnswer={handleCodeRunnerAnswer} disabled={codeRunnerChecked}/>)}
+          {question.type === "code-runner" && question.initial_code && question.expected_output && (<CodeRunnerChallenge initialCode={question.initial_code} expectedOutput={question.expected_output} hint={question.hint} instruction={question.instruction} language={languageInfo?.name?.toLowerCase() || "python"} languageSlug={languageInfo?.slug ?? null} onAnswer={handleCodeRunnerAnswer} disabled={codeRunnerChecked} lessonTitle={lessonData.title} lessonSubtitle={languageInfo?.name} questionIndex={currentQuestion} totalQuestions={totalQuestions} onExit={handleExit} onContinue={handleContinue} hearts={(isPracticeMode || isChallengeMode) ? "∞" : hearts} gems={profile?.gems ?? 0} isPracticeMode={isPracticeMode} isChallengeMode={isChallengeMode} progress={progress}/>)}
 
           {/* Code Block for Fill-in-the-blank */}
           {question.type === "fill-blank" && question.code && (<div className="bg-sidebar rounded-2xl p-6 mb-6 font-mono text-sm">
@@ -489,8 +490,8 @@ export default function Lesson() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className={cn("sticky bottom-0 border-t transition-colors", isChecked && isCorrect && "bg-primary/10 border-primary/30", isChecked && !isCorrect && "bg-destructive/10 border-destructive/30", !isChecked && "bg-background border-border")}>
+      {/* Footer — hidden on desktop for code-runner */}
+      <footer className={cn("sticky bottom-0 border-t transition-colors", isChecked && isCorrect && "bg-primary/10 border-primary/30", isChecked && !isCorrect && "bg-destructive/10 border-destructive/30", !isChecked && "bg-background border-border", isCodeRunner && "lg:hidden")}>
         <div className="container mx-auto px-4 py-4 max-w-2xl">
           <div className="flex gap-3">
             {/* Back button - always visible except on first question */}

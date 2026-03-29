@@ -101,12 +101,19 @@
 
   /* --- PREMIUM SEASONAL THEMES --- */
   
-  /* Christmas / Winter (Deep Crimson, Forest Green & Gold) */
+  /* Christmas / Winter (Winter Night: Deep Red/Green with Gold) */
   .theme-christmas {
-    --primary: 350 75% 42%; 
-    --primary-foreground: 45 100% 90%;
-    --secondary: 150 60% 30%;
-    --gradient-primary: linear-gradient(135deg, hsl(350, 75%, 42%), hsl(345, 80%, 32%));
+    --background: 350 60% 12%; 
+    --foreground: 45 100% 92%;
+    --card: 350 60% 18%;
+    --card-foreground: 45 100% 92%;
+    --muted: 350 40% 22%;
+    --muted-foreground: 350 20% 70%;
+    --border: 350 40% 25%;
+    --primary: 45 100% 50%; /* Gold primary */
+    --primary-foreground: 350 60% 10%;
+    --secondary: 150 60% 45%; /* Emerald green */
+    --gradient-primary: linear-gradient(135deg, hsl(350, 75% ,42%), hsl(150, 60%, 30%));
   }
 
   /* Valentine's (Rose Gold, Blush & Ruby) */
