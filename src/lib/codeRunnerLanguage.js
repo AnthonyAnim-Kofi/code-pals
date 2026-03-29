@@ -3,7 +3,7 @@
  * Piston runs code in a server-side sandbox; HTML/CSS use iframe preview only.
  */
 
-/** Slug → { editor, api } — api keys must match `supabase/functions/run-code` pistonLanguageMap */
+/** Slug → { editor, api } — `api` must match aliases in `supabase/functions/_shared/run-code-piston.ts` */
 const SLUG_MAP = {
   // Core languages
   python: { editor: "python", api: "python" },

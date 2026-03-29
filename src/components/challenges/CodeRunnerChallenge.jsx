@@ -10,9 +10,9 @@ import { Loader2, CheckCircle, XCircle, RotateCcw, Lightbulb, Play, Terminal, X,
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { CodeEditor } from "@/components/CodeEditor";
 import { resolveCodeRunnerLanguage, getRunnerFileLabel } from "@/lib/codeRunnerLanguage";
+import { consoleLinesFromRun, executeUserCode, gradingOutput } from "@/lib/runCode";
 import mascotImage from "@/assets/mascot.png";
 
 const SHORTCUTS = {
@@ -120,31 +120,25 @@ export function CodeRunnerChallenge({
         setIsRunning(false);
         return;
       }
-      const { data, error } = await supabase.functions.invoke("run-code", {
-        body: { code, language: resolved.apiLanguage },
+      const run = await executeUserCode({
+        code,
+        language: resolved.apiLanguage,
       });
-      if (error) {
-        const errMsg = "Error: " + error.message;
-        setOutput(errMsg);
-        setConsoleLines([{ type: "error", text: errMsg }]);
+      if (!run.ok) {
+        setOutput(run.message);
+        setConsoleLines([{ type: "error", text: run.message }]);
         setIsRunning(false);
         return;
       }
-      const out = typeof data?.output === "string" ? data.output.trim() : "";
-      const errOut = typeof data?.error === "string" ? data.error.trim() : "";
-      const lines = [];
-      if (out) lines.push({ type: "output", text: out });
-      if (errOut) lines.push({ type: "error", text: errOut });
-      setConsoleLines(lines);
-
-      const result = out || errOut || "No output";
+      setConsoleLines(consoleLinesFromRun(run));
+      const result = gradingOutput(run) || "No output";
       setOutput(result);
       const correct = result === expectedOutput.trim();
       setIsCorrect(correct);
       setHasChecked(true);
       onAnswer(correct);
     } catch (err) {
-      const errMsg = "Error: " + (err instanceof Error ? err.message : "Unknown error");
+      const errMsg = err instanceof Error ? err.message : "Unknown error";
       setOutput(errMsg);
       setConsoleLines([{ type: "error", text: errMsg }]);
     } finally {

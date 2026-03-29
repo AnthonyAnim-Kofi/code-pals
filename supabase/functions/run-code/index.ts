@@ -1,190 +1,162 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  MAX_CODE_BYTES,
+  buildExecutePayload,
+  friendlyPistonUpstreamError,
+  getPistonApiBase,
+  resolvePistonLanguage,
+  type PistonExecuteResult,
+} from "../_shared/run-code-piston.ts";
 
-const corsHeaders = {
+const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
 };
 
-function getPistonApiBase(): string {
-  const raw = Deno.env.get("PISTON_API_BASE")?.trim() || "https://emkc.org/api/v2";
-  return raw.replace(/\/$/, "");
+function json(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
 }
 
-const SANDBOX_TIMEOUT_MS = { run: 10_000, compile: 15_000 } as const;
-
-function buildPistonExecuteBody(
-  pistonLang: string,
-  resolvedVersion: string,
-  code: string,
-): Record<string, unknown> {
-  const body: Record<string, unknown> = {
-    language: pistonLang,
-    version: resolvedVersion,
-    files: [{ content: code }],
-    run_timeout: SANDBOX_TIMEOUT_MS.run,
-    compile_timeout: SANDBOX_TIMEOUT_MS.compile,
-  };
-  const memRaw = Deno.env.get("PISTON_RUN_MEMORY_BYTES")?.trim();
-  if (memRaw) {
-    const n = parseInt(memRaw, 10);
-    if (!Number.isNaN(n) && n > 0) {
-      body.run_memory_limit = n;
-    }
-  }
-  return body;
+function byteLengthUtf8(s: string): number {
+  return new TextEncoder().encode(s).length;
 }
 
-function pistonUnavailableMessage(message: string): string {
-  if (/whitelist|hosting your own|engineerman/i.test(message)) {
-    return (
-      "Code sandbox is not reachable: the public Piston demo requires allowlisting. " +
-      "Host your own Piston (Docker) and set PISTON_API_BASE on this function to your instance URL (e.g. https://piston.yourdomain.com/api/v2)."
-    );
-  }
-  return message;
-}
+type RunCodeBody = {
+  code?: unknown;
+  language?: unknown;
+  version?: unknown;
+};
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { status: 204, headers: corsHeaders });
   }
 
+  if (req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
+  }
+
+  let body: RunCodeBody;
   try {
-    const { code, language = "python", version = "*" } = await req.json();
+    body = (await req.json()) as RunCodeBody;
+  } catch {
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
-    if (!code || typeof code !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Code is required" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        },
-      );
-    }
+  const code = body.code;
+  const languageIn = body.language;
+  const versionIn = body.version;
 
-    const pistonLanguageMap: Record<string, string> = {
-      python: "python",
-      javascript: "javascript",
-      js: "javascript",
-      typescript: "typescript",
-      ts: "typescript",
-      java: "java",
-      c: "c",
-      cpp: "c++",
-      "c++": "c++",
-      csharp: "csharp",
-      "c#": "csharp",
-      ruby: "ruby",
-      go: "go",
-      rust: "rust",
-      php: "php",
-      swift: "swift",
-      kotlin: "kotlin",
-      bash: "bash",
-      sh: "bash",
-      lua: "lua",
-      perl: "perl",
-      raku: "raku",
-      scala: "scala",
-      dart: "dart",
-      r: "r",
-      julia: "julia",
-      haskell: "haskell",
-      zig: "zig",
-      nim: "nim",
-      crystal: "crystal",
-      elixir: "elixir",
-      erlang: "erlang",
-      clojure: "clojure",
-      fsharp: "fsharp",
-      ocaml: "ocaml",
-      vlang: "vlang",
-      groovy: "groovy",
-      fortran: "fortran",
-      cobol: "cobol",
-      lisp: "lisp",
-      scheme: "scheme",
-      prolog: "prolog",
-      ada: "ada",
-      d: "d",
-      brainfuck: "brainfuck",
-      deno: "deno",
-      powershell: "powershell",
-      pwsh: "powershell",
-      node: "javascript",
-      nodejs: "javascript",
-    };
+  if (typeof code !== "string") {
+    return json({ error: "Field `code` must be a string" }, 400);
+  }
+  if (byteLengthUtf8(code) > MAX_CODE_BYTES) {
+    return json(
+      { error: `Code exceeds maximum size (${MAX_CODE_BYTES} bytes)` },
+      400,
+    );
+  }
 
-    const pistonLang = pistonLanguageMap[language.toLowerCase()] || language.toLowerCase();
-    let resolvedVersion = version;
-    const apiBase = getPistonApiBase();
+  if (languageIn !== undefined && typeof languageIn !== "string") {
+    return json({ error: "Field `language` must be a string" }, 400);
+  }
+  const languageRaw = typeof languageIn === "string" && languageIn.length > 0
+    ? languageIn
+    : "python";
 
-    if (resolvedVersion === "*") {
-      const runtimesRes = await fetch(`${apiBase}/piston/runtimes`);
-      if (!runtimesRes.ok) {
-        const errText = await runtimesRes.text();
-        let msg = "Failed to fetch Piston runtimes";
+  let version =
+    typeof versionIn === "string" && versionIn.length > 0 ? versionIn : "*";
+
+  const pistonLang = resolvePistonLanguage(languageRaw);
+  const apiBase = getPistonApiBase();
+
+  try {
+    if (version === "*") {
+      const rtRes = await fetch(`${apiBase}/piston/runtimes`);
+      const rtText = await rtRes.text();
+      if (!rtRes.ok) {
+        let msg = "Failed to list runtimes from code runner";
         try {
-          const j = JSON.parse(errText);
-          if (typeof j?.message === "string") msg = pistonUnavailableMessage(j.message);
-        } catch { /* use default */ }
-        throw new Error(msg);
+          const j = JSON.parse(rtText) as { message?: string };
+          if (typeof j?.message === "string") {
+            msg = friendlyPistonUpstreamError(j.message);
+          }
+        } catch {
+          /* ignore */
+        }
+        return json({ error: msg }, 502);
       }
 
-      const runtimes = await runtimesRes.json();
+      const runtimes = JSON.parse(rtText) as Array<{
+        language: string;
+        version: string;
+        aliases?: string[];
+      }>;
 
-      const runtime = runtimes.find((r: { language: string; aliases?: string[] }) =>
-        r.language === pistonLang || r.aliases?.includes(pistonLang)
+      const hit = runtimes.find(
+        (r) => r.language === pistonLang || r.aliases?.includes(pistonLang),
       );
-
-      if (!runtime) {
-        throw new Error(`Language '${language}' is not currently supported by the execution engine.`);
+      if (!hit) {
+        return json(
+          {
+            error: `Language "${languageRaw}" is not available on this code runner.`,
+          },
+          400,
+        );
       }
-
-      resolvedVersion = runtime.version;
+      version = hit.version;
     }
 
-    const pistonResponse = await fetch(`${apiBase}/piston/execute`, {
+    const execRes = await fetch(`${apiBase}/piston/execute`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(buildPistonExecuteBody(pistonLang, resolvedVersion, code)),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildExecutePayload(pistonLang, version, code)),
     });
 
-    const pistonResult = await pistonResponse.json();
-
-    if (!pistonResponse.ok) {
-      const raw = typeof pistonResult?.message === "string"
-        ? pistonResult.message
-        : pistonResponse.statusText;
-      throw new Error(`Piston API Error: ${pistonUnavailableMessage(raw)}`);
+    const execText = await execRes.text();
+    let pistonResult: PistonExecuteResult;
+    try {
+      pistonResult = JSON.parse(execText) as PistonExecuteResult;
+    } catch {
+      return json(
+        { error: "Code runner returned invalid response" },
+        502,
+      );
     }
 
-    const compileOutput = pistonResult.compile?.output || "";
-    const runStdout = pistonResult.run?.stdout || "";
-    const runStderr = pistonResult.run?.stderr || "";
-    const exitCode = pistonResult.run?.code ?? (pistonResult.compile?.code || 0);
+    if (!execRes.ok) {
+      const msg =
+        typeof (pistonResult as { message?: string }).message === "string"
+          ? (pistonResult as { message: string }).message
+          : execRes.statusText;
+      return json(
+        { error: `Code runner error: ${friendlyPistonUpstreamError(msg)}` },
+        502,
+      );
+    }
 
-    const combinedOutput = (compileOutput + "\n" + runStdout).trim();
+    const compileOut = (pistonResult.compile?.output ?? "").trimEnd();
+    const runOut = (pistonResult.run?.stdout ?? "").trimEnd();
+    const runErr = (pistonResult.run?.stderr ?? "").trimEnd();
 
-    return new Response(
-      JSON.stringify({
-        output: combinedOutput,
-        error: runStderr.trim() || null,
-        exitCode: exitCode
-      }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    const stdout = [compileOut, runOut].filter(Boolean).join("\n").trim();
+    const stderr = runErr;
+    const exitCode =
+      pistonResult.run?.code ?? pistonResult.compile?.code ?? null;
 
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ output: "", error: errorMessage, exitCode: 1 }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      },
-    );
+    return json({
+      stdout,
+      stderr,
+      exitCode,
+    });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    return json({ error: message }, 502);
   }
 });
