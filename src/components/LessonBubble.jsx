@@ -22,12 +22,12 @@ function HexagonBubble({ status }) {
       <polygon points="40,10 72,28 72,64 40,82 8,64 8,28" className={cn("transition-all", status === "complete" && "fill-primary/80", status === "current" && "fill-primary/70", status === "locked" && "fill-muted/50")}/>
     </svg>);
 }
-export function LessonBubble({ id, status, position, lessonNumber, showConnector = false, prevPosition }) {
+export function LessonBubble({ id, status, position, lessonNumber, showConnector = false, prevPosition, showMascot = true }) {
     const offsetX = getOffsetX(position);
     const isClickable = status !== "locked";
     const bubbleContent = (<div className="relative flex flex-col items-center" style={{ marginLeft: offsetX }}>
       {/* Bear mascot on current lesson */}
-      {status === "current" && (<div className="absolute -top-11 z-10 animate-bounce-gentle">
+      {status === "current" && showMascot && (<div className="absolute -top-11 z-10 animate-bounce-gentle">
           <img src={mascot} alt="Bear" className="w-10 h-10 object-contain drop-shadow-md"/>
         </div>)}
 

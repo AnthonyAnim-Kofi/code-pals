@@ -262,9 +262,6 @@ function DatabaseUnit({
     const getLessonStatus = (lessonId, lessonIndex) => {
         if (completedLessonIds.includes(lessonId))
             return "complete";
-            
-        if (isUnlockedByJump)
-            return "current";
 
         if (isUnitLocked)
             return "locked";
@@ -278,7 +275,7 @@ function DatabaseUnit({
                 return "current";
         }
         
-        if (lessonIndex === 0 && previousUnitsComplete)
+        if (lessonIndex === 0 && (previousUnitsComplete || isUnlockedByJump))
             return "current";
             
         return "locked";
@@ -321,6 +318,7 @@ function DatabaseUnit({
             status={getLessonStatus(lesson.id, lessonIndex)} 
             position={positionPattern[lessonIndex % positionPattern.length]} 
             lessonNumber={lessonIndex + 1}
+            showMascot={!isUnlockedByJump}
           />
         ))}
       </LessonPath>
