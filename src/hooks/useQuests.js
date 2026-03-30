@@ -25,11 +25,35 @@ export function localDateISO(d = new Date()) {
     return `${y}-${m}-${day}`;
 }
 
+/**
+ * Calendar date in UTC (YYYY-MM-DD).
+ * Kept for backwards-compatibility with quest rows previously written using UTC
+ * (`toISOString().split('T')[0]`).
+ */
+export function utcDateISO(d = new Date()) {
+    return new Date(d).toISOString().split("T")[0];
+}
+
 /** Normalize DATE / timestamp strings from PostgREST for comparisons */
 export function questDateKey(v) {
     if (v == null || v === "") return "";
     const s = typeof v === "string" ? v : String(v);
     return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+/**
+ * Display/completion target for a quest (daily XP goal uses `profiles.daily_goal_minutes`).
+ * Not persisted on `user_quest_progress` so the app works when that optional column is missing.
+ */
+export function resolveQuestTargetValue(quest, profile) {
+    const raw =
+        quest.quest_type === "earn_xp" && !quest.is_weekly
+            ? (profile?.daily_goal_minutes ?? quest.target_value)
+            : quest.target_value;
+    const n = Number(raw);
+    const fallback = Math.max(1, Math.floor(Number(quest.target_value) || 1));
+    if (!Number.isFinite(n) || n < 1) return fallback;
+    return Math.floor(n);
 }
 
 /**
@@ -42,6 +66,17 @@ export function getWeekStartSundayISO(now = new Date()) {
     const day = d.getDay(); // 0 = Sunday
     d.setDate(d.getDate() - day);
     return localDateISO(d);
+}
+
+/**
+ * Returns the week start Sunday date in UTC (YYYY-MM-DD) for backwards-compatibility.
+ */
+export function getWeekStartSundayUTCISO(now = new Date()) {
+    const d = new Date(now);
+    d.setUTCHours(0, 0, 0, 0);
+    const day = d.getUTCDay(); // 0 = Sunday
+    d.setUTCDate(d.getUTCDate() - day);
+    return utcDateISO(d);
 }
 /** Fetches all available quests (both daily and weekly) */
 export function useQuests() {
@@ -66,13 +101,21 @@ export function useQuestProgress() {
         queryFn: async () => {
             if (!user)
                 return [];
-            const today = localDateISO(new Date());
-            const weekStart = getWeekStartSundayISO();
+            const localToday = localDateISO(new Date());
+            const localWeekStart = getWeekStartSundayISO();
+            const utcToday = utcDateISO(new Date());
+            const utcWeekStart = getWeekStartSundayUTCISO();
+            const questDates = Array.from(new Set([
+                localToday,
+                localWeekStart,
+                utcToday,
+                utcWeekStart,
+            ]));
             const { data, error } = await supabase
                 .from("user_quest_progress")
                 .select(`*, quest:daily_quests(*)`)
                 .eq("user_id", user.id)
-                .in("quest_date", [today, weekStart]);
+                .in("quest_date", questDates);
             if (error)
                 throw error;
             return data;
@@ -107,32 +150,28 @@ export function useInitializeQuestProgress() {
                 .from("profiles")
                 .select("streak_count, daily_goal_minutes")
                 .eq("user_id", user.id)
-                .single();
+                .maybeSingle();
             // Create progress entries for quests that don't have one yet
             const newEntries = quests
                 .filter((q) => {
                     const d = q.is_weekly ? weekStart : today;
                     return !existingByQuestAndDate.has(`${q.id}:${d}`);
                 })
-                .map((quest) => {
-                // If this is the daily earn_xp quest, use the user's set daily goal, fallback to the default global target.
-                const dynamicTarget = (quest.quest_type === "earn_xp" && !quest.is_weekly)
-                    ? (profile?.daily_goal_minutes || quest.target_value)
-                    : quest.target_value;
-                return {
+                .map((quest) => ({
                     user_id: user.id,
                     quest_id: quest.id,
                     current_value: 0,
                     completed: false,
                     claimed: false,
                     quest_date: quest.is_weekly ? weekStart : today,
-                    target_value: dynamicTarget,
-                };
-            });
+                }));
             if (newEntries.length > 0) {
                 const { error } = await supabase
                     .from("user_quest_progress")
-                    .insert(newEntries);
+                    .upsert(newEntries, {
+                        onConflict: "user_id,quest_id,quest_date",
+                        ignoreDuplicates: true,
+                    });
                 if (error)
                     throw error;
             }
@@ -192,7 +231,7 @@ export function useUpdateQuestProgress() {
                 .from("profiles")
                 .select("daily_goal_minutes")
                 .eq("user_id", user.id)
-                .single();
+                .maybeSingle();
             for (const quest of quests) {
                 const questDate = quest.is_weekly ? weekStart : today;
                 const { data: progress } = await supabase
@@ -203,8 +242,7 @@ export function useUpdateQuestProgress() {
                     .eq("quest_date", questDate)
                     .maybeSingle();
                 // Calculate dynamic ceiling
-                const targetValue = (quest.quest_type === "earn_xp" && !quest.is_weekly)
-                    ? (profile?.daily_goal_minutes || quest.target_value) : quest.target_value;
+                const targetValue = resolveQuestTargetValue(quest, profile);
                 const currentValue = progress?.current_value ?? 0;
                 const newValue = Math.min(currentValue + incrementBy, targetValue);
                 const isCompleted = newValue >= targetValue;
@@ -227,7 +265,6 @@ export function useUpdateQuestProgress() {
                         completed: isCompleted,
                         completed_at: isCompleted ? new Date().toISOString() : null,
                         claimed: false,
-                        target_value: targetValue,
                     });
                 }
             }

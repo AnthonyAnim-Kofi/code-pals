@@ -14,14 +14,17 @@ import {
     useInitializeQuestProgress,
     useClaimQuestReward,
     getWeekStartSundayISO,
+    getWeekStartSundayUTCISO,
     localDateISO,
+    utcDateISO,
     questDateKey,
+    resolveQuestTargetValue,
 } from "@/hooks/useQuests";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-function QuestCard({ quest, progress, onClaim, claimingId }) {
-    const targetValue = progress?.target_value || quest.target_value;
+function QuestCard({ quest, progress, profile, onClaim, claimingId, disableClaimAll }) {
+    const targetValue = resolveQuestTargetValue(quest, profile);
     const currentValue = progress?.current_value || 0;
     const progressPercent = Math.min((currentValue / targetValue) * 100, 100);
     const isCompleted = progress?.completed || false;
@@ -51,7 +54,7 @@ function QuestCard({ quest, progress, onClaim, claimingId }) {
               <span className="text-muted-foreground">
                 {currentValue} / {targetValue}
               </span>
-              {isCompleted && !isClaimed && (<Button size="sm" variant="golden" className="h-8" onClick={() => onClaim(progress.id, quest.gem_reward)} disabled={claimingId !== null}>
+              {isCompleted && !isClaimed && (<Button size="sm" variant="golden" className="h-8" onClick={() => onClaim(progress.id, quest.gem_reward)} disabled={claimingId !== null || disableClaimAll}>
                   {isThisOneClaiming ? (<Loader2 className="w-4 h-4 animate-spin"/>) : ("Claim")}
                 </Button>)}
               {isClaimed && (<span className="text-sm text-muted-foreground font-medium">Claimed ✓</span>)}
@@ -69,6 +72,7 @@ export default function Quests() {
     const initializeProgress = useInitializeQuestProgress();
     const claimReward = useClaimQuestReward();
     const [claimingId, setClaimingId] = useState(null);
+    const [claimAllLoading, setClaimAllLoading] = useState(false);
     // Create today's / this week's progress rows once quests are known (needs authenticated user)
     useEffect(() => {
         if (user && quests && quests.length > 0) {
@@ -90,18 +94,48 @@ export default function Quests() {
             setClaimingId(null);
         }
     };
+
+    const handleClaimAll = async () => {
+        if (!progressData || !quests) return;
+        const claimable = progressData.filter((p) => p.completed && !p.claimed);
+        if (claimable.length === 0) return;
+
+        setClaimAllLoading(true);
+        try {
+            let total = 0;
+            for (const p of claimable) {
+                const quest = quests.find((q) => q.id === p.quest_id);
+                if (!quest) continue;
+                total += quest.gem_reward || 0;
+                await claimReward.mutateAsync({ progressId: p.id, gemReward: quest.gem_reward || 0 });
+            }
+            toast.success(`+${total} gems claimed!`, {
+                description: "All available rewards have been added to your account",
+            });
+        } catch {
+            toast.error("Failed to claim all rewards");
+        } finally {
+            setClaimAllLoading(false);
+        }
+    };
     const isLoading = questsLoading || progressLoading || initializeProgress.isPending;
     const dailyQuests = quests?.filter((q) => !q.is_weekly) || [];
     const weeklyQuests = quests?.filter((q) => q.is_weekly) || [];
-    const today = localDateISO(new Date());
-    const weekStart = getWeekStartSundayISO();
+    const localToday = localDateISO(new Date());
+    const utcToday = utcDateISO(new Date());
+    const localWeekStart = getWeekStartSundayISO();
+    const utcWeekStart = getWeekStartSundayUTCISO();
+    const dailyDateCandidates = [localToday, utcToday];
+    const weeklyDateCandidates = [localWeekStart, utcWeekStart];
     const getProgressForQuest = (quest) => {
-        const questDate = quest.is_weekly ? weekStart : today;
-        return (
-            progressData?.find(
-                (p) => p.quest_id === quest.id && questDateKey(p.quest_date) === questDate,
-            ) || null
-        );
+        const candidates = quest.is_weekly ? weeklyDateCandidates : dailyDateCandidates;
+        for (const d of candidates) {
+            const found = progressData?.find(
+                (p) => p.quest_id === quest.id && questDateKey(p.quest_date) === d,
+            );
+            if (found) return found;
+        }
+        return null;
     };
     const totalClaimableGems = progressData
         ?.filter((p) => p.completed && !p.claimed)
@@ -132,7 +166,7 @@ export default function Quests() {
           Daily Quests
         </h2>
         <div className="space-y-3">
-          {dailyQuests.map((quest) => (<QuestCard key={quest.id} quest={quest} progress={getProgressForQuest(quest)} onClaim={handleClaim} claimingId={claimingId}/>))}
+          {dailyQuests.map((quest) => (<QuestCard key={quest.id} quest={quest} profile={profile} progress={getProgressForQuest(quest)} onClaim={handleClaim} claimingId={claimingId} disableClaimAll={claimAllLoading}/>))}
         </div>
       </div>
 
@@ -143,7 +177,7 @@ export default function Quests() {
           Weekly Quests
         </h2>
         <div className="space-y-3">
-          {weeklyQuests.map((quest) => (<QuestCard key={quest.id} quest={quest} progress={getProgressForQuest(quest)} onClaim={handleClaim} claimingId={claimingId}/>))}
+          {weeklyQuests.map((quest) => (<QuestCard key={quest.id} quest={quest} profile={profile} progress={getProgressForQuest(quest)} onClaim={handleClaim} claimingId={claimingId} disableClaimAll={claimAllLoading}/>))}
         </div>
       </div>
 
@@ -155,6 +189,20 @@ export default function Quests() {
             <p className="text-2xl font-extrabold text-golden-foreground">
               {totalClaimableGems} Gems
             </p>
+            <div className="mt-2">
+              <Button
+                variant="golden"
+                className="h-9"
+                onClick={handleClaimAll}
+                disabled={claimAllLoading || totalClaimableGems === 0}
+              >
+                {claimAllLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin"/>
+                ) : (
+                  "Claim all"
+                )}
+              </Button>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-golden-foreground/80 text-sm">Your gems</p>
