@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Gift, Sparkles, Star, Heart, Gem, Flame, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useMyChestAwards, useClaimChest } from "@/hooks/useLeagueChests";
 import { useToast } from "@/hooks/use-toast";
@@ -58,6 +58,9 @@ export function ChestRewardModal() {
   return (
     <Dialog open={isOpen}>
       <DialogContent className="sm:max-w-md p-0 overflow-hidden border-0 bg-transparent shadow-none [&>button]:hidden">
+        <DialogTitle className="sr-only">
+          {revealed ? (config?.chest_name || "Reward Chest") : "You Won a Chest"}
+        </DialogTitle>
         <div className="relative bg-card rounded-3xl border-2 border-golden/30 overflow-hidden">
           {/* Glowing header */}
           <div className={cn(

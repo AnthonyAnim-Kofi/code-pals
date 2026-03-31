@@ -14,6 +14,7 @@ import { LessonComplete } from "@/components/LessonComplete";
 import { DragOrderChallenge } from "@/components/challenges/DragOrderChallenge";
 import { CodeRunnerChallenge } from "@/components/challenges/CodeRunnerChallenge";
 import { MascotReaction } from "@/components/MascotReaction";
+import { LanguageIcon } from "@/components/LanguageIcon";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useUserProfile, useAddXP, useDeductHeart, useSaveLessonProgress, useLessonProgress } from "@/hooks/useUserProgress";
 import { useUpdateQuestProgress } from "@/hooks/useQuests";
@@ -231,6 +232,14 @@ export default function Lesson() {
             });
         }
     }, [lessonId, answeredQuestions, xpEarned, correctAnswers, savePartialProgress, lessonData.questions]);
+    const markCurrentQuestionAnswered = useCallback(() => {
+        setAnsweredQuestions((prev) => {
+            if (prev.has(currentQuestion)) return prev;
+            const next = new Set(prev);
+            next.add(currentQuestion);
+            return next;
+        });
+    }, [currentQuestion]);
     // Handle exit - save progress and navigate to current lesson's language
     const handleExit = () => {
         saveProgress();
@@ -240,6 +249,8 @@ export default function Lesson() {
     const handleCheck = async () => {
         if (selectedAnswer === null)
             return;
+        // Persist attempts immediately so users cannot retry by exiting before Continue/Finish.
+        markCurrentQuestionAnswered();
         let correct = false;
         if (question.type === "fill-blank") {
             correct = selectedAnswer === question.answer;
@@ -270,6 +281,7 @@ export default function Lesson() {
         }
     };
     const handleDragOrderAnswer = useCallback((isCorrect) => {
+        markCurrentQuestionAnswered();
         setDragOrderChecked(true);
         setIsChecked(true);
         setIsCorrect(isCorrect);
@@ -290,8 +302,9 @@ export default function Lesson() {
             }
             playIncorrect();
         }
-    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode]);
+    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode, markCurrentQuestionAnswered]);
     const handleCodeRunnerAnswer = useCallback((isCorrect) => {
+        markCurrentQuestionAnswered();
         setCodeRunnerChecked(true);
         setIsChecked(true);
         setIsCorrect(isCorrect);
@@ -312,7 +325,7 @@ export default function Lesson() {
             }
             playIncorrect();
         }
-    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode]);
+    }, [question, playCorrect, playIncorrect, deductHeart, updateQuestProgress, isPracticeMode, isChallengeMode, markCurrentQuestionAnswered]);
     const handleContinue = async () => {
         // Mark current question as answered
         const newAnswered = new Set(answeredQuestions).add(currentQuestion);
@@ -411,17 +424,25 @@ export default function Lesson() {
       {/* Header — hidden on desktop for code-runner */}
       <header className={cn("sticky top-0 z-50 bg-background border-b border-border", isCodeRunner && "lg:hidden")}>
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 h-14">
-            <button onClick={handleExit} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-              <X className="w-5 h-5 text-muted-foreground"/>
+          <div className="flex items-center gap-4 h-16 lg:h-20">
+            <button onClick={handleExit} className="p-2 lg:p-2.5 rounded-lg hover:bg-muted transition-colors">
+              <X className="w-6 h-6 lg:w-7 lg:h-7 text-muted-foreground"/>
             </button>
 
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-extrabold text-muted-foreground uppercase tracking-wider truncate">
-                {languageInfo?.name || "Lesson"}
-              </p>
-              <p className="text-sm font-bold text-foreground truncate">
-                {lessonData.title}
+              <div className="flex items-center gap-2.5 lg:gap-3 min-w-0">
+                <LanguageIcon
+                  slug={languageInfo?.slug || "lesson"}
+                  icon={languageInfo?.icon}
+                  size={28}
+                  className="shrink-0"
+                />
+                <p className="text-base lg:text-xl font-extrabold text-foreground truncate">
+                  {lessonData.title}
+                </p>
+              </div>
+              <p className="text-sm lg:text-base font-semibold text-muted-foreground">
+                Question {Math.min(currentQuestion + 1, totalQuestions)} of {totalQuestions}
               </p>
             </div>
             
@@ -437,14 +458,14 @@ export default function Lesson() {
                 Challenge
               </div>)}
 
-            <div className="flex items-center gap-1 text-destructive">
-              <Heart className="w-4 h-4 fill-current"/>
-              <span className="font-extrabold text-sm">{(isPracticeMode || isChallengeMode) ? "∞" : hearts}</span>
+            <div className="flex items-center gap-1.5 text-destructive">
+              <Heart className="w-5 h-5 lg:w-6 lg:h-6 fill-current"/>
+              <span className="font-extrabold text-base lg:text-lg">{(isPracticeMode || isChallengeMode) ? "∞" : hearts}</span>
             </div>
 
-            <div className="flex items-center gap-1 text-primary">
-              <span className="text-sm">💎</span>
-              <span className="font-extrabold text-sm">{profile?.gems ?? 0}</span>
+            <div className="flex items-center gap-1.5 text-primary">
+              <span className="text-base lg:text-lg">💎</span>
+              <span className="font-extrabold text-base lg:text-lg">{profile?.gems ?? 0}</span>
             </div>
           </div>
         </div>

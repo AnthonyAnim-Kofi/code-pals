@@ -27,6 +27,7 @@ export default function Settings() {
         achievementAlerts: true,
         weeklyReport: false,
     });
+    const [autoFreezeSaving, setAutoFreezeSaving] = useState(false);
     // Initialize form with profile data when it loads
     if (profile && !initialized) {
         setDisplayName(profile.display_name || "");
@@ -53,6 +54,28 @@ export default function Settings() {
                 description: "Failed to update profile. Please try again.",
                 variant: "destructive",
             });
+        }
+    };
+    const handleAutoStreakFreezeToggle = async (checked) => {
+        setAutoFreezeSaving(true);
+        try {
+            await updateProfile.mutateAsync({ auto_use_streak_freeze: checked });
+            toast({
+                title: checked ? "Auto Streak Freeze enabled" : "Auto Streak Freeze disabled",
+                description: checked
+                    ? "Your streak freeze will be used automatically if you miss a day."
+                    : "Your streak freeze will not be used automatically.",
+            });
+        }
+        catch (error) {
+            toast({
+                title: "Error",
+                description: "Failed to update streak freeze setting.",
+                variant: "destructive",
+            });
+        }
+        finally {
+            setAutoFreezeSaving(false);
         }
     };
     if (isLoading) {
@@ -186,6 +209,17 @@ export default function Settings() {
                 <p className="text-sm text-muted-foreground">Receive weekly progress summary</p>
               </div>
               <Switch checked={notifications.weeklyReport} onCheckedChange={(checked) => setNotifications(prev => ({ ...prev, weeklyReport: checked }))}/>
+            </div>
+            <div className="flex items-center justify-between py-3 border-t border-border">
+              <div>
+                <p className="font-semibold text-foreground">Auto Use Streak Freeze</p>
+                <p className="text-sm text-muted-foreground">Automatically save your streak if you miss a day</p>
+              </div>
+              <Switch
+                checked={profile?.auto_use_streak_freeze ?? true}
+                disabled={autoFreezeSaving}
+                onCheckedChange={handleAutoStreakFreezeToggle}
+              />
             </div>
           </div>
         </TabsContent>

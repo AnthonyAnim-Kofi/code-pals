@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { useUserProfile } from "@/hooks/useUserProgress";
 import { HeartTimer } from "@/components/HeartTimer";
 import { LeagueTimer } from "@/components/LeagueTimer";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { StreakCalendar } from "@/components/StreakCalendar";
 export function UserProgress() {
@@ -112,6 +112,7 @@ export function UserProgress() {
       {/* Streak calendar dialog (only) */}
       <Dialog open={streakOpen} onOpenChange={setStreakOpen}>
         <DialogContent className="w-[95vw] max-w-md max-h-[85dvh] overflow-auto p-0">
+          <DialogTitle className="sr-only">Streak calendar</DialogTitle>
           <div className="p-6">
             <StreakCalendar currentStreak={streak} lastPracticeDate={profile?.last_practice_date || null} streakFreezeCount={profile?.streak_freeze_count || 0} lastStreakFreezeUsed={profile?.last_streak_freeze_used || null}/>
           </div>

@@ -76,7 +76,7 @@ export function useLessonLanguageInfo(lessonId) {
                 return null;
             const { data: language, error: langError } = await supabase
                 .from("languages")
-                .select("id, name, slug")
+                .select("id, name, slug, icon")
                 .eq("id", unit.language_id)
                 .maybeSingle();
             if (langError)

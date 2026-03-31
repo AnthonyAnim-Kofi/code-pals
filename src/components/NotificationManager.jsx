@@ -1,19 +1,41 @@
 import { useEffect, useRef } from "react";
-import { useUserProfile } from "@/hooks/useUserProgress";
+import { useUserProfile, useUpdateProfile } from "@/hooks/useUserProgress";
 import { useStreakReminder } from "@/hooks/useNotifications";
 import { useChallenges } from "@/hooks/useSocial";
 import { useNotifications } from "@/hooks/useNotifications";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export function NotificationManager() {
     const { data: profile } = useUserProfile();
+    const updateProfile = useUpdateProfile();
     const { data: challenges } = useChallenges();
     const { notifyChallengeAlert, notifyChallengeWin, notifyChallengeLoss, notifyChallengeTie } = useNotifications();
     const notifiedChallengesRef = useRef(new Set());
     const notifiedCompletedRef = useRef(new Set());
+    const streakFreezeNoticeShownRef = useRef(false);
 
     // Enable streak reminders if user has a profile
     useStreakReminder(profile?.last_practice_date || null, !!profile);
+
+    // One-time login notice when auto streak freeze was used while away.
+    useEffect(() => {
+        if (!profile || streakFreezeNoticeShownRef.current)
+            return;
+        if (!profile.auto_use_streak_freeze || !profile.last_streak_freeze_used)
+            return;
+        const noticeSeenAt = profile.streak_freeze_notice_seen_at
+            ? new Date(profile.streak_freeze_notice_seen_at).getTime()
+            : 0;
+        const freezeUsedAt = new Date(profile.last_streak_freeze_used).getTime();
+        if (Number.isNaN(freezeUsedAt) || freezeUsedAt <= noticeSeenAt)
+            return;
+        streakFreezeNoticeShownRef.current = true;
+        toast.success("Your streak was saved while you were away using a Streak Freeze.");
+        updateProfile.mutate({
+            streak_freeze_notice_seen_at: new Date().toISOString(),
+        });
+    }, [profile, updateProfile]);
 
     // Check for new (pending) challenges
     useEffect(() => {

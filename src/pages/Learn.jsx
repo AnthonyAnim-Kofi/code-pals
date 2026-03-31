@@ -252,9 +252,10 @@ function DatabaseUnit({
 
     const canSkipLocks = userExperience === 'intermediate' || userExperience === 'advanced';
     
-    // Check if this unit or any later unit is the "advanced start" point
+    // Apply jump-start behavior only to the selected unit.
     const jumpedUnitIndex = allUnits.findIndex(u => u.id === advancedStartUnitId);
-    const isUnlockedByJump = canSkipLocks && jumpedUnitIndex !== -1 && unitIndex <= jumpedUnitIndex;
+    const hasAdvancedStartJump = canSkipLocks && jumpedUnitIndex !== -1;
+    const isUnlockedByJump = canSkipLocks && jumpedUnitIndex !== -1 && unitIndex === jumpedUnitIndex;
 
     const isUnitLocked = !previousUnitsComplete && !isUnlockedByJump;
 
@@ -266,7 +267,7 @@ function DatabaseUnit({
         if (isUnitLocked)
             return "locked";
         
-        if (unitIndex === 0 && lessonIndex === 0)
+        if (!hasAdvancedStartJump && unitIndex === 0 && lessonIndex === 0)
             return "current";
             
         if (lessonIndex > 0) {
@@ -275,13 +276,14 @@ function DatabaseUnit({
                 return "current";
         }
         
-        if (lessonIndex === 0 && (previousUnitsComplete || isUnlockedByJump))
+        if (lessonIndex === 0 && (isUnlockedByJump || (!hasAdvancedStartJump && previousUnitsComplete)))
             return "current";
             
         return "locked";
     };
     const isUnitActive = isUnlockedByJump ? true : (!isUnitLocked && lessons.some((lesson, idx) => getLessonStatus(lesson.id, idx) === "current"));
     const currentLessonId = lessons.find((lesson, idx) => getLessonStatus(lesson.id, idx) === "current")?.id;
+    const shouldShowMascotInUnit = hasAdvancedStartJump ? isUnlockedByJump : unitIndex === 0;
     const colorMap = {
         green: "green", blue: "blue", orange: "orange", purple: "purple",
     };
@@ -318,7 +320,7 @@ function DatabaseUnit({
             status={getLessonStatus(lesson.id, lessonIndex)} 
             position={positionPattern[lessonIndex % positionPattern.length]} 
             lessonNumber={lessonIndex + 1}
-            showMascot={!isUnlockedByJump}
+            showMascot={shouldShowMascotInUnit && lesson.id === currentLessonId}
           />
         ))}
       </LessonPath>

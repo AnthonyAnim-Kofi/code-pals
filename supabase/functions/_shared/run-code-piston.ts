@@ -6,11 +6,17 @@
 /** Max UTF-8 bytes accepted per request (protects the runner and upstream Piston). */
 export const MAX_CODE_BYTES = 200_000;
 
-const DEFAULT_PISTON_BASE = "https://emkc.org/api/v2";
+/** Default public demo; path segment matches vanilla Piston (`…/api/v2` + `/runtimes`). */
+const DEFAULT_PISTON_BASE = "https://emkc.org/api/v2/piston";
 
 export function getPistonApiBase(): string {
-  const raw = Deno.env.get("PISTON_API_BASE")?.trim() || DEFAULT_PISTON_BASE;
-  return raw.replace(/\/$/, "");
+  let raw = Deno.env.get("PISTON_API_BASE")?.trim() || DEFAULT_PISTON_BASE;
+  raw = raw.replace(/\/$/, "");
+  // Older docs used `…/api/v2` for EMKC; the demo mounts Piston under `…/api/v2/piston`.
+  if (raw === "https://emkc.org/api/v2") {
+    raw = "https://emkc.org/api/v2/piston";
+  }
+  return raw;
 }
 
 /** Client `language` / alias → Piston runtime language id (for execute + runtimes lookup). */

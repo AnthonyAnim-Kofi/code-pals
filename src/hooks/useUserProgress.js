@@ -58,23 +58,27 @@ export function useAddXP() {
             if (!user)
                 throw new Error("Not authenticated");
             const today = todayISO();
+            const baseXpAmount = Math.max(0, Number(xpAmount) || 0);
             const { data: profile, error: fetchError } = await supabase
                 .from("profiles")
-                .select("xp, weekly_xp, daily_xp, last_daily_reset_at")
+                .select("xp, weekly_xp, daily_xp, last_daily_reset_at, double_xp_until")
                 .eq("user_id", user.id)
                 .single();
             if (fetchError)
                 throw fetchError;
+            const now = new Date();
+            const isDoubleXpActive = Boolean(profile?.double_xp_until) && new Date(profile.double_xp_until) > now;
+            const awardedXp = isDoubleXpActive ? baseXpAmount * 2 : baseXpAmount;
             // Reset daily XP when it's a new day
             const lastReset = profile?.last_daily_reset_at;
             const dailyXp = lastReset === today
-                ? (profile?.daily_xp ?? 0) + xpAmount
-                : xpAmount;
+                ? (profile?.daily_xp ?? 0) + awardedXp
+                : awardedXp;
             const { data, error } = await supabase
                 .from("profiles")
                 .update({
-                xp: (profile?.xp || 0) + xpAmount,
-                weekly_xp: (profile?.weekly_xp || 0) + xpAmount,
+                xp: (profile?.xp || 0) + awardedXp,
+                weekly_xp: (profile?.weekly_xp || 0) + awardedXp,
                 daily_xp: dailyXp,
                 last_daily_reset_at: today,
             })

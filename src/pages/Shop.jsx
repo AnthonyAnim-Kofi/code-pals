@@ -24,11 +24,12 @@ export default function Shop() {
     const purchaseDoubleXP = usePurchaseDoubleXP();
     const gems = profile?.gems ?? 0;
     const streakFreezes = profile?.streak_freeze_count ?? 0;
-    const getPurchaseHandler = (actionType) => {
-        switch (actionType) {
-            case "heart_refill": return () => purchaseHeartRefill.mutate();
-            case "streak_freeze": return () => purchaseStreakFreeze.mutate();
-            case "double_xp": return () => purchaseDoubleXP.mutate();
+    const getPurchaseHandler = (item) => {
+        const price = item?.price;
+        switch (item?.action_type) {
+            case "heart_refill": return () => purchaseHeartRefill.mutate(price);
+            case "streak_freeze": return () => purchaseStreakFreeze.mutate(price);
+            case "double_xp": return () => purchaseDoubleXP.mutate(price);
             default: return () => toast.info("This item is not yet available for purchase.");
         }
     };
@@ -88,9 +89,11 @@ export default function Shop() {
                   <p className="text-sm text-center text-muted-foreground mb-4">
                     {item.action_type === "streak_freeze"
                         ? `${item.description} (You have ${streakFreezes})`
-                        : item.description}
+                        : item.action_type === "double_xp"
+                            ? "Earn 2x XP for 15 minutes"
+                            : item.description}
                   </p>
-                  <Button className="w-full" variant={disabled ? "outline" : "default"} onClick={getPurchaseHandler(item.action_type)} disabled={disabled || loading}>
+                  <Button className="w-full" variant={disabled ? "outline" : "default"} onClick={getPurchaseHandler(item)} disabled={disabled || loading}>
                     {loading ? (<Loader2 className="w-4 h-4 animate-spin"/>) : (<>
                         <Gem className="w-4 h-4 text-secondary"/>
                         {item.price}

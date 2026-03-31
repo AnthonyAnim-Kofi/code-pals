@@ -78,7 +78,7 @@ serve(async (req: Request) => {
 
   try {
     if (version === "*") {
-      const rtRes = await fetch(`${apiBase}/piston/runtimes`);
+      const rtRes = await fetch(`${apiBase}/runtimes`);
       const rtText = await rtRes.text();
       if (!rtRes.ok) {
         let msg = "Failed to list runtimes from code runner";
@@ -113,7 +113,7 @@ serve(async (req: Request) => {
       version = hit.version;
     }
 
-    const execRes = await fetch(`${apiBase}/piston/execute`, {
+    const execRes = await fetch(`${apiBase}/execute`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(buildExecutePayload(pistonLang, version, code)),
