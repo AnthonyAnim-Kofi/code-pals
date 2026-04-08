@@ -70,11 +70,23 @@ function runJavaScriptLocally(code: string): { stdout: string; stderr: string; e
 /* ── Built-in Python subset runner ──────────────────────────────── */
 
 function runPythonSubset(code: string): { stdout: string; stderr: string; exitCode: number } {
-  const BLOCKED_TOKENS = ["import ", "from ", "__", "exec(", "eval(", "open(", "os.", "sys.", "subprocess"];
-  const lower = code.toLowerCase();
-  for (const t of BLOCKED_TOKENS) {
-    if (lower.includes(t)) {
-      return { stdout: "", stderr: `Blocked: "${t.trim()}" is not allowed in the sandbox.`, exitCode: 1 };
+  // Only block dangerous statements that appear as actual code lines, not inside strings
+  const lines = code.split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Skip comments and empty lines
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    // Strip string literals before checking for blocked tokens
+    const stripped = trimmed
+      .replace(/("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g, '""');
+    const strippedLower = stripped.toLowerCase();
+    if (/^import\s/.test(strippedLower) || /^from\s/.test(strippedLower)) {
+      return { stdout: "", stderr: `Blocked: import statements are not allowed in the sandbox.`, exitCode: 1 };
+    }
+    for (const t of ["__", "exec(", "eval(", "open(", "subprocess"]) {
+      if (strippedLower.includes(t)) {
+        return { stdout: "", stderr: `Blocked: "${t.trim()}" is not allowed in the sandbox.`, exitCode: 1 };
+      }
     }
   }
 
@@ -461,7 +473,9 @@ serve(async (req: Request) => {
     : "python";
 
   // Route to built-in runners
-  if (languageRaw === "javascript" || languageRaw === "js" || languageRaw === "node" || languageRaw === "nodejs") {
+  const jsAliases = ["javascript", "js", "node", "nodejs", "typescript", "ts"];
+  if (jsAliases.includes(languageRaw)) {
+    // TypeScript runs as JS (type annotations are stripped by Deno anyway for simple code)
     const result = runJavaScriptLocally(code);
     return json({ stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
   }
@@ -471,7 +485,15 @@ serve(async (req: Request) => {
     return json({ stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode });
   }
 
+  // Languages that need a real compiler/runtime - provide helpful message
+  const compiledLangs = ["java", "c", "cpp", "c++", "csharp", "c#", "go", "rust", "ruby", "swift", "kotlin", "dart", "scala", "haskell", "perl", "lua", "r", "julia", "php", "elixir", "erlang"];
+  if (compiledLangs.includes(languageRaw)) {
+    return json({
+      error: `Language "${languageRaw}" requires an external code runner (Piston). Set the PISTON_API_BASE secret to enable it. JavaScript, TypeScript, and Python run without any setup.`,
+    }, 400);
+  }
+
   return json({
-    error: `Language "${languageRaw}" is not yet supported in the built-in sandbox. JavaScript and Python are available.`,
+    error: `Language "${languageRaw}" is not recognized. Supported built-in languages: JavaScript, TypeScript, Python.`,
   }, 400);
 });
