@@ -71,8 +71,8 @@ function runJavaScriptLocally(code: string): { stdout: string; stderr: string; e
 
 function runPythonSubset(code: string): { stdout: string; stderr: string; exitCode: number } {
   // Only block dangerous statements that appear as actual code lines, not inside strings
-  const lines = code.split("\n");
-  for (const line of lines) {
+  const codeLines = code.split("\n");
+  for (const line of codeLines) {
     const trimmed = line.trim();
     // Skip comments and empty lines
     if (!trimmed || trimmed.startsWith("#")) continue;
