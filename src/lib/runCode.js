@@ -70,14 +70,22 @@ export function gradingOutput({ stdout, stderr }) {
 }
 
 /**
- * @param {{ stdout: string, stderr: string }} run
- * @returns {Array<{ type: 'output' | 'error', text: string }>}
+ * @param {{ stdout: string, stderr: string, exitCode?: number | null }} run
+ * @returns {Array<{ type: 'output' | 'error' | 'exit', text: string, exitOk?: boolean }>}
  */
 export function consoleLinesFromRun(run) {
   const lines = [];
   const out = (run.stdout || "").trimEnd();
   const err = (run.stderr || "").trimEnd();
-  if (out) lines.push({ type: "output", text: out });
-  if (err) lines.push({ type: "error", text: err });
+  if (out) {
+    out.split("\n").forEach((line) => lines.push({ type: "output", text: line }));
+  }
+  if (err) {
+    err.split("\n").forEach((line) => lines.push({ type: "error", text: line }));
+  }
+  const code = run.exitCode ?? null;
+  if (code !== null) {
+    lines.push({ type: "exit", text: `Process finished with exit code ${code}`, exitOk: code === 0 });
+  }
   return lines;
 }

@@ -5,7 +5,7 @@
  * Desktop (>=1024px): Full viewport - Left (lesson info) | Center (editor) | Right (live console)
  * Mobile: Learn / Code / Preview tabs (unchanged)
  */
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Loader2, CheckCircle, XCircle, RotateCcw, Lightbulb, Play, Terminal, X, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -26,11 +26,22 @@ const SHORTCUTS = {
   cpp: ["#include", "int", "std", "cout", "return", "namespace"],
   csharp: ["using", "namespace", "class", "static", "void", "Console", "WriteLine"],
   go: ["package", "func", "fmt", "Println", "import"],
-  rust: ["fn", "let", "mut", "println!", "use"],
-  php: ["<?php", "echo", "$", "function"],
-  ruby: ["def", "puts", "end", "class"],
-  swift: ["import", "func", "print", "var", "let"],
-  kotlin: ["fun", "println", "val", "var", "main"],
+  rust: ["fn", "let", "mut", "println!", "use", "->", "struct", "impl", "&str"],
+  php: ["<?php", "echo", "$", "function", "->", "array", "foreach", "=>"],
+  ruby: ["def", "puts", "end", "class", "do", "each", "nil", "attr"],
+  swift: ["import", "func", "print", "var", "let", "guard", "if", "return"],
+  kotlin: ["fun", "println", "val", "var", "main", "if", "when", "return"],
+  bash: ["echo", "$", "if", "fi", "for", "do", "done", "&&", "||", "#!/bin/bash"],
+  shell: ["echo", "$", "if", "fi", "for", "do", "done", "&&", "||", "#!/bin/bash"],
+  lua: ["print", "local", "function", "end", "if", "then", "for", "do", "return", "nil"],
+  r: ["print", "<-", "c()", "function", "if", "for", "in", "TRUE", "FALSE", "NULL"],
+  scala: ["def", "val", "var", "object", "class", "println", "import", "match", "case"],
+  elixir: ["def", "IO.puts", "end", "defmodule", "if", "do", "|>", "fn", "->"],
+  dart: ["void", "main", "print", "var", "final", "if", "for", "return", "class"],
+  haskell: ["main", "putStrLn", "let", "where", "do", "if", "then", "else", "->"],
+  julia: ["println", "function", "end", "if", "for", "return", "module", "::", "begin"],
+  perl: ["print", "my", "$", "@", "%", "if", "foreach", "sub", "use", "->"],
+  powershell: ["Write-Host", "$", "if", "foreach", "function", "return", "param", "Get-"],
 };
 
 export function CodeRunnerChallenge({
@@ -69,9 +80,17 @@ export function CodeRunnerChallenge({
   const [showHint, setShowHint] = useState(false);
   const [consoleLines, setConsoleLines] = useState([]);
 
+  const consoleRef = useRef(null);
+
   useEffect(() => {
     setConsoleLines([]);
   }, [resolved.resolutionKey]);
+
+  useEffect(() => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [consoleLines, isRunning]);
 
   const shortcuts = SHORTCUTS[resolved.editorLanguage] || SHORTCUTS.python;
   const fileTabLabel = getRunnerFileLabel(resolved.editorLanguage);
@@ -93,7 +112,7 @@ export function CodeRunnerChallenge({
     setIsRunning(true);
     setOutput(null);
     setHtmlPreview(null);
-    setConsoleLines([]);
+    setConsoleLines([{ type: "info", text: `$ ${resolved.displayLabel} ${getRunnerFileLabel(resolved.editorLanguage)}` }]);
 
     try {
       if (resolved.isMarkup) {
@@ -108,7 +127,7 @@ export function CodeRunnerChallenge({
         setHasChecked(true);
         onAnswer(correct);
         setActiveTab("preview");
-        setConsoleLines([]);
+        setConsoleLines([{ type: "info", text: "HTML rendered in preview." }]);
         setIsRunning(false);
         return;
       }
@@ -116,7 +135,7 @@ export function CodeRunnerChallenge({
         const msg =
           "This language track does not use the server sandbox yet. Use a compiled/interpreted language lesson, or contact your admin.";
         setOutput(msg);
-        setConsoleLines([]);
+        setConsoleLines([{ type: "error", text: msg }]);
         setIsRunning(false);
         return;
       }
@@ -297,24 +316,46 @@ export function CodeRunnerChallenge({
 
           {/* RIGHT: Live Console */}
           <div className="flex flex-col overflow-hidden bg-card">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/50 shrink-0">
-              <Terminal className="w-4 h-4 text-primary shrink-0" />
-              <span className="text-xs font-black uppercase tracking-widest text-foreground">Live Console</span>
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-muted/50 shrink-0">
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-xs font-black uppercase tracking-widest text-foreground">Live Console</span>
+              </div>
+              {consoleLines.length > 0 && !isRunning && (
+                <button
+                  onClick={() => setConsoleLines([])}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded hover:bg-muted"
+                >
+                  Clear
+                </button>
+              )}
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto font-mono text-sm space-y-1 min-h-[120px]">
+            <div ref={consoleRef} className="flex-1 p-4 overflow-y-auto font-mono text-sm space-y-0.5 min-h-[120px]">
+              {consoleLines.length === 0 && !isRunning && (
+                <div className="text-muted-foreground/40 text-xs select-none">Run your code to see output here</div>
+              )}
               {consoleLines.map((line, i) => (
                 <div
                   key={i}
                   className={cn(
-                    "whitespace-pre-wrap",
-                    line.type === "output" && "text-foreground font-semibold",
+                    "whitespace-pre-wrap leading-5",
+                    line.type === "output" && "text-foreground",
                     line.type === "error" && "text-destructive",
+                    line.type === "info" && "text-muted-foreground text-xs",
+                    line.type === "exit" && line.exitOk && "text-primary/60 text-xs mt-1",
+                    line.type === "exit" && !line.exitOk && "text-destructive/70 text-xs mt-1",
                   )}
                 >
                   {line.text}
                 </div>
               ))}
+              {isRunning && (
+                <div className="flex items-center gap-2 text-muted-foreground text-xs pt-1">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Running...</span>
+                </div>
+              )}
             </div>
 
             {hasChecked && (

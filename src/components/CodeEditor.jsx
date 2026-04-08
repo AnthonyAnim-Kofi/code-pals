@@ -5,29 +5,44 @@
 import Editor from "@monaco-editor/react";
 import { cn } from "@/lib/utils";
 
+const MONACO_LANGUAGE_MAP = {
+  python: "python",
+  javascript: "javascript",
+  typescript: "typescript",
+  html: "html",
+  css: "css",
+  java: "java",
+  c: "c",
+  cpp: "cpp",
+  csharp: "csharp",
+  php: "php",
+  go: "go",
+  ruby: "ruby",
+  swift: "swift",
+  kotlin: "kotlin",
+  rust: "rust",
+  lua: "lua",
+  perl: "perl",
+  r: "r",
+  scala: "scala",
+  elixir: "elixir",
+  fsharp: "fsharp",
+  clojure: "clojure",
+  julia: "julia",
+  scheme: "scheme",
+  bash: "shell",
+  shell: "shell",
+  powershell: "powershell",
+  sql: "sql",
+  graphql: "graphql",
+  yaml: "yaml",
+  json: "json",
+  xml: "xml",
+  markdown: "markdown",
+};
+
 function getMonacoLanguage(lang) {
-  switch (lang) {
-    case "python":
-    case "javascript":
-    case "typescript":
-    case "html":
-    case "css":
-    case "java":
-    case "c":
-    case "cpp":
-    case "csharp":
-    case "php":
-    case "go":
-    case "ruby":
-    case "swift":
-    case "kotlin":
-      return lang;
-    case "rust":
-      // Monaco does not include built-in Rust support in every bundle setup.
-      return "plaintext";
-    default:
-      return "python";
-  }
+  return MONACO_LANGUAGE_MAP[lang] ?? "plaintext";
 }
 
 export function CodeEditor({
