@@ -32,6 +32,7 @@ import Admin from "./pages/Admin";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import Onboarding from "./pages/Onboarding";
+import CodePlayground from "./pages/CodePlayground";
 const queryClient = new QueryClient();
 const App = () => {
     useDeviceNotifications();
@@ -88,6 +89,11 @@ const App = () => {
                 {/* Lesson (Full screen, no sidebar) - Protected */}
                 <Route path="/lesson/:lessonId" element={<ProtectedRoute>
                       <Lesson />
+                    </ProtectedRoute>}/>
+
+                {/* Code Playground (Full screen, no sidebar) - Protected */}
+                <Route path="/playground" element={<ProtectedRoute>
+                      <CodePlayground />
                     </ProtectedRoute>}/>
 
                 {/* Catch-all */}

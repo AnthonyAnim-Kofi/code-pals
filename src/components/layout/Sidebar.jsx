@@ -4,7 +4,7 @@
  * Uses the shared LogoutConfirmDialog for logout confirmation.
  */
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Trophy, Target, ShoppingBag, User, Home, Code2, LogOut, Users, RotateCcw, Award, Settings, Globe, History, Gift } from "lucide-react";
+import { Trophy, Target, ShoppingBag, User, Home, Code2, LogOut, Users, RotateCcw, Award, Settings, Globe, History, Gift, Terminal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import mascot from "@/assets/mascot.png";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +13,7 @@ import { LogoutConfirmDialog } from "@/components/LogoutConfirmDialog";
 /** Primary navigation items shown at the top of the sidebar */
 const navItems = [
     { icon: Home, label: "Learn", path: "/learn" },
+    { icon: Terminal, label: "Playground", path: "/playground" },
     { icon: Trophy, label: "Leaderboard", path: "/leaderboard" },
     { icon: Target, label: "Quests", path: "/quests" },
     { icon: ShoppingBag, label: "Shop", path: "/shop" },
