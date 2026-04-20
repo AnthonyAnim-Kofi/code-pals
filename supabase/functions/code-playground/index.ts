@@ -585,29 +585,66 @@ serve(async (req) => {
     return json({ stdout: code, stderr: "", exitCode: 0, language: lang, version: "passthrough" });
   }
 
-  // Other languages — try external Piston if configured
-  const pistonBase = Deno.env.get("PISTON_API_BASE");
-  if (pistonBase) {
-    try {
-      const pistonRes = await fetch(`${pistonBase}/api/v2/execute`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          language: lang, version, files: [{ content: code }], stdin,
-          run_timeout: 10000, compile_timeout: 15000,
-        }),
-      });
-      const result = await pistonRes.json();
-      return json({
-        stdout: result.run?.stdout ?? "", stderr: result.run?.stderr ?? "",
-        exitCode: result.run?.code ?? null, language: result.language ?? lang, version: result.version ?? version,
-      });
-    } catch (e) {
-      return json({ error: `Piston API error: ${(e as Error).message}` }, 503);
-    }
-  }
+  // Other languages — proxy to Piston (public emkc.org by default)
+  const pistonBase = (Deno.env.get("PISTON_API_BASE") || "https://emkc.org").replace(/\/+$/, "");
 
-  return json({
-    error: `Language "${language}" requires an external code execution service. JavaScript, TypeScript, Python, and HTML/CSS are supported natively. For other languages, configure the PISTON_API_BASE secret.`,
-  }, 400);
+  // Map our slugs → Piston language keys
+  const PISTON_LANG_MAP: Record<string, string> = {
+    "c++": "cpp", cpp: "cpp",
+    "c#": "csharp", csharp: "csharp",
+    "f#": "fsharp", fsharp: "fsharp",
+    java: "java", c: "c",
+    go: "go", golang: "go",
+    rust: "rust", ruby: "ruby", php: "php",
+    swift: "swift", kotlin: "kotlin", dart: "dart",
+    scala: "scala", perl: "perl", lua: "lua",
+    haskell: "haskell", elixir: "elixir", erlang: "erlang",
+    clojure: "clojure", ocaml: "ocaml", nim: "nim",
+    crystal: "crystal", zig: "zig", julia: "julia", r: "rscript",
+    bash: "bash", shell: "bash", zsh: "bash",
+    powershell: "powershell", pwsh: "powershell",
+    groovy: "groovy", fortran: "fortran", cobol: "cobol",
+    lisp: "commonlisp", scheme: "scheme", prolog: "swiprolog",
+    ada: "ada", d: "d", brainfuck: "brainfuck", vlang: "vlang",
+    deno: "deno",
+  };
+
+  const pistonLang = PISTON_LANG_MAP[lang] || lang;
+
+  try {
+    const pistonRes = await fetch(`${pistonBase}/api/v2/execute`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        language: pistonLang,
+        version: version === "*" ? "*" : version,
+        files: [{ content: code }],
+        stdin,
+        run_timeout: 10000,
+        compile_timeout: 15000,
+      }),
+    });
+
+    if (!pistonRes.ok) {
+      const text = await pistonRes.text();
+      return json({
+        error: `Piston returned ${pistonRes.status}: ${text.slice(0, 300)}`,
+      }, 502);
+    }
+
+    const result = await pistonRes.json();
+    if (result?.message && !result?.run) {
+      return json({ error: `Piston: ${result.message}` }, 400);
+    }
+
+    return json({
+      stdout: result.run?.stdout ?? "",
+      stderr: result.run?.stderr ?? result.compile?.stderr ?? "",
+      exitCode: result.run?.code ?? null,
+      language: result.language ?? pistonLang,
+      version: result.version ?? version,
+    });
+  } catch (e) {
+    return json({ error: `Code execution service unavailable: ${(e as Error).message}` }, 503);
+  }
 });
