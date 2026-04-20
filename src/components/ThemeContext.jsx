@@ -60,17 +60,31 @@ export function ThemeProvider({ children }) {
   const [currentTheme, setCurrentTheme] = useState('theme-default');
 
   useEffect(() => {
-    // Determine active theme based on override or calendar
-    const activeTheme = overrideTheme || getCurrentHolidayTheme();
-    setCurrentTheme(activeTheme);
+    const applyTheme = () => {
+      const activeTheme = overrideTheme || getCurrentHolidayTheme();
+      setCurrentTheme(activeTheme);
 
-    // Remove all previous theme classes
-    const root = document.documentElement;
-    HOLIDAYS.forEach(h => root.classList.remove(h.name));
-    root.classList.remove('theme-default');
+      const root = document.documentElement;
+      HOLIDAYS.forEach(h => root.classList.remove(h.name));
+      root.classList.remove('theme-default');
+      root.classList.add(activeTheme);
+    };
 
-    // Add new theme class
-    root.classList.add(activeTheme);
+    applyTheme();
+
+    // Re-check periodically so themes auto-revert when a holiday window ends
+    const intervalId = setInterval(applyTheme, 60 * 60 * 1000); // hourly
+
+    // Re-check when tab becomes visible again (covers day rollovers on idle tabs)
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') applyTheme();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [overrideTheme]);
 
   return (
