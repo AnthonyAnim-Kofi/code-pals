@@ -585,56 +585,35 @@ serve(async (req) => {
     return json({ stdout: code, stderr: "", exitCode: 0, language: lang, version: "passthrough" });
   }
 
-  // Other languages — proxy to Piston (public emkc.org by default)
-  const pistonBase = (Deno.env.get("PISTON_API_BASE") || "https://emkc.org").replace(/\/+$/, "");
+  // Other languages — proxy to Piston via shared helpers (auto-resolves latest version)
+  const { buildExecutePayload, friendlyPistonUpstreamError, getLatestVersion, getPistonApiBase, resolvePistonLanguage } =
+    await import("../_shared/run-code-piston.ts");
 
-  // Map our slugs → Piston language keys
-  const PISTON_LANG_MAP: Record<string, string> = {
-    "c++": "cpp", cpp: "cpp",
-    "c#": "csharp", csharp: "csharp",
-    "f#": "fsharp", fsharp: "fsharp",
-    java: "java", c: "c",
-    go: "go", golang: "go",
-    rust: "rust", ruby: "ruby", php: "php",
-    swift: "swift", kotlin: "kotlin", dart: "dart",
-    scala: "scala", perl: "perl", lua: "lua",
-    haskell: "haskell", elixir: "elixir", erlang: "erlang",
-    clojure: "clojure", ocaml: "ocaml", nim: "nim",
-    crystal: "crystal", zig: "zig", julia: "julia", r: "rscript",
-    bash: "bash", shell: "bash", zsh: "bash",
-    powershell: "powershell", pwsh: "powershell",
-    groovy: "groovy", fortran: "fortran", cobol: "cobol",
-    lisp: "commonlisp", scheme: "scheme", prolog: "swiprolog",
-    ada: "ada", d: "d", brainfuck: "brainfuck", vlang: "vlang",
-    deno: "deno",
-  };
-
-  const pistonLang = PISTON_LANG_MAP[lang] || lang;
+  const pistonLang = resolvePistonLanguage(lang);
+  const base = getPistonApiBase();
+  const resolvedVersion = version && version !== "*" ? version : await getLatestVersion(pistonLang);
+  const payload = { ...buildExecutePayload(pistonLang, resolvedVersion, code), stdin };
 
   try {
-    const pistonRes = await fetch(`${pistonBase}/api/v2/execute`, {
+    const pistonRes = await fetch(`${base}/execute`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        language: pistonLang,
-        version: version === "*" ? "*" : version,
-        files: [{ content: code }],
-        stdin,
-        run_timeout: 10000,
-        compile_timeout: 15000,
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!pistonRes.ok) {
       const text = await pistonRes.text();
       return json({
-        error: `Piston returned ${pistonRes.status}: ${text.slice(0, 300)}`,
+        error: friendlyPistonUpstreamError(`Piston returned ${pistonRes.status}: ${text.slice(0, 400)}`),
+        hint: !Deno.env.get("PISTON_API_BASE")
+          ? "No PISTON_API_BASE secret set. The public emkc.org demo is allowlist-only — self-host Piston (https://github.com/engineer-man/piston) and set the secret."
+          : undefined,
       }, 502);
     }
 
     const result = await pistonRes.json();
     if (result?.message && !result?.run) {
-      return json({ error: `Piston: ${result.message}` }, 400);
+      return json({ error: friendlyPistonUpstreamError(`Piston: ${result.message}`) }, 400);
     }
 
     return json({
@@ -642,9 +621,12 @@ serve(async (req) => {
       stderr: result.run?.stderr ?? result.compile?.stderr ?? "",
       exitCode: result.run?.code ?? null,
       language: result.language ?? pistonLang,
-      version: result.version ?? version,
+      version: result.version ?? resolvedVersion,
     });
   } catch (e) {
-    return json({ error: `Code execution service unavailable: ${(e as Error).message}` }, 503);
+    return json({
+      error: `Code execution service unavailable: ${(e as Error).message}`,
+      hint: "Set the PISTON_API_BASE secret in Lovable Cloud to a reachable Piston instance.",
+    }, 503);
   }
 });

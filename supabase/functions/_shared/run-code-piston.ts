@@ -123,6 +123,36 @@ export function friendlyPistonUpstreamError(message: string): string {
   return message;
 }
 
+// ── Runtime version cache ──────────────────────────────────────────────
+// Piston `/runtimes` lists all installed languages + versions. We cache the
+// latest version per language id so callers don't have to specify versions.
+type RuntimeEntry = { language: string; version: string; aliases?: string[] };
+let runtimesCache: { fetchedAt: number; map: Map<string, string> } | null = null;
+const RUNTIMES_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function getLatestVersion(pistonLang: string): Promise<string> {
+  const now = Date.now();
+  if (!runtimesCache || now - runtimesCache.fetchedAt > RUNTIMES_TTL_MS) {
+    const base = getPistonApiBase();
+    try {
+      const res = await fetch(`${base}/runtimes`);
+      if (res.ok) {
+        const list = (await res.json()) as RuntimeEntry[];
+        const map = new Map<string, string>();
+        for (const r of list) {
+          // Keep the LAST occurrence (Piston returns versions ascending → last = latest)
+          map.set(r.language, r.version);
+          for (const alias of r.aliases ?? []) map.set(alias, r.version);
+        }
+        runtimesCache = { fetchedAt: now, map };
+      }
+    } catch {
+      /* fall through — return "*" wildcard */
+    }
+  }
+  return runtimesCache?.map.get(pistonLang) ?? "*";
+}
+
 export type PistonExecuteResult = {
   compile?: { output?: string; stderr?: string; code?: number | null };
   run?: {
