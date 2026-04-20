@@ -181,7 +181,11 @@ export default function Admin() {
                 instruction: newQuestion.instruction,
                 code: newQuestion.type === "fill-blank" ? newQuestion.code || undefined : undefined,
                 answer: newQuestion.answer || undefined,
-                options: (newQuestion.type === "fill-blank" || newQuestion.type === "multiple-choice") ? newQuestion.options.filter(o => o) : undefined,
+                options: newQuestion.type === "drag-order" && blocks?.length
+                    ? blocks.map((b) => (typeof b.code === "string" ? b.code : String(b?.code ?? "")))
+                    : (newQuestion.type === "fill-blank" || newQuestion.type === "multiple-choice")
+                        ? newQuestion.options.filter(o => o)
+                        : undefined,
                 hint: newQuestion.hint || undefined,
                 expected_output: newQuestion.type === "code-runner" ? newQuestion.expected_output || undefined : undefined,
                 initial_code: newQuestion.type === "code-runner" ? (newQuestion.initial_code || newQuestion.code) || undefined : undefined,

@@ -1,8 +1,19 @@
 import { useState, useCallback } from "react";
 import { GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
+function withStableRowKeys(shuffled) {
+    const seen = new Map();
+    return shuffled.map((item, index) => {
+        const rawId = item?.id;
+        const base = rawId != null && String(rawId) !== "" ? String(rawId) : `anon-${String(item?.code ?? "").slice(0, 48)}-${index}`;
+        const n = (seen.get(base) ?? 0) + 1;
+        seen.set(base, n);
+        const key = n === 1 ? base : `${base}__${n}`;
+        return { ...item, _rowKey: key };
+    });
+}
 export function DragOrderChallenge({ blocks, correctOrder, onAnswer, disabled = false, }) {
-    const [items, setItems] = useState(() => [...blocks].sort(() => Math.random() - 0.5));
+    const [items, setItems] = useState(() => withStableRowKeys([...blocks].sort(() => Math.random() - 0.5)));
     const [draggedItem, setDraggedItem] = useState(null);
     const [dragOverItem, setDragOverItem] = useState(null);
     const handleDragStart = useCallback((id) => {
@@ -67,7 +78,7 @@ export function DragOrderChallenge({ blocks, correctOrder, onAnswer, disabled = 
       </p>
       
       <div className="space-y-2">
-        {items.map((item, index) => (<div key={item.id} draggable={!disabled} onDragStart={() => handleDragStart(item.id)} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd} className={cn("flex items-center gap-3 p-4 rounded-xl border-2 bg-card transition-all cursor-grab active:cursor-grabbing", draggedItem === item.id && "opacity-50 scale-95", dragOverItem === item.id && "border-primary bg-primary/10", !draggedItem && !dragOverItem && "border-border hover:border-primary/50", disabled && "cursor-not-allowed opacity-75")}>
+        {items.map((item, index) => (<div key={item._rowKey} draggable={!disabled} onDragStart={() => handleDragStart(item.id)} onDragOver={(e) => handleDragOver(e, item.id)} onDrop={() => handleDrop(item.id)} onDragEnd={handleDragEnd} className={cn("flex items-center gap-3 p-4 rounded-xl border-2 bg-card transition-all cursor-grab active:cursor-grabbing", draggedItem === item.id && "opacity-50 scale-95", dragOverItem === item.id && "border-primary bg-primary/10", !draggedItem && !dragOverItem && "border-border hover:border-primary/50", disabled && "cursor-not-allowed opacity-75")}>
             <div className="flex flex-col gap-1">
               <button type="button" onClick={() => moveItem(item.id, 'up')} disabled={disabled || index === 0} className="p-1 rounded hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed" aria-label="Move up">
                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

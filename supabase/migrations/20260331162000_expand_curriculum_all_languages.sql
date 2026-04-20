@@ -589,25 +589,31 @@ $md$,
                 do_instrs[1 + ((q_idx - 1) % array_length(do_instrs,1))],
                 lesson_topics[lesson_idx], lang.name
               );
+              -- Numbered (1/3)(2/3)(3/3) labels so execution order is unambiguous; `options` mirrors blocks for admin/API.
               q_blocks := jsonb_build_array(
                 jsonb_build_object('id','1','code',
-                  format('%s Step 1: %s', cpfx,
+                  format('%s (1/3) First — %s', cpfx,
                          drag_step1[1 + ((lesson_idx-1) % array_length(drag_step1,1))])),
                 jsonb_build_object('id','2','code',
-                  format('%s Step 2: %s', cpfx,
+                  format('%s (2/3) Then — %s', cpfx,
                          drag_step2[1 + ((lesson_idx-1) % array_length(drag_step2,1))])),
                 jsonb_build_object('id','3','code',
-                  format('%s Step 3: %s', cpfx,
+                  format('%s (3/3) Finally — %s', cpfx,
                          drag_step3[1 + ((lesson_idx-1) % array_length(drag_step3,1))]))
               );
               q_order := jsonb_build_array('1','2','3');
+              q_options := jsonb_build_array(
+                (q_blocks->0->>'code'),
+                (q_blocks->1->>'code'),
+                (q_blocks->2->>'code')
+              );
               q_hint := 'Always set up first, execute the logic second, then handle the output last.';
 
               INSERT INTO public.questions
-                (lesson_id,type,instruction,blocks,correct_order,hint,order_index,xp_reward)
+                (lesson_id,type,instruction,blocks,correct_order,options,hint,order_index,xp_reward)
               VALUES
                 (v_lesson_id,'drag-order',q_instruction,
-                 q_blocks,q_order,q_hint,q_idx-1,15);
+                 q_blocks,q_order,q_options,q_hint,q_idx-1,15);
             END IF;
           END IF;
         END LOOP; -- questions

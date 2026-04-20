@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { LocalNotifications } from '@capacitor/local-notifications';
-import { HOLIDAYS } from '../components/ThemeContext';
+import { HOLIDAYS, getWesternEasterSunday } from '../components/ThemeContext';
 import { Capacitor } from '@capacitor/core';
 
 /**
@@ -64,6 +64,17 @@ export function useDeviceNotifications() {
           sound: 'res://notification.mp3', // Uses custom notification sound if available in native assets
           extra: { theme: holiday.name }
         };
+      });
+
+      const easter = getWesternEasterSunday(year);
+      const easterMsg = holidayMessages['theme-easter'];
+      notifications.push({
+        title: easterMsg.title,
+        body: easterMsg.body,
+        id: 1000 + HOLIDAYS.length,
+        schedule: { at: new Date(year, easter.getMonth(), easter.getDate(), 9, 0, 0) },
+        sound: 'res://notification.mp3',
+        extra: { theme: 'theme-easter' },
       });
 
       // 4. Add a daily streak reminder (8 PM every day)

@@ -553,6 +553,44 @@ function runPythonSubset(code: string): { stdout: string; stderr: string; exitCo
   }
 }
 
+/* ── TypeScript-to-JavaScript transpiler (naive but effective for tutorials) ── */
+function stripTypeScriptSyntax(code: string): string {
+  let js = code;
+
+  // 1. Remove full-line or block `interface Foo { ... }` (multi-line aware)
+  js = js.replace(/\binterface\s+\w+(?:<[^>]*>)?(?:\s+extends\s+[^{]+)?\s*\{[^}]*\}/gs, "");
+
+  // 2. Remove `type Alias = ...;` lines
+  js = js.replace(/^\s*type\s+\w+(?:<[^>]*>)?\s*=.*?;?\s*$/gm, "");
+
+  // 3. Remove access modifiers (private, public, protected, readonly, abstract, override)
+  js = js.replace(/\b(private|public|protected|readonly|abstract|override)\s+/g, "");
+
+  // 4. Remove return type annotations: ): SomeType { / ): SomeType =>
+  js = js.replace(/\)\s*:\s*[\w<>[\], |&?]+(?=\s*(?:\{|=>|\())/g, ")");
+
+  // 5. Remove parameter type annotations: (name: string, age: number)
+  //    Handles simple types, union types, generic types, optional params
+  js = js.replace(/(\w+\??):\s*[\w<>[\], |&?]+/g, "$1");
+
+  // 6. Remove `as Type` casts
+  js = js.replace(/\s+as\s+[\w<>[\]|&]+/g, "");
+
+  // 7. Remove non-null assertions: value!
+  js = js.replace(/(\w)\!(?=[.\[;,)}\s])/g, "$1");
+
+  // 8. Remove generic type arguments from function calls: fn<Type>(...)
+  js = js.replace(/<[\w<>[\], |&?]+>(?=\s*\()/g, "");
+
+  // 9. Remove `implements InterfaceName` from class declarations
+  js = js.replace(/\bimplements\s+[\w,\s]+(?=\s*\{)/g, "");
+
+  // 10. Remove `extends SomeType` from class declarations (keep the class, drop extension if needed)
+  // Note: Only remove if the extends is a type, not a class — we skip this to avoid breaking real inheritance
+
+  return js;
+}
+
 /* ── Main handler ── */
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -568,10 +606,17 @@ serve(async (req) => {
 
   const lang = language.toLowerCase().trim();
 
-  // JavaScript / TypeScript — local sandbox
-  if (["javascript", "js", "typescript", "ts"].includes(lang)) {
+  // JavaScript — local sandbox (runs as-is)
+  if (["javascript", "js"].includes(lang)) {
     const result = runJavaScriptLocally(code);
     return json({ stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode, language: lang, version: "sandbox" });
+  }
+
+  // TypeScript — strip type annotations then run in JS sandbox
+  if (["typescript", "ts"].includes(lang)) {
+    const stripped = stripTypeScriptSyntax(code);
+    const result = runJavaScriptLocally(stripped);
+    return json({ stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode, language: "typescript", version: "sandbox (types stripped)" });
   }
 
   // Python — local subset interpreter

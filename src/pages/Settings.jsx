@@ -16,7 +16,7 @@ export default function Settings() {
     const { toast } = useToast();
     const { data: profile, isLoading } = useUserProfile();
     const updateProfile = useUpdateProfile();
-    const { overrideTheme, setOverrideTheme, HOLIDAYS } = useTheme();
+    const { overrideTheme, setOverrideTheme, HOLIDAYS_FOR_SETTINGS } = useTheme();
     const [displayName, setDisplayName] = useState("");
     const [selectedAvatar, setSelectedAvatar] = useState(null);
     const [avatarCategory, setAvatarCategory] = useState("all");
@@ -135,7 +135,7 @@ export default function Settings() {
               >
                 <option value="auto">Auto (Calendar Date)</option>
                 <option value="theme-default">Default Theme</option>
-                {HOLIDAYS.map(h => (
+                {HOLIDAYS_FOR_SETTINGS.map(h => (
                   <option key={h.name} value={h.name}>{h.name.replace('theme-', '').toUpperCase()}</option>
                 ))}
               </select>

@@ -1,7 +1,6 @@
 /**
  * CodePlayground – Full-featured online code editor and runner.
- * Supports 40+ languages via the Piston execution engine.
- * Built from scratch as a standalone full-screen protected page.
+ * Supports the 10 languages taught in the CodeOwl curriculum.
  */
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -17,163 +16,250 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // ─────────────────────────────────────────────────────────
-//  Language registry
+//  Language registry — the 10 languages taught in CodeOwl
 // ─────────────────────────────────────────────────────────
 const LANGUAGES = [
+  // ── Web ──────────────────────────────────────────────
+  {
+    id: "html", label: "HTML", group: "Web",
+    pistonLang: "html", monacoLang: "html", ext: "html",
+    isPreview: true,
+    template: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Page</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; background: #fafafa; }
+    h1   { color: #6d28d9; }
+    p    { color: #374151; line-height: 1.6; }
+    button {
+      background: #7c3aed; color: #fff; border: none;
+      padding: 0.5rem 1.25rem; border-radius: 0.5rem; cursor: pointer; font-size: 1rem;
+    }
+    button:hover { background: #5b21b6; }
+  </style>
+</head>
+<body>
+  <h1>Hello, World! 🌐</h1>
+  <p>Edit this HTML and click <strong>Run</strong> to see the live preview.</p>
+  <button onclick="this.textContent = 'Clicked! 🎉'">Click me</button>
+</body>
+</html>`,
+  },
+  {
+    id: "css", label: "CSS", group: "Web",
+    pistonLang: "css", monacoLang: "css", ext: "css",
+    isPreview: true,
+    template: `/* ── Your CSS — a live preview renders below ── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 2rem;
+}
+
+h1   { font-size: 2rem; color: #a78bfa; }
+p    { color: #94a3b8; line-height: 1.6; }
+
+button {
+  background: #7c3aed; color: #fff; border: none;
+  padding: 0.6rem 1.4rem; border-radius: 0.5rem;
+  cursor: pointer; font-size: 1rem; transition: background 0.2s;
+}
+button:hover { background: #5b21b6; }
+
+.card {
+  background: #1e293b; border: 1px solid #334155;
+  border-radius: 0.75rem; padding: 1.5rem; max-width: 24rem; width: 100%;
+}`,
+  },
   {
     id: "javascript", label: "JavaScript", group: "Web",
     pistonLang: "javascript", monacoLang: "javascript", ext: "js",
-    template: `// JavaScript\nconst greet = (name) => \`Hello, \${name}!\`;\nconsole.log(greet("World"));\n\nconst nums = [1, 2, 3, 4, 5];\nconst sum = nums.reduce((a, b) => a + b, 0);\nconsole.log("Sum:", sum);`,
+    template: `// JavaScript — runs instantly in the browser sandbox
+const greet = (name) => \`Hello, \${name}!\`;
+console.log(greet("World"));
+
+const nums = [1, 2, 3, 4, 5];
+const sum  = nums.reduce((a, b) => a + b, 0);
+console.log("Sum:", sum);
+console.log("Squares:", nums.map((x) => x ** 2));`,
   },
   {
     id: "typescript", label: "TypeScript", group: "Web",
     pistonLang: "typescript", monacoLang: "typescript", ext: "ts",
-    template: `// TypeScript\ninterface Person {\n  name: string;\n  age: number;\n}\n\nconst greet = (person: Person): string =>\n  \`Hello, \${person.name}! You are \${person.age} years old.\`;\n\nconst user: Person = { name: "World", age: 25 };\nconsole.log(greet(user));`,
+    template: `// TypeScript — compiled & run via Deno
+interface Person {
+  name: string;
+  age:  number;
+}
+
+function greet(person: Person): string {
+  return \`Hello, \${person.name}! You are \${person.age} years old.\`;
+}
+
+const user: Person = { name: "World", age: 25 };
+console.log(greet(user));
+
+const nums: number[] = [1, 2, 3, 4, 5];
+const sum: number = nums.reduce((a, b) => a + b, 0);
+console.log("Sum:", sum);`,
   },
+  {
+    id: "angular", label: "Angular", group: "Web",
+    pistonLang: "typescript", monacoLang: "typescript", ext: "ts",
+    template: `// Angular — TypeScript fundamentals used in Angular apps
+// (Full Angular apps require the CLI; here we run the TS logic directly)
+
+interface User {
+  name: string;
+  role: string;
+}
+
+class UserService {
+  private users: User[] = [
+    { name: "Alice",   role: "admin"  },
+    { name: "Bob",     role: "editor" },
+    { name: "Charlie", role: "viewer" },
+  ];
+
+  getAdmins(): User[] {
+    return this.users.filter((u) => u.role === "admin");
+  }
+
+  greet(user: User): string {
+    return \`Welcome, \${user.name}! Role: \${user.role}\`;
+  }
+}
+
+const svc = new UserService();
+svc.getAdmins().forEach((u) => console.log(svc.greet(u)));
+console.log("Total users:", 3);`,
+  },
+
+  // ── General ───────────────────────────────────────────
   {
     id: "python", label: "Python", group: "General",
     pistonLang: "python", monacoLang: "python", ext: "py",
-    template: `# Python\ndef greet(name: str) -> str:\n    return f"Hello, {name}!"\n\nprint(greet("World"))\n\nnums = [1, 2, 3, 4, 5]\nprint("Sum:", sum(nums))\nprint("List:", [x ** 2 for x in nums])`,
+    template: `# Python — runs via sandbox (imports fall back to Piston)
+def greet(name: str) -> str:
+    return f"Hello, {name}!"
+
+print(greet("World"))
+
+nums = [1, 2, 3, 4, 5]
+print("Sum:", sum(nums))
+print("Squares:", [x ** 2 for x in nums])
+
+# Try a dict
+scores = {"Alice": 95, "Bob": 82, "Charlie": 90}
+for name, score in scores.items():
+    print(f"  {name}: {score}")`,
   },
-  {
-    id: "java", label: "Java", group: "General",
-    pistonLang: "java", monacoLang: "java", ext: "java",
-    template: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n        \n        int[] nums = {1, 2, 3, 4, 5};\n        int sum = 0;\n        for (int n : nums) sum += n;\n        System.out.println("Sum: " + sum);\n    }\n}`,
-  },
-  {
-    id: "c", label: "C", group: "Systems",
-    pistonLang: "c", monacoLang: "c", ext: "c",
-    template: `#include <stdio.h>\n\nint main() {\n    printf("Hello, World!\\n");\n    \n    int nums[] = {1, 2, 3, 4, 5};\n    int sum = 0;\n    for (int i = 0; i < 5; i++) sum += nums[i];\n    printf("Sum: %d\\n", sum);\n    \n    return 0;\n}`,
-  },
-  {
-    id: "cpp", label: "C++", group: "Systems",
-    pistonLang: "c++", monacoLang: "cpp", ext: "cpp",
-    template: `#include <iostream>\n#include <vector>\n#include <numeric>\nusing namespace std;\n\nint main() {\n    cout << "Hello, World!" << endl;\n    \n    vector<int> nums = {1, 2, 3, 4, 5};\n    int sum = accumulate(nums.begin(), nums.end(), 0);\n    cout << "Sum: " << sum << endl;\n    \n    return 0;\n}`,
-  },
-  {
-    id: "csharp", label: "C#", group: "Systems",
-    pistonLang: "csharp", monacoLang: "csharp", ext: "cs",
-    template: `using System;\nusing System.Linq;\n\nclass Program {\n    static void Main() {\n        Console.WriteLine("Hello, World!");\n        \n        int[] nums = {1, 2, 3, 4, 5};\n        Console.WriteLine($"Sum: {nums.Sum()}");\n    }\n}`,
-  },
+
+  // ── Systems ───────────────────────────────────────────
   {
     id: "go", label: "Go", group: "Systems",
     pistonLang: "go", monacoLang: "go", ext: "go",
-    template: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Hello, World!")\n    \n    nums := []int{1, 2, 3, 4, 5}\n    sum := 0\n    for _, n := range nums {\n        sum += n\n    }\n    fmt.Printf("Sum: %d\\n", sum)\n}`,
+    template: `package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+func greet(name string) string {
+	return fmt.Sprintf("Hello, %s!", name)
+}
+
+func main() {
+	fmt.Println(greet("World"))
+
+	nums := []int{1, 2, 3, 4, 5}
+	sum  := 0
+	for _, n := range nums {
+		sum += n
+	}
+	fmt.Println("Sum:", sum)
+
+	words := []string{"Go", "is", "awesome"}
+	fmt.Println(strings.Join(words, " "))
+}`,
   },
   {
     id: "rust", label: "Rust", group: "Systems",
     pistonLang: "rust", monacoLang: "rust", ext: "rs",
-    template: `fn main() {\n    println!("Hello, World!");\n    \n    let nums = vec![1, 2, 3, 4, 5];\n    let sum: i32 = nums.iter().sum();\n    println!("Sum: {}", sum);\n    \n    let squares: Vec<i32> = nums.iter().map(|x| x * x).collect();\n    println!("Squares: {:?}", squares);\n}`,
-  },
-  {
-    id: "ruby", label: "Ruby", group: "Scripting",
-    pistonLang: "ruby", monacoLang: "ruby", ext: "rb",
-    template: `# Ruby\ndef greet(name)\n  "Hello, #{name}!"\nend\n\nputs greet("World")\n\nnums = [1, 2, 3, 4, 5]\nputs "Sum: #{nums.sum}"\nputs "Squares: #{nums.map { |x| x ** 2 }}"`,
-  },
-  {
-    id: "php", label: "PHP", group: "Web",
-    pistonLang: "php", monacoLang: "php", ext: "php",
-    template: `<?php\nfunction greet($name) {\n    return "Hello, $name!";\n}\n\necho greet("World") . "\\n";\n\n$nums = [1, 2, 3, 4, 5];\necho "Sum: " . array_sum($nums) . "\\n";\necho "Squares: " . implode(", ", array_map(fn($x) => $x ** 2, $nums)) . "\\n";`,
+    template: `fn greet(name: &str) -> String {
+    format!("Hello, {}!", name)
+}
+
+fn main() {
+    println!("{}", greet("World"));
+
+    let nums = vec![1, 2, 3, 4, 5];
+    let sum: i32  = nums.iter().sum();
+    let squares: Vec<i32> = nums.iter().map(|x| x * x).collect();
+
+    println!("Sum: {}", sum);
+    println!("Squares: {:?}", squares);
+}`,
   },
   {
     id: "swift", label: "Swift", group: "Mobile",
     pistonLang: "swift", monacoLang: "swift", ext: "swift",
-    template: `// Swift\nfunc greet(_ name: String) -> String {\n    return "Hello, \\(name)!"\n}\n\nprint(greet("World"))\n\nlet nums = [1, 2, 3, 4, 5]\nlet sum = nums.reduce(0, +)\nprint("Sum: \\(sum)")\nprint("Squares: \\(nums.map { $0 * $0 })")`,
+    template: `// Swift
+func greet(_ name: String) -> String {
+    return "Hello, \\(name)!"
+}
+
+print(greet("World"))
+
+let nums = [1, 2, 3, 4, 5]
+let sum  = nums.reduce(0, +)
+print("Sum: \\(sum)")
+print("Squares: \\(nums.map { $0 * $0 })")`,
   },
+
+  // ── Database ──────────────────────────────────────────
   {
-    id: "kotlin", label: "Kotlin", group: "Mobile",
-    pistonLang: "kotlin", monacoLang: "kotlin", ext: "kt",
-    template: `fun main() {\n    println("Hello, World!")\n    \n    val nums = listOf(1, 2, 3, 4, 5)\n    println("Sum: \${nums.sum()}")\n    println("Squares: \${nums.map { it * it }}")\n}`,
-  },
-  {
-    id: "scala", label: "Scala", group: "JVM",
-    pistonLang: "scala", monacoLang: "scala", ext: "scala",
-    template: `object Main extends App {\n  println("Hello, World!")\n  \n  val nums = List(1, 2, 3, 4, 5)\n  println(s"Sum: \${nums.sum}")\n  println(s"Squares: \${nums.map(x => x * x)}")\n}`,
-  },
-  {
-    id: "r", label: "R", group: "Data Science",
-    pistonLang: "r", monacoLang: "r", ext: "r",
-    template: `# R\ngreet <- function(name) {\n  paste("Hello,", name, "!")\n}\n\ncat(greet("World"), "\\n")\n\nnums <- c(1, 2, 3, 4, 5)\ncat("Sum:", sum(nums), "\\n")\ncat("Squares:", nums^2, "\\n")`,
-  },
-  {
-    id: "lua", label: "Lua", group: "Scripting",
-    pistonLang: "lua", monacoLang: "lua", ext: "lua",
-    template: `-- Lua\nlocal function greet(name)\n    return "Hello, " .. name .. "!"\nend\n\nprint(greet("World"))\n\nlocal nums = {1, 2, 3, 4, 5}\nlocal sum = 0\nfor _, v in ipairs(nums) do\n    sum = sum + v\nend\nprint("Sum:", sum)`,
-  },
-  {
-    id: "perl", label: "Perl", group: "Scripting",
-    pistonLang: "perl", monacoLang: "perl", ext: "pl",
-    template: `#!/usr/bin/perl\nuse strict;\nuse warnings;\n\nsub greet {\n    my ($name) = @_;\n    return "Hello, $name!";\n}\n\nprint greet("World") . "\\n";\n\nmy @nums = (1, 2, 3, 4, 5);\nmy $sum = 0;\n$sum += $_ for @nums;\nprint "Sum: $sum\\n";`,
-  },
-  {
-    id: "bash", label: "Bash", group: "Shell",
-    pistonLang: "bash", monacoLang: "shell", ext: "sh",
-    template: `#!/bin/bash\n\ngreet() {\n    echo "Hello, $1!"\n}\n\ngreet "World"\n\nnums=(1 2 3 4 5)\nsum=0\nfor n in "\${nums[@]}"; do\n    sum=$((sum + n))\ndone\necho "Sum: $sum"`,
-  },
-  {
-    id: "powershell", label: "PowerShell", group: "Shell",
-    pistonLang: "powershell", monacoLang: "powershell", ext: "ps1",
-    template: `# PowerShell\nfunction Greet($name) {\n    "Hello, $name!"\n}\n\nGreet "World"\n\n$nums = 1..5\n$sum = ($nums | Measure-Object -Sum).Sum\nWrite-Output "Sum: $sum"`,
-  },
-  {
-    id: "haskell", label: "Haskell", group: "Functional",
-    pistonLang: "haskell", monacoLang: "haskell", ext: "hs",
-    template: `-- Haskell\nmain :: IO ()\nmain = do\n    putStrLn (greet "World")\n    let nums = [1..5] :: [Int]\n    putStrLn $ "Sum: " ++ show (sum nums)\n    putStrLn $ "Squares: " ++ show (map (^2) nums)\n\ngreet :: String -> String\ngreet name = "Hello, " ++ name ++ "!"`,
-  },
-  {
-    id: "erlang", label: "Erlang", group: "Functional",
-    pistonLang: "erlang", monacoLang: "erlang", ext: "erl",
-    template: `-module(main).\n-export([main/0]).\n\nmain() ->\n    io:format("Hello, World!~n"),\n    Nums = lists:seq(1, 5),\n    Sum = lists:sum(Nums),\n    io:format("Sum: ~p~n", [Sum]).`,
-  },
-  {
-    id: "elixir", label: "Elixir", group: "Functional",
-    pistonLang: "elixir", monacoLang: "elixir", ext: "ex",
-    template: `# Elixir\ndefmodule Main do\n  def run do\n    IO.puts("Hello, World!")\n    \n    nums = 1..5 |> Enum.to_list()\n    sum = Enum.sum(nums)\n    IO.puts("Sum: \#{sum}")\n    squares = Enum.map(nums, &(&1 * &1))\n    IO.inspect(squares, label: "Squares")\n  end\nend\n\nMain.run()`,
-  },
-  {
-    id: "clojure", label: "Clojure", group: "Functional",
-    pistonLang: "clojure", monacoLang: "clojure", ext: "clj",
-    template: `; Clojure\n(defn greet [name]\n  (str "Hello, " name "!"))\n\n(println (greet "World"))\n\n(def nums (range 1 6))\n(println "Sum:" (reduce + nums))\n(println "Squares:" (map #(* % %) nums))`,
-  },
-  {
-    id: "julia", label: "Julia", group: "Data Science",
-    pistonLang: "julia", monacoLang: "julia", ext: "jl",
-    template: `# Julia\nfunction greet(name::String)::String\n    return "Hello, $name!"\nend\n\nprintln(greet("World"))\n\nnums = 1:5\nprintln("Sum: ", sum(nums))\nprintln("Squares: ", [x^2 for x in nums])`,
-  },
-  {
-    id: "dart", label: "Dart", group: "Mobile",
-    pistonLang: "dart", monacoLang: "dart", ext: "dart",
-    template: `void main() {\n  print(greet('World'));\n  \n  var nums = [1, 2, 3, 4, 5];\n  var sum = nums.reduce((a, b) => a + b);\n  print('Sum: \$sum');\n  print('Squares: \${nums.map((x) => x * x).toList()}');\n}\n\nString greet(String name) => 'Hello, \$name!';`,
-  },
-  {
-    id: "nim", label: "Nim", group: "Systems",
-    pistonLang: "nim", monacoLang: "nim", ext: "nim",
-    template: `# Nim\nproc greet(name: string): string =\n  "Hello, " & name & "!"\n\necho greet("World")\n\nvar nums = @[1, 2, 3, 4, 5]\nvar sum = 0\nfor n in nums: sum += n\necho "Sum: ", sum`,
-  },
-  {
-    id: "crystal", label: "Crystal", group: "Systems",
-    pistonLang: "crystal", monacoLang: "crystal", ext: "cr",
-    template: `# Crystal\ndef greet(name : String) : String\n  "Hello, #{name}!"\nend\n\nputs greet("World")\n\nnums = [1, 2, 3, 4, 5]\nputs "Sum: #{nums.sum}"\nputs "Squares: #{nums.map { |x| x ** 2 }}"`,
-  },
-  {
-    id: "d", label: "D", group: "Systems",
-    pistonLang: "d", monacoLang: "d", ext: "d",
-    template: `import std.stdio;\nimport std.algorithm;\nimport std.range;\n\nvoid main() {\n    writeln("Hello, World!");\n    \n    auto nums = iota(1, 6).array;\n    writeln("Sum: ", nums.sum);\n    writeln("Squares: ", nums.map!(x => x * x).array);\n}`,
-  },
-  {
-    id: "ocaml", label: "OCaml", group: "Functional",
-    pistonLang: "ocaml", monacoLang: "ocaml", ext: "ml",
-    template: `(* OCaml *)\nlet greet name = "Hello, " ^ name ^ "!"\n\nlet () =\n  print_endline (greet "World");\n  let nums = [1; 2; 3; 4; 5] in\n  let sum = List.fold_left (+) 0 nums in\n  Printf.printf "Sum: %d\\n" sum`,
-  },
-  {
-    id: "fsharp", label: "F#", group: "Functional",
-    pistonLang: "fsharp", monacoLang: "fsharp", ext: "fs",
-    template: `// F#\nlet greet name = sprintf "Hello, %s!" name\n\nprintfn "%s" (greet "World")\n\nlet nums = [1..5]\nlet sum = List.sum nums\nprintfn "Sum: %d" sum\nprintfn "Squares: %A" (List.map (fun x -> x * x) nums)`,
-  },
-  {
-    id: "groovy", label: "Groovy", group: "JVM",
-    pistonLang: "groovy", monacoLang: "groovy", ext: "groovy",
-    template: `// Groovy\ndef greet = { name -> "Hello, \${name}!" }\n\nprintln greet("World")\n\ndef nums = [1, 2, 3, 4, 5]\nprintln "Sum: \${nums.sum()}"\nprintln "Squares: \${nums.collect { it ** 2 }}"`,
+    id: "sql", label: "SQL", group: "Database",
+    pistonLang: "sql", monacoLang: "sql", ext: "sql",
+    noRun: true,
+    template: `-- SQL — write and study your queries here
+-- Note: SQL requires a live database to execute.
+-- Use this editor to write and review SQL syntax.
+
+CREATE TABLE users (
+  id    INTEGER PRIMARY KEY,
+  name  TEXT    NOT NULL,
+  email TEXT    UNIQUE
+);
+
+INSERT INTO users (id, name, email) VALUES
+  (1, 'Alice',   'alice@example.com'),
+  (2, 'Bob',     'bob@example.com'),
+  (3, 'Charlie', 'charlie@example.com');
+
+-- Retrieve all users
+SELECT * FROM users;
+
+-- Filter with WHERE
+SELECT name, email
+FROM   users
+WHERE  name LIKE 'A%';
+
+-- Aggregate
+SELECT COUNT(*) AS total FROM users;`,
   },
 ];
 
@@ -191,6 +277,35 @@ const EDITOR_THEMES = [
 const FONT_SIZES = [12, 13, 14, 15, 16, 18, 20];
 
 // ─────────────────────────────────────────────────────────
+//  Preview helpers (HTML / CSS)
+// ─────────────────────────────────────────────────────────
+function buildCssPreviewHtml(css) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>${css}</style>
+</head>
+<body>
+  <h1>CSS Preview</h1>
+  <p>This is a paragraph with <strong>bold</strong> and <em>italic</em> text.</p>
+  <button type="button">Button</button>
+  <ul>
+    <li>List item one</li>
+    <li>List item two</li>
+    <li>List item three</li>
+  </ul>
+  <div class="card">
+    <h2>Card Title</h2>
+    <p>Card content goes here.</p>
+  </div>
+  <a href="#">A link element</a>
+</body>
+</html>`;
+}
+
+// ─────────────────────────────────────────────────────────
 //  Execution logic
 // ─────────────────────────────────────────────────────────
 async function runCodeOnPiston({ language, code, stdin = "" }) {
@@ -199,11 +314,24 @@ async function runCodeOnPiston({ language, code, stdin = "" }) {
   });
 
   if (error) {
-    const msg = error?.context?.body
-      ? (() => { try { return JSON.parse(error.context.body)?.error; } catch { return null; } })()
-      : null;
+    // Try to extract a human-readable message from the response body
+    let msg = null;
+    try {
+      const body = error?.context?.body;
+      if (body) {
+        const parsed = typeof body === "string" ? JSON.parse(body) : body;
+        msg = parsed?.error || parsed?.message || null;
+      }
+    } catch { /* ignore */ }
     throw new Error(msg || error.message || "Failed to run code");
   }
+
+  // The edge function may return { error, hint } even with HTTP 200 in some paths
+  if (data?.error) {
+    const detail = data.hint ? `${data.error}\n\n${data.hint}` : data.error;
+    throw new Error(detail);
+  }
+
   return data;
 }
 
@@ -213,7 +341,6 @@ async function runCodeOnPiston({ language, code, stdin = "" }) {
 
 function LanguagePicker({ value, onChange }) {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const ref = useRef(null);
 
   useEffect(() => {
@@ -224,12 +351,8 @@ function LanguagePicker({ value, onChange }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const filtered = search.trim()
-    ? LANGUAGES.filter((l) => l.label.toLowerCase().includes(search.toLowerCase()))
-    : LANGUAGES;
-
   const grouped = LANGUAGE_GROUPS.reduce((acc, g) => {
-    const items = filtered.filter((l) => l.group === g);
+    const items = LANGUAGES.filter((l) => l.group === g);
     if (items.length) acc[g] = items;
     return acc;
   }, {});
@@ -246,41 +369,32 @@ function LanguagePicker({ value, onChange }) {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1.5 z-50 w-64 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
-          <div className="p-2 border-b border-white/10">
-            <input
-              autoFocus
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search languages…"
-              className="w-full bg-white/10 text-white placeholder-white/40 text-sm px-3 py-1.5 rounded-lg outline-none"
-            />
-          </div>
-          <div className="max-h-72 overflow-y-auto">
+        <div className="absolute left-0 top-full mt-1.5 z-50 w-52 bg-[#1e1e2e] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="overflow-y-auto">
             {Object.entries(grouped).map(([group, langs]) => (
               <div key={group}>
-                <p className="px-3 py-1 text-xs font-bold text-white/40 uppercase tracking-widest sticky top-0 bg-[#1e1e2e]">
+                <p className="px-3 pt-2 pb-1 text-[10px] font-bold text-white/30 uppercase tracking-widest sticky top-0 bg-[#1e1e2e]">
                   {group}
                 </p>
                 {langs.map((lang) => (
                   <button
                     key={lang.id}
-                    onClick={() => { onChange(lang); setOpen(false); setSearch(""); }}
+                    onClick={() => { onChange(lang); setOpen(false); }}
                     className={cn(
-                      "w-full text-left px-3 py-2 text-sm transition-colors",
+                      "w-full text-left px-4 py-2 text-sm transition-colors flex items-center gap-2",
                       lang.id === value.id
                         ? "bg-primary/20 text-primary font-semibold"
                         : "text-white/80 hover:bg-white/10"
                     )}
                   >
                     {lang.label}
+                    {lang.noRun && (
+                      <span className="ml-auto text-[10px] text-white/30 font-normal">editor only</span>
+                    )}
                   </button>
                 ))}
               </div>
             ))}
-            {Object.keys(grouped).length === 0 && (
-              <p className="text-center py-6 text-sm text-white/40">No languages found</p>
-            )}
           </div>
         </div>
       )}
@@ -418,13 +532,14 @@ function buildConsoleLines(result) {
 export default function CodePlayground() {
   const navigate = useNavigate();
 
-  const [language, setLanguage] = useState(LANGUAGES[2]); // Python default
-  const [code, setCode] = useState(LANGUAGES[2].template);
+  const [language, setLanguage] = useState(LANGUAGES[5]); // Python default
+  const [code, setCode] = useState(LANGUAGES[5].template);
   const [stdin, setStdin] = useState("");
   const [consoleLines, setConsoleLines] = useState([]);
+  const [previewHtml, setPreviewHtml] = useState(null);
   const [running, setRunning] = useState(false);
   const [runCount, setRunCount] = useState(0);
-  const [activeTab, setActiveTab] = useState("output"); // output | input
+  const [activeTab, setActiveTab] = useState("output"); // output | preview | input
   const [fontSize, setFontSize] = useState(14);
   const [editorTheme, setEditorTheme] = useState("vs-dark");
   const [showSettings, setShowSettings] = useState(false);
@@ -467,6 +582,8 @@ export default function CodePlayground() {
     setLanguage(lang);
     setCode(lang.template);
     setConsoleLines([]);
+    setPreviewHtml(null);
+    setActiveTab(lang.isPreview ? "preview" : "output");
   }, []);
 
   const handleRun = useCallback(async () => {
@@ -476,15 +593,40 @@ export default function CodePlayground() {
       toast.error("Write some code first!");
       return;
     }
+
+    // SQL and other non-runnable languages
+    if (language.noRun) {
+      setOutputCollapsed(false);
+      setActiveTab("output");
+      setConsoleLines([{
+        type: "stderr",
+        text: `${language.label} requires a live database connection and cannot run in the browser sandbox.\nUse this editor to write and review your ${language.label} syntax.`,
+      }]);
+      return;
+    }
+
     setRunning(true);
     setOutputCollapsed(false);
-    setActiveTab("output");
+    if (!language.isPreview) setActiveTab("output");
     const start = Date.now();
     setConsoleLines([{ type: "meta", text: `Running ${language.label}…` }]);
 
     try {
       const result = await runCodeOnPiston({ language, code: currentCode, stdin });
       const elapsed = ((Date.now() - start) / 1000).toFixed(2);
+
+      // HTML / CSS → render in iframe preview
+      if (language.isPreview) {
+        let html = result.stdout || currentCode;
+        if (language.id === "css") html = buildCssPreviewHtml(html);
+        setPreviewHtml(html);
+        setActiveTab("preview");
+        setConsoleLines([{ type: "meta", text: `Rendered ${language.label} in ${elapsed}s` }]);
+        setRunCount((c) => c + 1);
+        return;
+      }
+
+      // All other languages → console output
       const lines = buildConsoleLines(result);
       if (lines.length === 0 || lines.every((l) => l.type === "meta")) {
         lines.unshift({ type: "meta", text: "(no output)" });
@@ -676,25 +818,50 @@ export default function CodePlayground() {
             >
               {/* Console header */}
               <div className="flex items-center gap-1 px-3 py-2 border-b border-white/10 shrink-0">
-                <button
-                  onClick={() => setActiveTab("output")}
-                  className={cn(
-                    "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
-                    activeTab === "output"
-                      ? "bg-white/15 text-white"
-                      : "text-white/40 hover:text-white/70"
-                  )}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Terminal className="w-3 h-3" />
-                    Output
-                    {consoleLines.length > 0 && (
-                      <span className="bg-primary/30 text-primary text-[10px] px-1 rounded">
-                        {consoleLines.filter((l) => l.type !== "meta").length}
-                      </span>
+                {/* Output tab — hidden for preview-only languages */}
+                {!language.isPreview && (
+                  <button
+                    onClick={() => setActiveTab("output")}
+                    className={cn(
+                      "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+                      activeTab === "output"
+                        ? "bg-white/15 text-white"
+                        : "text-white/40 hover:text-white/70"
                     )}
-                  </span>
-                </button>
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Terminal className="w-3 h-3" />
+                      Output
+                      {consoleLines.length > 0 && (
+                        <span className="bg-primary/30 text-primary text-[10px] px-1 rounded">
+                          {consoleLines.filter((l) => l.type !== "meta").length}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                )}
+
+                {/* Preview tab — shown for HTML / CSS */}
+                {language.isPreview && (
+                  <button
+                    onClick={() => setActiveTab("preview")}
+                    className={cn(
+                      "px-3 py-1 rounded-md text-xs font-semibold transition-colors",
+                      activeTab === "preview"
+                        ? "bg-white/15 text-white"
+                        : "text-white/40 hover:text-white/70"
+                    )}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <FileCode className="w-3 h-3" />
+                      Preview
+                      {previewHtml && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
+                      )}
+                    </span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => setActiveTab("input")}
                   className={cn(
@@ -742,10 +909,31 @@ export default function CodePlayground() {
                 </button>
               </div>
 
-              {/* Console body */}
-              <div className="flex-1 overflow-y-auto px-4 py-3 space-y-0.5">
-                {activeTab === "output" ? (
-                  <>
+              {/* Console / Preview body */}
+              <div className="flex-1 overflow-hidden relative">
+                {/* Live preview iframe (HTML / CSS) */}
+                {activeTab === "preview" && (
+                  previewHtml ? (
+                    <iframe
+                      key={previewHtml}
+                      srcDoc={previewHtml}
+                      title="Preview"
+                      sandbox="allow-scripts allow-forms allow-modals allow-pointer-lock allow-popups"
+                      className="w-full h-full border-0 bg-white"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full gap-2 select-none">
+                      <FileCode className="w-8 h-8 text-white/10" />
+                      <p className="text-white/25 text-sm">
+                        Press <kbd className="bg-white/10 text-white/50 px-1.5 py-0.5 rounded text-xs font-mono">Ctrl+Enter</kbd> or click <strong className="text-white/40">Run</strong> to preview
+                      </p>
+                    </div>
+                  )
+                )}
+
+                {/* Console output */}
+                {activeTab === "output" && (
+                  <div className="h-full overflow-y-auto px-4 py-3 space-y-0.5">
                     {consoleLines.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full gap-2 select-none">
                         <Terminal className="w-8 h-8 text-white/10" />
@@ -759,9 +947,12 @@ export default function CodePlayground() {
                       ))
                     )}
                     <div ref={consoleEndRef} />
-                  </>
-                ) : (
-                  <div className="h-full flex flex-col gap-2">
+                  </div>
+                )}
+
+                {/* Stdin input */}
+                {activeTab === "input" && (
+                  <div className="h-full flex flex-col gap-2 px-4 py-3">
                     <p className="text-white/40 text-xs">Provide standard input (stdin) for your program:</p>
                     <textarea
                       value={stdin}

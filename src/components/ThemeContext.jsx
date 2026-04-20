@@ -2,12 +2,12 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 // Define the precise holiday boundaries
 // Month is 1-indexed (1 = Jan, 12 = Dec)
+// Easter is NOT listed here — it uses computed Western Easter (see isEasterThemeActive) so it does not stay on through April.
 export const HOLIDAYS = [
   { name: 'theme-newyear', start: { m: 12, d: 31 }, end: { m: 1, d: 2 } },
   { name: 'theme-lunar', start: { m: 1, d: 20 }, end: { m: 2, d: 15 } }, // Approx Lunar New Year Window
   { name: 'theme-valentine', start: { m: 2, d: 10 }, end: { m: 2, d: 15 } },
   { name: 'theme-stpatricks', start: { m: 3, d: 15 }, end: { m: 3, d: 17 } },
-  { name: 'theme-easter', start: { m: 3, d: 22 }, end: { m: 4, d: 25 } }, // Approx Easter window
   { name: 'theme-earth', start: { m: 4, d: 20 }, end: { m: 4, d: 22 } },
   { name: 'theme-summer', start: { m: 6, d: 20 }, end: { m: 7, d: 10 } },
   { name: 'theme-independence', start: { m: 7, d: 1 }, end: { m: 7, d: 7 } }, // July 4th week
@@ -18,6 +18,44 @@ export const HOLIDAYS = [
   { name: 'theme-christmas', start: { m: 12, d: 15 }, end: { m: 12, d: 30 } },
   { name: 'theme-ramadan', start: { m: 2, d: 17 }, end: { m: 3, d: 19 } }, // Approx Ramadan window 2026
 ];
+
+/** For Settings dropdown — includes Easter (calendar-driven separately). */
+export const HOLIDAYS_FOR_SETTINGS = [...HOLIDAYS, { name: 'theme-easter' }];
+
+/** Gregorian Western Easter Sunday (Anonymous algorithm). */
+export function getWesternEasterSunday(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+/** Easter theme: Palm Sunday through Easter Monday only (local calendar dates). */
+function isEasterThemeActive(date) {
+  const y = date.getFullYear();
+  const easter = getWesternEasterSunday(y);
+  const start = new Date(easter);
+  start.setDate(easter.getDate() - 7);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(easter);
+  end.setDate(easter.getDate() + 1);
+  end.setHours(23, 59, 59, 999);
+  const t = date.getTime();
+  return t >= start.getTime() && t <= end.getTime();
+}
+
+const ROOT_SEASONAL_CLASSES = ['theme-default', 'theme-easter', ...HOLIDAYS.map((h) => h.name)];
 
 function isDateInRange(date, start, end) {
   const m = date.getMonth() + 1;
@@ -43,7 +81,11 @@ function isDateInRange(date, start, end) {
 
 function getCurrentHolidayTheme(mockDate) {
   const now = mockDate ? new Date(mockDate) : new Date();
-  
+
+  if (isEasterThemeActive(now)) {
+    return 'theme-easter';
+  }
+
   for (const holiday of HOLIDAYS) {
     if (isDateInRange(now, holiday.start, holiday.end)) {
       return holiday.name;
@@ -65,8 +107,7 @@ export function ThemeProvider({ children }) {
       setCurrentTheme(activeTheme);
 
       const root = document.documentElement;
-      HOLIDAYS.forEach(h => root.classList.remove(h.name));
-      root.classList.remove('theme-default');
+      ROOT_SEASONAL_CLASSES.forEach((cls) => root.classList.remove(cls));
       root.classList.add(activeTheme);
     };
 
@@ -88,7 +129,7 @@ export function ThemeProvider({ children }) {
   }, [overrideTheme]);
 
   return (
-    <ThemeContext.Provider value={{ currentTheme, overrideTheme, setOverrideTheme, HOLIDAYS }}>
+    <ThemeContext.Provider value={{ currentTheme, overrideTheme, setOverrideTheme, HOLIDAYS, HOLIDAYS_FOR_SETTINGS }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -21,6 +21,38 @@ import { useUpdateQuestProgress } from "@/hooks/useQuests";
 import { useUpdateChallengeScore } from "@/hooks/useSocial";
 import { useLessonData, useLessonLanguageInfo, usePartialLessonProgress, useSavePartialProgress, useClearPartialProgress } from "@/hooks/useLessonData";
 import { cn } from "@/lib/utils";
+
+/** Code-runner uses full-screen IDE layout only when the runner can actually mount. */
+function codeRunnerChallengeCanRender(q) {
+    return (
+        q?.type === "code-runner" &&
+        typeof q.expected_output === "string" &&
+        q.expected_output.trim() !== ""
+    );
+}
+
+/** Detect questions missing required fields so we show a message instead of a blank shell. */
+function lessonQuestionHasInteractiveUI(q) {
+    if (!q?.type) return false;
+    switch (q.type) {
+        case "fill-blank":
+            return !!(q.code != null && String(q.code).length > 0 && Array.isArray(q.options) && q.options.length > 0);
+        case "multiple-choice":
+            return Array.isArray(q.options) && q.options.length > 0;
+        case "drag-order":
+            return (
+                Array.isArray(q.blocks) &&
+                q.blocks.length > 0 &&
+                Array.isArray(q.correct_order) &&
+                q.correct_order.length > 0
+            );
+        case "code-runner":
+            return codeRunnerChallengeCanRender(q);
+        default:
+            return false;
+    }
+}
+
 // Fallback lesson data for demo
 const fallbackLessonData = {
     title: "Print Statements",
@@ -419,7 +451,7 @@ export default function Lesson() {
     if (isComplete) {
         return (<LessonComplete xpEarned={xpEarned} totalQuestions={lessonData.questions.length} correctAnswers={correctAnswers} onContinue={handleLessonComplete}/>);
     }
-    const isCodeRunner = question?.type === "code-runner";
+    const isCodeRunner = codeRunnerChallengeCanRender(question);
     return (<div className="min-h-screen bg-background flex flex-col">
       {/* Header — hidden on desktop for code-runner */}
       <header className={cn("sticky top-0 z-50 bg-background border-b border-border", isCodeRunner && "lg:hidden")}>
@@ -492,8 +524,25 @@ export default function Lesson() {
           {/* Drag Order Challenge */}
           {question.type === "drag-order" && question.blocks && question.correct_order && (<DragOrderChallenge blocks={question.blocks} correctOrder={question.correct_order} onAnswer={handleDragOrderAnswer} disabled={dragOrderChecked}/>)}
 
-          {/* Code Runner Challenge */}
-          {question.type === "code-runner" && question.initial_code && question.expected_output && (<CodeRunnerChallenge initialCode={question.initial_code} expectedOutput={question.expected_output} hint={question.hint} instruction={question.instruction} language={languageInfo?.name?.toLowerCase() || "python"} languageSlug={languageInfo?.slug ?? null} onAnswer={handleCodeRunnerAnswer} disabled={codeRunnerChecked} lessonTitle={lessonData.title} lessonSubtitle={languageInfo?.name} questionIndex={currentQuestion} totalQuestions={totalQuestions} onExit={handleExit} onContinue={handleContinue} hearts={(isPracticeMode || isChallengeMode) ? "∞" : hearts} gems={profile?.gems ?? 0} isPracticeMode={isPracticeMode} isChallengeMode={isChallengeMode} progress={progress}/>)}
+          {/* Code Runner Challenge — expected_output required; initial_code may be empty */}
+          {codeRunnerChallengeCanRender(question) && (<CodeRunnerChallenge initialCode={question.initial_code ?? ""} expectedOutput={question.expected_output} hint={question.hint} instruction={question.instruction} language={languageInfo?.name?.toLowerCase() || "python"} languageSlug={languageInfo?.slug ?? null} onAnswer={handleCodeRunnerAnswer} disabled={codeRunnerChecked} lessonTitle={lessonData.title} lessonSubtitle={languageInfo?.name} questionIndex={currentQuestion} totalQuestions={totalQuestions} onExit={handleExit} onContinue={handleContinue} isLastQuestion={isLastQuestion} hearts={(isPracticeMode || isChallengeMode) ? "∞" : hearts} gems={profile?.gems ?? 0} isPracticeMode={isPracticeMode} isChallengeMode={isChallengeMode} progress={progress}/>)}
+
+          {/* Misconfigured or unsupported question — avoids blank screen (esp. code-runner + lg:hidden chrome) */}
+          {!lessonQuestionHasInteractiveUI(question) && (<div className="rounded-2xl border-2 border-amber-500/40 bg-amber-500/5 p-6 space-y-4">
+              <p className="font-bold text-foreground">This question can&apos;t be shown</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {question.type === "code-runner"
+                  ? "Add an expected output for this coding task in the lesson editor, or contact support if this keeps happening."
+                  : "This question is missing required fields or uses an unsupported type. You can move on with the button below."}
+              </p>
+              {!isChecked && (<Button variant="secondary" size="lg" className="rounded-xl" onClick={() => {
+                      setIsChecked(true);
+                      setIsCorrect(false);
+                      setMascotReaction("idle");
+                  }}>
+                  Got it
+                </Button>)}
+            </div>)}
 
           {/* Code Block for Fill-in-the-blank */}
           {question.type === "fill-blank" && question.code && (<div className="bg-sidebar rounded-2xl p-6 mb-6 font-mono text-sm">

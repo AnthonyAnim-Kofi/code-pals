@@ -59,6 +59,7 @@ export function CodeRunnerChallenge({
   totalQuestions,
   onExit,
   onContinue,
+  isLastQuestion = false,
   hearts,
   gems,
   isPracticeMode,
@@ -196,14 +197,25 @@ export function CodeRunnerChallenge({
               <span className="text-sm">{"💎"}</span>
               <span className="font-extrabold text-sm">{gems}</span>
             </div>
-            <Button
-              onClick={runCode}
-              disabled={disabled || isRunning || hasChecked}
-              className="rounded-xl font-bold gap-2"
-            >
-              {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
-              {"Run Code"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {hasChecked && onContinue && (
+                <Button
+                  onClick={onContinue}
+                  variant={isCorrect ? "default" : "destructive"}
+                  className="rounded-xl font-bold"
+                >
+                  {isLastQuestion ? "Finish" : "Continue"}
+                </Button>
+              )}
+              <Button
+                onClick={runCode}
+                disabled={disabled || isRunning || hasChecked}
+                className="rounded-xl font-bold gap-2"
+              >
+                {isRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+                {"Run Code"}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -552,6 +564,16 @@ export function CodeRunnerChallenge({
                     {hint}
                   </p>
                 </div>
+              )}
+              {hasChecked && onContinue && (
+                <Button
+                  onClick={onContinue}
+                  variant={isCorrect ? "default" : "destructive"}
+                  className="w-full mt-3 rounded-xl font-extrabold h-12"
+                  size="lg"
+                >
+                  {isLastQuestion ? "Finish" : "Continue"}
+                </Button>
               )}
             </div>
           </div>
