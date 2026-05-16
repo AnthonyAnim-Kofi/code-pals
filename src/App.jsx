@@ -12,6 +12,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { MobileChrome } from "@/components/layout/MobileChrome";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { toast } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -104,6 +105,7 @@ const App = () => {
         </TooltipProvider>
       </AuthProvider>
     </ThemeProvider>
+    <Analytics />
   </QueryClientProvider>);
 };
 export default App;
