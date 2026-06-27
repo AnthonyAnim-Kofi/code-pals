@@ -65,7 +65,7 @@ export function MobileHeader() {
             const r = el.getBoundingClientRect();
             return { left: r.left - base.left, width: r.width };
         });
-        setRects(next.filter(Boolean).length === next.length ? next : next);
+        setRects(next);
     }, []);
 
     useLayoutEffect(() => {
@@ -180,9 +180,9 @@ export function MobileHeader() {
               ref={listRef}
               className="relative flex items-center justify-around h-16 touch-pan-y"
               onPointerDown={isIOS ? onPointerDown : undefined}
-              onPointerMove={drag ? onPointerMove : undefined}
-              onPointerUp={drag ? onPointerUp : undefined}
-              onPointerCancel={drag ? onPointerUp : undefined}
+              onPointerMove={isIOS ? onPointerMove : undefined}
+              onPointerUp={isIOS ? onPointerUp : undefined}
+              onPointerCancel={isIOS ? onPointerUp : undefined}
             >
               {/* Liquid-glass active indicator (iOS only) */}
               {pill && (
