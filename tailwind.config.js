@@ -99,6 +99,23 @@ export default {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" },
         },
+        "splash-pop": {
+          "0%": { transform: "scale(0.5)", opacity: "0" },
+          "60%": { transform: "scale(1.08)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "splash-bounce": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "splash-fade-up": {
+          from: { transform: "translateY(12px)", opacity: "0" },
+          to: { transform: "translateY(0)", opacity: "1" },
+        },
+        "splash-dot": {
+          "0%, 100%": { transform: "translateY(0)", opacity: "0.4" },
+          "50%": { transform: "translateY(-6px)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -107,6 +124,10 @@ export default {
         "slide-in-up": "slide-in-up 0.4s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        "splash-pop": "splash-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        "splash-bounce": "splash-bounce 1.4s ease-in-out 0.6s infinite",
+        "splash-fade-up": "splash-fade-up 0.5s ease-out 0.3s both",
+        "splash-dot": "splash-dot 1s ease-in-out infinite",
       },
       boxShadow: {
         "button-primary": "0 4px 0 hsl(40, 100%, 35%)",
