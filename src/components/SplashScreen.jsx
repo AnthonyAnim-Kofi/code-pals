@@ -64,7 +64,7 @@ export function SplashScreen() {
 
       {/* Wordmark */}
       <h1 className="relative mt-6 text-3xl font-extrabold tracking-tight text-foreground animate-splash-fade-up">
-        Code<span className="text-primary">Pals</span>
+        Code<span className="text-primary">Bear</span>
       </h1>
 
       {/* Loading dots */}
